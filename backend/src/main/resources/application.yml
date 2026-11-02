@@ -8,3 +8,9 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
+
+keycheck:
+  geekhack:
+    base-url: https://geekhack.org
+    user-agent: "keycheck/0.1 (+https://github.com/HongnamKim/keycheck)"
+    min-interval: 2s
