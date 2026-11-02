@@ -8,9 +8,12 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
+    open-in-view: false
 
 keycheck:
   summarizer: fake
+  cors:
+    allowed-origins: http://localhost:3000
   geekhack:
     base-url: https://geekhack.org
     user-agent: "keycheck/0.1 (+https://github.com/HongnamKim/keycheck)"
