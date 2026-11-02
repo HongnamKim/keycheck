@@ -159,12 +159,13 @@ data class RawImage(val url: String, val source: ImageSource, val position: Int,
 
 파일: `classify/Classifier.kt`
 
-- 설계 4.4 키워드 규칙. 대소문자 무시, `SA `처럼 공백 포함 키워드는 단어 경계로 비교
-- 키캡·키보드 키워드가 둘 다 있으면 키캡 우선 (예: "GMK ... for 65% boards")
+- `classify(title, bodyText): Category`
+- 설계 4.4 순서: 제목 키캡 단어 → 제목 기타 단어 → 본문 사양 단어 종류 수 비교 → 키보드
+- 대소문자 무시, 단어 경계 비교
 
-테스트: 샘플 8건 제목(제목만 테스트에 사용) + 기타 예시(데스크매트, 스위치)로 기대 분류 확인
+테스트: 샘플 8건 이름 + 기타 예시(데스크매트, 스위치), 본문 판정(키캡 우세·키보드 우세·동점), 제목이 본문보다 우선, 단어 경계
 
-커밋: `feat: 제목 키워드 기반 분류기`
+커밋: `feat: 제목·본문 기반 분류기`
 
 ### Task 7. 대표 이미지 선택
 
