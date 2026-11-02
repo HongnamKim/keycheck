@@ -10,9 +10,9 @@ geekhack Interest Checks(board 132)의 키보드·키캡 글을 한국어 요약
 
 - `main`: 배포용. 직접 커밋·푸시하지 않는다. `dev`에서 PR로만 합친다.
 - `dev`: 개발 통합 브랜치. feature 브랜치의 PR을 받는다.
-- `feature/<작업명>`: 작업마다 `dev`에서 새로 따고, 끝나면 `dev`로 PR을 연다.
-  - 예: `feature/task-6-classifier`
-- 작업 시작 전 `dev`를 최신으로 받은 뒤 브랜치를 딴다.
+- 지금은 MVP 단계: 구현 계획의 모든 태스크를 `feature/mvp` 한 브랜치에서 작업한다. 태스크마다 새 브랜치를 따지 않는다.
+- MVP가 완성되면 `feature/mvp`를 `dev`로 PR해 합친다.
+- MVP 이후에는 세부 기능마다 `dev`에서 `feature/<기능명>`을 따고, 끝나면 `dev`로 PR을 연다.
 
 ## 커밋
 
