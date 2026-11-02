@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: keycheck
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/keycheck}
+    username: ${DB_USERNAME:keycheck}
+    password: ${DB_PASSWORD:keycheck}
+  jpa:
+    hibernate:
+      ddl-auto: validate
