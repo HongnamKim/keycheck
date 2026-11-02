@@ -11,5 +11,4 @@ public class RawImage {
   private final String url;
   private final ImageSource source;
   private final int position;
-  private final boolean inSignature;
 }

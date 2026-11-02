@@ -26,6 +26,11 @@ public class GeekhackClient {
     return get("/index.php?topic=" + topicId + ".0");
   }
 
+  /** 오프셋을 글 수보다 크게 주면 geekhack이 마지막 페이지를 돌려준다 */
+  public String fetchTopicLastPage(long topicId) {
+    return get("/index.php?topic=" + topicId + ".999999");
+  }
+
   private String get(String path) {
     byte[] bytes = restClient.get().uri(path).retrieve().body(byte[].class);
     return bytes == null ? "" : new String(bytes, RESPONSE_CHARSET);

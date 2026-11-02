@@ -180,7 +180,7 @@ public interface RepresentativeImageSelector {
   Selection select(List<RawImage> images); // 대표 인덱스(없으면 null) + 이미지별 제외 사유
 }
 ```
-- 설계 4.5 제외 규칙: 서명 영역, 이모티콘·아바타·테마 경로, 후원·디스코드 버튼 호스트, 파일명 `logo`/`banner`/`divider`
+- 설계 4.5 제외 규칙: 이모티콘·아바타·테마 경로, 후원·디스코드 버튼 호스트, 파일명 `logo`/`banner`/`divider`
 - 제외 규칙 목록은 상수로 한곳에 모은다
 
 테스트: 규칙별 제외 1건씩 + "첫 이미지가 배너인 글은 두 번째 이미지 선택" + "후보 없음"

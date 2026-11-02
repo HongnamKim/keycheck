@@ -2,7 +2,6 @@ package com.keycheck.image;
 
 import static com.keycheck.image.RuleBasedImageSelector.REASON_BUTTON;
 import static com.keycheck.image.RuleBasedImageSelector.REASON_DECORATION;
-import static com.keycheck.image.RuleBasedImageSelector.REASON_SIGNATURE;
 import static com.keycheck.image.RuleBasedImageSelector.REASON_SITE_ASSET;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -17,7 +16,7 @@ class RuleBasedImageSelectorTest {
   private final RuleBasedImageSelector selector = new RuleBasedImageSelector();
 
   private RawImage image(String url, int position) {
-    return new RawImage(url, ImageSource.EXTERNAL, position, false);
+    return new RawImage(url, ImageSource.EXTERNAL, position);
   }
 
   @ParameterizedTest
@@ -42,15 +41,6 @@ class RuleBasedImageSelectorTest {
   }
 
   @Test
-  @DisplayName("서명 영역 이미지는 제외한다")
-  void excludesSignatureImage() {
-    RawImage signature = new RawImage("https://i.imgur.com/render.jpg", ImageSource.EXTERNAL, 0, true);
-
-    assertThat(selector.select(List.of(signature)).getExcludedReasons())
-        .containsExactly(REASON_SIGNATURE);
-  }
-
-  @Test
   @DisplayName("첫 이미지가 배너면 두 번째 이미지를 대표로 고른다")
   void picksSecondWhenFirstIsBanner() {
     Selection selection =
@@ -71,8 +61,7 @@ class RuleBasedImageSelectorTest {
         new RawImage(
             "https://geekhack.org/index.php?action=dlattach;topic=127200.0;attach=318371;image",
             ImageSource.ATTACHMENT,
-            0,
-            false);
+            0);
 
     assertThat(selector.select(List.of(attachment)).getRepresentativeIndex()).isEqualTo(0);
   }

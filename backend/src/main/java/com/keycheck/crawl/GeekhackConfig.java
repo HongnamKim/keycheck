@@ -15,6 +15,11 @@ public class GeekhackConfig {
   }
 
   @Bean
+  public TopicParser topicParser(GeekhackProperties properties, Clock clock) {
+    return new TopicParser(properties.getTimeZone(), clock);
+  }
+
+  @Bean
   public GeekhackClient geekhackClient(GeekhackProperties properties) {
     return new GeekhackClient(
         RestClient.builder()

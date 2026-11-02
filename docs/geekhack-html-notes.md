@@ -37,10 +37,12 @@
 | 본문 | 글 안 `div.inner` (id `msg_{번호}`) |
 | 외부 이미지 | `div.inner img.bbc_img` (일부 `bbc_img resized`) |
 | 첨부 이미지 | `div.inner a.highslide > img`, src가 `index.php?action=dlattach;topic=…;attach=…;image` |
-| 첨부 영역 | `div.attachments` (본문 아래). 샘플 8건은 모두 비어 있었다(첨부를 본문에 넣음) |
+| 첨부 영역 | `div.attachments a.highslide` (본문 아래). href가 원본, 안쪽 img는 썸네일(attach 번호가 다름). 샘플 8건의 원글은 비어 있었고 형식은 댓글에서 확인했다 |
 | 이모티콘 | `div.inner img.smiley` (`/Smileys/` 경로) |
 | 아바타 | `div.poster img.avatar` — `div.inner` 밖 |
 | 서명 | `div.signature` — `div.inner` 밖 (`moderatorbar` 뒤) |
+
+- 이미지 주소에도 `PHPSESSID=...&`가 붙어 있으므로 저장 전에 지운다.
 
 ### 시간대
 - 비로그인 표시 시각은 **UTC−6**이다. 같은 글 2건을 RSS(`pubDate`, GMT)와 비교해 6시간 차이를 확인했다(2026-11-02 기준).

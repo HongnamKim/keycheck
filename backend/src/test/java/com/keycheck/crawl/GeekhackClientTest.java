@@ -44,4 +44,15 @@ class GeekhackClientTest {
     assertThat(client.fetchTopic(123456L)).isEqualTo("<html></html>");
     server.verify();
   }
+
+  @Test
+  @DisplayName("마지막 페이지는 아주 큰 오프셋으로 요청한다")
+  void requestsLastPageWithLargeOffset() {
+    server
+        .expect(requestTo("https://geekhack.test/index.php?topic=123456.999999"))
+        .andRespond(withSuccess("<html>last</html>", MediaType.TEXT_HTML));
+
+    assertThat(client.fetchTopicLastPage(123456L)).isEqualTo("<html>last</html>");
+    server.verify();
+  }
 }

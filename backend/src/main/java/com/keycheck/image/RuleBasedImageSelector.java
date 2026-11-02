@@ -7,7 +7,6 @@ import org.springframework.stereotype.Component;
 /** 설계 4.5: 규칙으로 부적합한 이미지를 거르고, 남은 후보 중 첫 번째를 대표로 고른다. */
 @Component
 public class RuleBasedImageSelector implements RepresentativeImageSelector {
-  public static final String REASON_SIGNATURE = "signature";
   public static final String REASON_SITE_ASSET = "site-asset";
   public static final String REASON_BUTTON = "button";
   public static final String REASON_DECORATION = "decoration";
@@ -33,7 +32,6 @@ public class RuleBasedImageSelector implements RepresentativeImageSelector {
 
   private String exclusionReason(RawImage image) {
     String url = image.getUrl().toLowerCase();
-    if (image.isInSignature()) return REASON_SIGNATURE;
     if (SITE_ASSET_PATTERNS.stream().anyMatch(url::contains)) return REASON_SITE_ASSET;
     if (BUTTON_PATTERNS.stream().anyMatch(url::contains)) return REASON_BUTTON;
     if (DECORATION_FILE_KEYWORDS.stream().anyMatch(fileName(url)::contains)) {
