@@ -19,12 +19,14 @@ class GeekhackClientTest {
     private val client = GeekhackClient(builder.build())
 
     @Test
-    fun `게시판 페이지를 ISO-8859-1로 디코딩해 받아온다`() {
+    fun `게시판 페이지를 Windows-1252로 디코딩해 받아온다`() {
+        // 0x97은 Windows-1252의 em dash, 0xE9는 é. ISO-8859-1로 읽으면 0x97이 제어 문자가 된다.
+        val body = byteArrayOf(0x43, 0x61, 0x66, 0xE9.toByte(), 0x20, 0x97.toByte(), 0x20, 0x41)
         server.expect(requestTo("https://geekhack.test/index.php?board=132.50"))
             .andExpect(header(HttpHeaders.USER_AGENT, "keycheck-test"))
-            .andRespond(withSuccess("Café".toByteArray(Charsets.ISO_8859_1), MediaType.TEXT_HTML))
+            .andRespond(withSuccess(body, MediaType.TEXT_HTML))
 
-        assertEquals("Café", client.fetchBoardPage(1))
+        assertEquals("Café — A", client.fetchBoardPage(1))
         server.verify()
     }
 
