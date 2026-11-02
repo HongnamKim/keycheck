@@ -65,7 +65,7 @@ com.keycheck
 
 확인된 사실:
 - 로그인 없이 목록·본문 HTML과 RSS(`action=.xml;type=rss;board=132`)를 받을 수 있다.
-- 응답 인코딩은 ISO-8859-1이며, 일부 문자는 HTML 엔티티로 온다.
+- 응답은 ISO-8859-1로 선언하지만 실제 바이트는 Windows-1252이며, 그 밖의 문자는 HTML 엔티티로 온다 (`docs/geekhack-html-notes.md`).
 - robots.txt에 제한이 없다. 이용약관은 아직 확인하지 않았다.
 
 방식:

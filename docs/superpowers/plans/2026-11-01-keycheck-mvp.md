@@ -126,10 +126,12 @@ Kotlin 포인트: `Duration`, `Clock`을 생성자 인자로 받으면 테스트
 
 ```kotlin
 data class BoardTopic(val topicId: Long, val title: String, val author: String,
-                      val replies: Int, val views: Int, val postedAt: Instant?)
+                      val replies: Int, val views: Int)
 ```
-- 고정글 제외, 제목의 HTML 엔티티 디코딩, 숫자의 쉼표 제거
-- 작성일이 목록에 없으면 null로 두고 Task 5의 글 페이지 값으로 채운다
+- 선택자는 `docs/geekhack-html-notes.md` 2장
+- 고정글 제외(`td.subject` class에 `sticky`), 제목의 HTML 엔티티 디코딩
+- 목록에는 작성일이 없다. 작성일은 Task 5의 글 페이지에서 읽는다
+- 함께: `GeekhackClient` 디코딩을 ISO-8859-1에서 Windows-1252로 변경 (notes 1장)
 
 테스트: 고정글 1개 + 일반글 2개 픽스처로 일반글 2개만, 각 필드 값 확인
 
@@ -144,14 +146,19 @@ Kotlin 포인트: 엔티티가 아닌 단순 값 묶음에는 `data class`를 �
 - `fixtures/topic-external.html`, `fixtures/topic-attachment.html` (직접 작성)
 
 ```kotlin
-data class TopicPage(val bodyText: String, val images: List<RawImage>,
-                     val views: Int, val replies: Int, val postedAt: Instant?)
-data class RawImage(val url: String, val source: ImageSource, val position: Int, val inSignature: Boolean)
+// 첫 페이지(topic={id}.0): 새 글 수집용
+data class TopicPage(val bodyText: String, val images: List<RawImage>, val views: Int, val postedAt: Instant)
+// 마지막 페이지(topic={id}.999999): 조회수·댓글 수 갱신용 (Task 11)
+data class TopicStats(val views: Int, val replies: Int)
 ```
-- 첫 글 본문만 사용. 외부 `<img>`와 `dlattach` 첨부 링크 둘 다 수집, 상대 경로는 절대 URL로
-- 서명 영역 이미지는 `inSignature = true`로 표시 (제외 판단은 Task 7)
+- 선택자는 `docs/geekhack-html-notes.md` 3장
+- 첫 글 `div.inner` 안의 이미지만 수집(외부 `img.bbc_img`, 첨부 `dlattach`) + `div.attachments`. 서명·아바타는 `div.inner` 밖이라 수집되지 않는다
+  - 그래서 `RawImage.inSignature`와 Task 7의 서명 규칙을 제거한다
+- 작성일: `« on: Tue, 13 October 2026, 08:29:35 »`, `Today at …` 형식도 처리. 시간대는 설정값 `keycheck.geekhack.time-zone` (기본 `America/Chicago`)
+- 댓글 수: 마지막 페이지의 마지막 `Reply #N`, 없으면 0
+- `GeekhackClient.fetchTopicLastPage(topicId)` 추가
 
-테스트: 픽스처별 본문 텍스트, 이미지 순서·출처·서명 여부, 조회수·댓글 수
+테스트: 픽스처별 본문 텍스트, 이미지 순서·출처, 작성일(일반·Today 형식), 조회수, 마지막 페이지의 댓글 수(댓글 있음·없음)
 
 커밋: `feat: 글 페이지 파서`
 
@@ -236,7 +243,7 @@ interface RepresentativeImageSelector {
 `GET /api/posts/{id}/stats` (설계 4.3):
 1. `stats_checked_at`이 1시간 이내면 저장값 반환
 2. 아니면 `gate.tryAcquire()`. false면 저장값 반환
-3. true면 글 페이지를 읽어 조회수·댓글 수·`stats_checked_at` 저장 후 반환
+3. true면 마지막 페이지(`fetchTopicLastPage`)를 읽어 조회수·댓글 수·`stats_checked_at` 저장 후 반환
 4. 요청·파싱 실패 시 저장값 반환, `stats_checked_at` 유지
 
 테스트 (가짜 클라이언트 + 가짜 Clock):

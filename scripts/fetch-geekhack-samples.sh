@@ -32,6 +32,8 @@ fetch board-132-page1 "$BASE?board=132.50"
 for id in "${TOPICS[@]}"; do
   fetch "topic-$id" "$BASE?topic=$id.0"
 done
+# 여러 페이지 글의 마지막 페이지 (오프셋을 크게 주면 마지막 페이지가 온다, 댓글 수 확인용)
+fetch topic-120481-last "$BASE?topic=120481.999999"
 
 date -u +"%Y-%m-%dT%H:%M:%SZ" > "$OUT/FETCHED_AT"
 echo "done: $OUT"
