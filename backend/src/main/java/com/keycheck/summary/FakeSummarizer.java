@@ -12,8 +12,8 @@ public class FakeSummarizer implements Summarizer {
 
   @Override
   public SummaryResult summarize(PostSource source) {
-    String body = source.bodyText();
+    String body = source.getBodyText();
     String preview = body.substring(0, Math.min(body.length(), BODY_PREVIEW_LENGTH));
-    return new SummaryResult(List.of("[가짜 요약] " + source.title(), preview), List.of());
+    return new SummaryResult(List.of("[가짜 요약] " + source.getTitle(), preview), List.of());
   }
 }

@@ -44,7 +44,7 @@ keycheck/
 - Spring Boot, Java 21. 정확한 버전은 구현 계획 단계에서 그 시점 최신 안정판으로 정한다.
 - Spring MVC(동기 방식). WebFlux는 쓰지 않는다.
 - Spring Data JPA + PostgreSQL. 스키마는 Flyway로 관리한다.
-- Lombok 사용. DTO와 값 타입은 `record`, 엔티티는 일반 클래스와 정적 `create` 메서드로 만든다.
+- Lombok 사용. DTO와 값 타입은 `private final` 필드와 `@Getter`, 엔티티는 일반 클래스와 정적 `create` 메서드로 만든다.
 - HTML 파싱: Jsoup. HTTP 요청: Spring `RestClient`.
 - 스케줄링: `@Scheduled`.
 

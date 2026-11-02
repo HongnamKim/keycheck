@@ -5,21 +5,25 @@ import com.keycheck.post.Post;
 import com.keycheck.post.SummaryStatus;
 import java.time.Instant;
 import java.util.List;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
-/**
- * @param summaryFirstLine summaryStatus가 DONE일 때만 값이 있다
- */
-public record PostCardResponse(
-    Long id,
-    String title,
-    Category category,
-    String representativeImageUrl,
-    SummaryStatus summaryStatus,
-    String summaryFirstLine,
-    int views,
-    int replies,
-    Instant statsCheckedAt,
-    Instant postedAt) {
+@Getter
+@RequiredArgsConstructor
+public class PostCardResponse {
+  private final Long id;
+  private final String title;
+  private final Category category;
+  private final String representativeImageUrl;
+  private final SummaryStatus summaryStatus;
+
+  /** summaryStatus가 DONE일 때만 값이 있다 */
+  private final String summaryFirstLine;
+
+  private final int views;
+  private final int replies;
+  private final Instant statsCheckedAt;
+  private final Instant postedAt;
 
   public static PostCardResponse from(Post post, String imageUrl) {
     List<String> lines = post.getSummaryLines();

@@ -37,8 +37,8 @@ class RuleBasedImageSelectorTest {
   void excludesWithReason(String url, String reason) {
     Selection selection = selector.select(List.of(image(url, 0)));
 
-    assertThat(selection.excludedReasons()).containsExactly(reason);
-    assertThat(selection.representativeIndex()).isNull();
+    assertThat(selection.getExcludedReasons()).containsExactly(reason);
+    assertThat(selection.getRepresentativeIndex()).isNull();
   }
 
   @Test
@@ -46,7 +46,7 @@ class RuleBasedImageSelectorTest {
   void excludesSignatureImage() {
     RawImage signature = new RawImage("https://i.imgur.com/render.jpg", ImageSource.EXTERNAL, 0, true);
 
-    assertThat(selector.select(List.of(signature)).excludedReasons())
+    assertThat(selector.select(List.of(signature)).getExcludedReasons())
         .containsExactly(REASON_SIGNATURE);
   }
 
@@ -60,8 +60,8 @@ class RuleBasedImageSelectorTest {
                 image("https://i.imgur.com/render1.jpg", 1),
                 image("https://i.imgur.com/render2.jpg", 2)));
 
-    assertThat(selection.representativeIndex()).isEqualTo(1);
-    assertThat(selection.excludedReasons()).containsExactly(REASON_DECORATION, null, null);
+    assertThat(selection.getRepresentativeIndex()).isEqualTo(1);
+    assertThat(selection.getExcludedReasons()).containsExactly(REASON_DECORATION, null, null);
   }
 
   @Test
@@ -74,7 +74,7 @@ class RuleBasedImageSelectorTest {
             0,
             false);
 
-    assertThat(selector.select(List.of(attachment)).representativeIndex()).isEqualTo(0);
+    assertThat(selector.select(List.of(attachment)).getRepresentativeIndex()).isEqualTo(0);
   }
 
   @Test
@@ -86,8 +86,8 @@ class RuleBasedImageSelectorTest {
                 image("https://storage.ko-fi.com/cdn/kofi2.png", 0),
                 image("https://x.com/logo.svg", 1)));
 
-    assertThat(selection.representativeIndex()).isNull();
-    assertThat(selection.excludedReasons()).containsExactly(REASON_BUTTON, REASON_DECORATION);
+    assertThat(selection.getRepresentativeIndex()).isNull();
+    assertThat(selection.getExcludedReasons()).containsExactly(REASON_BUTTON, REASON_DECORATION);
   }
 
   @Test
@@ -95,8 +95,8 @@ class RuleBasedImageSelectorTest {
   void emptyImages() {
     Selection selection = selector.select(List.of());
 
-    assertThat(selection.representativeIndex()).isNull();
-    assertThat(selection.excludedReasons()).isEmpty();
+    assertThat(selection.getRepresentativeIndex()).isNull();
+    assertThat(selection.getExcludedReasons()).isEmpty();
   }
 
   @Test
@@ -105,6 +105,6 @@ class RuleBasedImageSelectorTest {
     Selection selection =
         selector.select(List.of(image("https://geekhack.org/Themes/default/images/logo.png", 0)));
 
-    assertThat(selection.excludedReasons()).containsExactly(REASON_SITE_ASSET);
+    assertThat(selection.getExcludedReasons()).containsExactly(REASON_SITE_ASSET);
   }
 }

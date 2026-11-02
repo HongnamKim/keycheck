@@ -2,6 +2,7 @@ package com.keycheck.crawl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,9 +26,15 @@ class BoardListParserTest {
   @DisplayName("고정글과 안내 행을 빼고 일반 글의 필드를 읽는다")
   void readsNormalTopics() {
     assertThat(parser.parse(fixture))
+        .extracting(
+            BoardTopic::getTopicId,
+            BoardTopic::getTitle,
+            BoardTopic::getAuthor,
+            BoardTopic::getReplies,
+            BoardTopic::getViews)
         .containsExactly(
-            new BoardTopic(2000, "[IC] Foo & Bar — A \"Test\" Board", "alice", 12, 4347),
-            new BoardTopic(3000, "[IC] Multi Page Topic", "bob", 78, 82388));
+            tuple(2000L, "[IC] Foo & Bar — A \"Test\" Board", "alice", 12, 4347),
+            tuple(3000L, "[IC] Multi Page Topic", "bob", 78, 82388));
   }
 
   @Test
@@ -35,7 +42,7 @@ class BoardListParserTest {
   void skipsMalformedRow() {
     String broken = fixture.replace("12 Replies", "알 수 없음");
 
-    assertThat(parser.parse(broken)).extracting(BoardTopic::topicId).containsExactly(3000L);
+    assertThat(parser.parse(broken)).extracting(BoardTopic::getTopicId).containsExactly(3000L);
   }
 
   @Test

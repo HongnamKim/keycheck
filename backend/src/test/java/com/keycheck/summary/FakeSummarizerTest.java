@@ -13,8 +13,8 @@ class FakeSummarizerTest {
   void summarizesWithTitleAndBodyPreview() {
     SummaryResult result = summarizer.summarize(new PostSource("[IC] Example", "가".repeat(150)));
 
-    assertThat(result.lines()).containsExactly("[가짜 요약] [IC] Example", "가".repeat(100));
-    assertThat(result.specs()).isEmpty();
+    assertThat(result.getLines()).containsExactly("[가짜 요약] [IC] Example", "가".repeat(100));
+    assertThat(result.getSpecs()).isEmpty();
   }
 
   @Test
@@ -22,6 +22,6 @@ class FakeSummarizerTest {
   void shortBodyIsUsedWhole() {
     SummaryResult result = summarizer.summarize(new PostSource("제목", "짧은 본문"));
 
-    assertThat(result.lines().get(1)).isEqualTo("짧은 본문");
+    assertThat(result.getLines().get(1)).isEqualTo("짧은 본문");
   }
 }

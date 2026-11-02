@@ -32,8 +32,8 @@ public class RuleBasedImageSelector implements RepresentativeImageSelector {
   }
 
   private String exclusionReason(RawImage image) {
-    String url = image.url().toLowerCase();
-    if (image.inSignature()) return REASON_SIGNATURE;
+    String url = image.getUrl().toLowerCase();
+    if (image.isInSignature()) return REASON_SIGNATURE;
     if (SITE_ASSET_PATTERNS.stream().anyMatch(url::contains)) return REASON_SITE_ASSET;
     if (BUTTON_PATTERNS.stream().anyMatch(url::contains)) return REASON_BUTTON;
     if (DECORATION_FILE_KEYWORDS.stream().anyMatch(fileName(url)::contains)) {

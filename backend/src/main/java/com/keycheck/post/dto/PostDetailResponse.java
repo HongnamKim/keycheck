@@ -6,24 +6,28 @@ import com.keycheck.post.SpecItem;
 import com.keycheck.post.SummaryStatus;
 import java.time.Instant;
 import java.util.List;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
-/**
- * @param summaryLines summaryStatus가 DONE이 아니면 빈 목록
- */
-public record PostDetailResponse(
-    Long id,
-    String title,
-    String author,
-    Category category,
-    String representativeImageUrl,
-    SummaryStatus summaryStatus,
-    List<String> summaryLines,
-    List<SpecItem> specs,
-    String originalUrl,
-    int views,
-    int replies,
-    Instant statsCheckedAt,
-    Instant postedAt) {
+@Getter
+@RequiredArgsConstructor
+public class PostDetailResponse {
+  private final Long id;
+  private final String title;
+  private final String author;
+  private final Category category;
+  private final String representativeImageUrl;
+  private final SummaryStatus summaryStatus;
+
+  /** summaryStatus가 DONE이 아니면 빈 목록 */
+  private final List<String> summaryLines;
+
+  private final List<SpecItem> specs;
+  private final String originalUrl;
+  private final int views;
+  private final int replies;
+  private final Instant statsCheckedAt;
+  private final Instant postedAt;
 
   public static PostDetailResponse from(Post post, String imageUrl) {
     boolean done = post.getSummaryStatus() == SummaryStatus.DONE;

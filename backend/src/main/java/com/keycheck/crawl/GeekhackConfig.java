@@ -11,15 +11,15 @@ public class GeekhackConfig {
 
   @Bean
   public RequestGate requestGate(GeekhackProperties properties, Clock clock) {
-    return new RequestGate(properties.minInterval(), clock);
+    return new RequestGate(properties.getMinInterval(), clock);
   }
 
   @Bean
   public GeekhackClient geekhackClient(GeekhackProperties properties) {
     return new GeekhackClient(
         RestClient.builder()
-            .baseUrl(properties.baseUrl())
-            .defaultHeader(HttpHeaders.USER_AGENT, properties.userAgent())
+            .baseUrl(properties.getBaseUrl())
+            .defaultHeader(HttpHeaders.USER_AGENT, properties.getUserAgent())
             .build());
   }
 }

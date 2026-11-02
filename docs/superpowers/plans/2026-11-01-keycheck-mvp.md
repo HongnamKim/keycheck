@@ -5,7 +5,7 @@
 
 ## 진행 원칙
 
-- 태스크는 순서대로 진행하고, 태스크마다 테스트 통과를 확인한 뒤 커밋한다.
+- 태스크는 순서대로 진행하고, 태스크마다 테스트 통과를 확인한다. 커밋은 사용자가 요청할 때만 한다(각 태스크의 "커밋:"은 메시지 예시).
 - 테스트를 먼저 쓰고 구현한다(파서·분류·이미지 선택·표기 함수).
 - 설계에 없는 기능은 넣지 않는다. 설계와 다르게 가야 하면 멈추고 묻는다.
 - 자동 테스트는 실제 geekhack을 호출하지 않는다. 테스트 HTML은 실제 구조를 흉내 내 직접 작성한다.
@@ -117,7 +117,15 @@ public class RequestGate {
 - `backend/src/test/resources/fixtures/board-list.html` (직접 작성)
 
 ```java
-public record BoardTopic(long topicId, String title, String author, int replies, int views) {}
+@Getter
+@RequiredArgsConstructor
+public class BoardTopic {
+  private final long topicId;
+  private final String title;
+  private final String author;
+  private final int replies;
+  private final int views;
+}
 ```
 - 선택자는 `docs/geekhack-html-notes.md` 2장
 - 고정글 제외(`td.subject` class에 `sticky`), 제목의 HTML 엔티티 디코딩
@@ -135,10 +143,10 @@ public record BoardTopic(long topicId, String title, String author, int replies,
 - `fixtures/topic-external.html`, `fixtures/topic-attachment.html` (직접 작성)
 
 ```java
-// 첫 페이지(topic={id}.0): 새 글 수집용
-public record TopicPage(String bodyText, List<RawImage> images, int views, Instant postedAt) {}
-// 마지막 페이지(topic={id}.999999): 조회수·댓글 수 갱신용 (Task 11)
-public record TopicStats(int views, int replies) {}
+// 첫 페이지(topic={id}.0): 새 글 수집용. private final 필드 + @Getter
+public class TopicPage { String bodyText; List<RawImage> images; int views; Instant postedAt; }
+// 마지막 페이지(topic={id}.999999): 조회수·댓글 수 갱신용 (Task 11). private final 필드 + @Getter
+public class TopicStats { int views; int replies; }
 ```
 - 선택자는 `docs/geekhack-html-notes.md` 3장
 - 첫 글 `div.inner` 안의 이미지만 수집(외부 `img.bbc_img`, 첨부 `dlattach`) + `div.attachments`. 서명·아바타는 `div.inner` 밖이라 수집되지 않는다
