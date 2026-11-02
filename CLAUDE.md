@@ -17,6 +17,7 @@ geekhack Interest Checks(board 132)의 키보드·키캡 글을 한국어 요약
 ## 커밋
 
 - 사용자가 커밋하라고 할 때만 커밋한다. 태스크가 끝나도 자동으로 커밋하지 않는다.
+- 새 파일은 만들 때 바로 `git add` 한다.
 - 제목은 conventional commit 형식(`feat:`, `fix:`, `refactor:`, `chore:`, `docs:`, `test:`), 한국어로 쓴다.
 - 본문은 `## 주요 내용`, `## 세부 내용`(필요하면 `### 영역`) 섹션과 하이픈 목록으로 쓴다.
 
@@ -36,6 +37,7 @@ docker-compose.yml  로컬 PostgreSQL 17
 ## 코드 규칙
 
 - WebFlux는 쓰지 않는다 (Spring MVC, 동기 방식).
+- 패키지는 도메인(`post`, `crawl` 등) 아래를 역할별 폴더(`controller`, `service`, `repository`, `domain`, `dto` 등)로 나눈다. 테스트도 같은 구조를 따른다.
 - 스타일은 사용자의 `typing-practice-be`를 따른다: Lombok, DTO·값 타입은 `record` 대신 `private final` 필드와 `@Getter`, 엔티티는 `@Getter`·`@NoArgsConstructor(access = PROTECTED)`·정적 `create`, 들여쓰기 2칸, 테스트는 `@DisplayName`과 AssertJ.
 - 자동 테스트에서 실제 geekhack을 호출하지 않는다. 테스트 HTML은 구조만 흉내 내 직접 작성한다.
 - geekhack 원문 HTML·이미지를 저장소에 커밋하지 않는다.

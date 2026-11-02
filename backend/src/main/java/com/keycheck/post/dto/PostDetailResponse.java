@@ -1,9 +1,9 @@
 package com.keycheck.post.dto;
 
-import com.keycheck.post.Category;
-import com.keycheck.post.Post;
-import com.keycheck.post.SpecItem;
-import com.keycheck.post.SummaryStatus;
+import com.keycheck.post.domain.Category;
+import com.keycheck.post.domain.Post;
+import com.keycheck.post.domain.SpecItem;
+import com.keycheck.post.domain.SummaryStatus;
 import java.time.Instant;
 import java.util.List;
 import lombok.Getter;

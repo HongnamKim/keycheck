@@ -69,8 +69,8 @@ Task 1~3, 6~8, 10, 13은 Task 0 없이 먼저 진행할 수 있다.
 
 파일:
 - `backend/src/main/resources/db/migration/V1__init.sql`
-- `post/Post.java`, `post/PostImage.java`, `post/Category.java`, `post/SummaryStatus.java`, `image/ImageSource.java`
-- `post/PostRepository.java`, `post/PostImageRepository.java`
+- `post/domain/Post.java`, `post/domain/PostImage.java`, `post/domain/Category.java`, `post/domain/SummaryStatus.java`, `image/domain/ImageSource.java`
+- `post/repository/PostRepository.java`, `post/repository/PostImageRepository.java`
 
 스키마는 설계 4.7 그대로.
 - `post.topic_id` 유니크
@@ -87,9 +87,9 @@ Task 1~3, 6~8, 10, 13은 Task 0 없이 먼저 진행할 수 있다.
 ### Task 3. geekhack 요청 클라이언트와 요청 간격 제한
 
 파일:
-- `crawl/RequestGate.java`
-- `crawl/GeekhackClient.java`
-- `crawl/GeekhackProperties.java` (`baseUrl`, `userAgent`, `minInterval=2s`)
+- `crawl/client/RequestGate.java`
+- `crawl/client/GeekhackClient.java`
+- `crawl/config/GeekhackProperties.java` (`baseUrl`, `userAgent`, `minInterval=2s`)
 
 `RequestGate` (설계 4.3: 모든 geekhack 요청이 하나의 간격 제한을 공유):
 ```java
@@ -113,7 +113,7 @@ public class RequestGate {
 ### Task 4. 게시판 목록 파서 (Task 0 필요)
 
 파일:
-- `crawl/BoardListParser.java`, `crawl/BoardTopic.java`
+- `crawl/parser/BoardListParser.java`, `crawl/dto/BoardTopic.java`
 - `backend/src/test/resources/fixtures/board-list.html` (직접 작성)
 
 ```java
@@ -139,7 +139,7 @@ public class BoardTopic {
 ### Task 5. 글 페이지 파서 (Task 0 필요)
 
 파일:
-- `crawl/TopicParser.java`, `crawl/TopicPage.java`
+- `crawl/parser/TopicParser.java`, `crawl/dto/TopicPage.java`
 - `fixtures/topic-external.html`, `fixtures/topic-attachment.html` (직접 작성)
 
 ```java
@@ -161,7 +161,7 @@ public class TopicStats { int views; int replies; }
 
 ### Task 6. 분류기
 
-파일: `classify/Classifier.java`
+파일: `classify/service/Classifier.java`
 
 - `classify(title, bodyText): Category`
 - 설계 4.4 순서: 제목 키캡 단어 → 제목 기타 단어 → 본문 사양 단어 종류 수 비교 → 키보드
@@ -173,7 +173,7 @@ public class TopicStats { int views; int replies; }
 
 ### Task 7. 대표 이미지 선택
 
-파일: `image/RepresentativeImageSelector.java`(인터페이스), `image/RuleBasedImageSelector.java`
+파일: `image/service/RepresentativeImageSelector.java`(인터페이스), `image/service/RuleBasedImageSelector.java`
 
 ```java
 public interface RepresentativeImageSelector {
@@ -189,7 +189,7 @@ public interface RepresentativeImageSelector {
 
 ### Task 8. 요약 인터페이스와 가짜 요약기
 
-파일: `summary/Summarizer.java`, `summary/FakeSummarizer.java`, `summary/SummaryResult.java`
+파일: `summary/service/Summarizer.java`, `summary/service/FakeSummarizer.java`, `summary/dto/SummaryResult.java`
 
 - 설계 4.6. `FakeSummarizer`는 `["[가짜 요약] {제목}", 본문 앞 100자]`와 빈 스펙 목록을 반환
 - 구현체 선택은 `keycheck.summarizer=fake` 설정 (`@ConditionalOnProperty`, 기본값 fake)
@@ -200,15 +200,16 @@ public interface RepresentativeImageSelector {
 
 ### Task 9. 정기 수집 (Task 4·5 필요)
 
-파일: `crawl/CrawlService.java`, `crawl/CrawlScheduler.java`
+파일: `crawl/service/CrawlService.java`, `crawl/service/CrawlStore.java`(글 단위 트랜잭션), `crawl/scheduler/CrawlScheduler.java`
 
 흐름 (설계 4.3):
 1. 목록 1~2페이지를 읽는다 (페이지마다 `gate.acquire()`)
 2. 이미 있는 글: 제목, 조회수, 댓글 수, `stats_checked_at` 갱신
 3. 처음 보는 글: `gate.acquire()` 후 글 페이지를 읽어 본문·이미지 저장 → 분류 → 대표 이미지 선택 → 요약(성공 `DONE`, 예외 `FAILED`)
 4. 글 하나가 실패해도 나머지는 계속 처리하고 로그를 남긴다
+5. 제목이 `deleted`인 새 글은 건너뛰고, 저장된 글이 `deleted`가 되면 숨긴다
 
-- `@Scheduled(fixedDelayString = "${keycheck.crawl.interval:PT30M}")`, 기동 직후 1회 실행
+- `@Scheduled(fixedDelayString = "${keycheck.crawl.interval}")`, 기동 직후 1회 실행. `keycheck.crawl.enabled`(`CRAWL_ENABLED`, 기본 false)일 때만 동작
 - 글 하나 저장 단위로 트랜잭션
 
 테스트 (`CrawlServiceTest`, Testcontainers): `GeekhackClient`를 픽스처를 돌려주는 가짜로 바꿔
@@ -220,7 +221,7 @@ public interface RepresentativeImageSelector {
 
 ### Task 10. 조회 API
 
-파일: `post/PostQueryService.java`, `post/PostController.java`, `post/dto/*.java`
+파일: `post/service/PostQueryService.java`, `post/controller/PostController.java`, `post/dto/*.java`
 
 - `GET /api/posts?category=all|keyboard|keycap&sort=recent|views&page=0` (페이지 크기 20)
   - 숨김 제외, 응답은 설계 4.8 카드 필드 + `totalPages`
@@ -235,7 +236,7 @@ public interface RepresentativeImageSelector {
 
 ### Task 11. 조회수 갱신 API (Task 5 필요)
 
-파일: `post/PostStatsService.java`, `PostController`에 엔드포인트 추가
+파일: `post/service/PostStatsService.java`, `PostController`에 엔드포인트 추가
 
 `GET /api/posts/{id}/stats` (설계 4.3):
 1. `stats_checked_at`이 1시간 이내면 저장값 반환

@@ -15,6 +15,10 @@ springdoc:
 
 keycheck:
   summarizer: fake
+  crawl:
+    # 켜면 기동 직후와 이후 interval마다 실제 geekhack에 요청한다
+    enabled: ${CRAWL_ENABLED:false}
+    interval: PT30M
   cors:
     allowed-origins: http://localhost:3000
   geekhack:

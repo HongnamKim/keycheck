@@ -52,11 +52,11 @@ keycheck/
 
 ```
 com.keycheck
-├── crawl/      # geekhack 요청, 목록·본문 파싱, 수집 스케줄
-├── post/       # 엔티티, 리포지토리, 조회 서비스, API 컨트롤러
-├── image/      # 대표 이미지 후보 필터링·선택
-├── classify/   # 키보드/키캡/기타 분류
-└── summary/    # Summarizer 인터페이스와 구현체
+├── crawl/      # geekhack 요청, 목록·본문 파싱, 수집 스케줄 (client, parser, service, scheduler, config, dto)
+├── post/       # 글 조회 API (controller, service, repository, domain, dto)
+├── image/      # 대표 이미지 후보 필터링·선택 (service, domain, dto)
+├── classify/   # 키보드/키캡/기타 분류 (service)
+└── summary/    # Summarizer 인터페이스와 구현체 (service, dto)
 ```
 
 ### 4.3 수집
@@ -79,6 +79,8 @@ com.keycheck
 - 글 페이지에서 조회수·댓글 수를 어떻게 읽을지(글 페이지 표시 vs 목록 검색)는 구현 계획 단계에서 실제 HTML로 확인한다.
 - 요청 사이에 최소 2초 간격을 두고, 연락처를 담은 User-Agent를 보낸다.
 - 원문 본문 텍스트는 요약용으로만 DB에 저장하고 API로 노출하지 않는다.
+- 제목이 정확히 `deleted`인 글은 작성자가 지운 글로 본다. 새 글이면 저장하지 않고, 이미 저장된 글이면 숨긴다.
+- 수집 스케줄러는 실제 사이트에 요청하므로 기본으로 꺼 둔다. `CRAWL_ENABLED=true`일 때만 동작한다.
 
 본문의 가격·일정·상태는 글쓴이가 갱신하지 않아 낡았을 수 있다(예: Della). 그래서 화면에는 "가격·일정은 원문에서 확인" 안내를 항상 붙인다.
 
