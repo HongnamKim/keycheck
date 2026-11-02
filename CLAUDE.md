@@ -1,0 +1,43 @@
+# 키체크(keycheck)
+
+geekhack Interest Checks(board 132)의 키보드·키캡 글을 한국어 요약, 대표 이미지, 원문 링크로 보여주는 읽기 전용 서비스.
+
+- 설계: `docs/superpowers/specs/2026-11-01-keycheck-design.md`
+- 구현 계획: `docs/superpowers/plans/2026-11-01-keycheck-mvp.md` (태스크 순서와 진행 원칙은 이 문서를 따른다)
+- UI 시안: https://claude.ai/artifact/H3wUMv8ZWu3XaMcVL8gsQh
+
+## 브랜치
+
+- `main`: 배포용. 직접 커밋·푸시하지 않는다. `dev`에서 PR로만 합친다.
+- `dev`: 개발 통합 브랜치. feature 브랜치의 PR을 받는다.
+- `feature/<작업명>`: 작업마다 `dev`에서 새로 따고, 끝나면 `dev`로 PR을 연다.
+  - 예: `feature/task-6-classifier`
+- 작업 시작 전 `dev`를 최신으로 받은 뒤 브랜치를 딴다.
+
+## 커밋
+
+- 태스크마다 커밋한다.
+- 제목은 conventional commit 형식(`feat:`, `fix:`, `refactor:`, `chore:`, `docs:`, `test:`), 한국어로 쓴다.
+- 본문은 `## 주요 내용`, `## 세부 내용`(필요하면 `### 영역`) 섹션과 하이픈 목록으로 쓴다.
+
+## 구조와 실행
+
+```
+backend/    Spring Boot 4 + Kotlin, Java 21, Gradle Kotlin DSL
+frontend/   Next.js 16 (App Router, TypeScript)
+docker-compose.yml  로컬 PostgreSQL 17
+```
+
+- 백엔드 테스트: `cd backend && ./gradlew test` (Testcontainers 사용, Docker 필요)
+- 백엔드 실행: `docker compose up -d` 후 `cd backend && ./gradlew bootRun`
+- 프론트: `cd frontend && npm test && npm run lint && npm run build`
+- 커밋 전에 바꾼 쪽의 테스트를 통과시킨다.
+
+## 코드 규칙
+
+- 사용자는 Kotlin 초보다. Java와 다른 문법은 작업 보고에 짧게 설명한다.
+- 코루틴·WebFlux는 쓰지 않는다 (Spring MVC, 동기 방식).
+- JPA 엔티티에 `data class`를 쓰지 않는다.
+- 자동 테스트에서 실제 geekhack을 호출하지 않는다. 테스트 HTML은 구조만 흉내 내 직접 작성한다.
+- geekhack 원문 HTML·이미지를 저장소에 커밋하지 않는다.
+- Next.js 코드는 `frontend/AGENTS.md` 안내대로 `node_modules/next/dist/docs/`를 먼저 확인한다.
