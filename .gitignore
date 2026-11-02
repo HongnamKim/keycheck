@@ -10,3 +10,6 @@ build/
 # IDE
 .idea/
 *.iml
+
+# geekhack 원문 HTML 저장본 (저작권, scripts/fetch-geekhack-samples.sh로 생성)
+samples/
