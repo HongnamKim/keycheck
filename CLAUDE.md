@@ -23,7 +23,7 @@ geekhack Interest Checks(board 132)의 키보드·키캡 글을 한국어 요약
 ## 구조와 실행
 
 ```
-backend/    Spring Boot 4 + Kotlin, Java 21, Gradle Kotlin DSL
+backend/    Spring Boot 4, Java 21, Gradle Groovy
 frontend/   Next.js 16 (App Router, TypeScript)
 docker-compose.yml  로컬 PostgreSQL 17
 ```
@@ -35,9 +35,8 @@ docker-compose.yml  로컬 PostgreSQL 17
 
 ## 코드 규칙
 
-- 사용자는 Kotlin 초보다. Java와 다른 문법은 작업 보고에 짧게 설명한다.
-- 코루틴·WebFlux는 쓰지 않는다 (Spring MVC, 동기 방식).
-- JPA 엔티티에 `data class`를 쓰지 않는다.
+- WebFlux는 쓰지 않는다 (Spring MVC, 동기 방식).
+- 스타일은 사용자의 `typing-practice-be`를 따른다: Lombok, DTO·값 타입은 `record`, 엔티티는 `@Getter`·`@NoArgsConstructor(access = PROTECTED)`·정적 `create`, 들여쓰기 2칸, 테스트는 `@DisplayName`과 AssertJ.
 - 자동 테스트에서 실제 geekhack을 호출하지 않는다. 테스트 HTML은 구조만 흉내 내 직접 작성한다.
 - geekhack 원문 HTML·이미지를 저장소에 커밋하지 않는다.
 - Next.js 코드는 `frontend/AGENTS.md` 안내대로 `node_modules/next/dist/docs/`를 먼저 확인한다.

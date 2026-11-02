@@ -9,10 +9,6 @@ spring:
     hibernate:
       ddl-auto: validate
     open-in-view: false
-    properties:
-      # jsonb 변환에 Jackson 3을 쓴다. springdoc이 Jackson 2를 함께 들여와서
-      # 지정하지 않으면 Hibernate가 Kotlin 모듈 없는 Jackson 2를 골라 data class를 읽지 못한다.
-      hibernate.type.json_format_mapper: jackson3
 
 springdoc:
   paths-to-match: /api/**

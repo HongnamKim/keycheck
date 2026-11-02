@@ -2,10 +2,9 @@
 .claude/
 sample-images/
 
-# Gradle / Kotlin
+# Gradle
 .gradle/
 build/
-.kotlin/
 
 # IDE
 .idea/

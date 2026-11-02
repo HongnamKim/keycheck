@@ -1,4 +1,4 @@
-/** 백엔드 응답 타입과 호출 함수. 응답 형식은 backend의 post/dto/PostResponses.kt와 맞춘다. */
+/** 백엔드 응답 타입과 호출 함수. 응답 형식은 backend의 post/dto와 맞춘다. */
 
 export type Category = "KEYBOARD" | "KEYCAP" | "OTHER";
 export type SummaryStatus = "PENDING" | "DONE" | "FAILED";

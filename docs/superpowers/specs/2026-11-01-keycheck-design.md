@@ -32,7 +32,7 @@ UI는 승인된 시안(https://claude.ai/artifact/H3wUMv8ZWu3XaMcVL8gsQh)의 구
 
 ```
 keycheck/
-├── backend/            # Spring Boot + Kotlin (Gradle Kotlin DSL)
+├── backend/            # Spring Boot + Java (Gradle Groovy)
 ├── frontend/           # Next.js (App Router, TypeScript)
 ├── docker-compose.yml  # 로컬 PostgreSQL
 └── docs/
@@ -41,14 +41,12 @@ keycheck/
 ## 4. 백엔드
 
 ### 4.1 기술 선택
-- Spring Boot, Kotlin, Java 21. 정확한 버전은 구현 계획 단계에서 그 시점 최신 안정판으로 정한다.
-- Spring MVC(동기 방식). 코루틴·WebFlux는 쓰지 않는다.
+- Spring Boot, Java 21. 정확한 버전은 구현 계획 단계에서 그 시점 최신 안정판으로 정한다.
+- Spring MVC(동기 방식). WebFlux는 쓰지 않는다.
 - Spring Data JPA + PostgreSQL. 스키마는 Flyway로 관리한다.
-- `kotlin("plugin.spring")`, `kotlin("plugin.jpa")` 사용. 엔티티는 `data class`가 아닌 일반 `class`로 만든다.
+- Lombok 사용. DTO와 값 타입은 `record`, 엔티티는 일반 클래스와 정적 `create` 메서드로 만든다.
 - HTML 파싱: Jsoup. HTTP 요청: Spring `RestClient`.
 - 스케줄링: `@Scheduled`.
-
-Kotlin 초보를 고려해 Java와 다른 문법(널 안전성, 주 생성자, `val`/`var` 등)은 구현 중에 짧게 설명한다.
 
 ### 4.2 패키지 구성
 
@@ -115,9 +113,9 @@ geekhack에는 대표 이미지 표시가 없다. 시안용 샘플 8건 중 4건
 
 ### 4.6 요약
 
-```kotlin
-interface Summarizer {
-    fun summarize(source: PostSource): SummaryResult
+```java
+public interface Summarizer {
+  SummaryResult summarize(PostSource source);
 }
 ```
 

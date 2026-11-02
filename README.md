@@ -7,7 +7,7 @@
 ## 예정 스택
 
 - 프론트엔드: Next.js
-- 서버: Spring Boot (Kotlin)
+- 서버: Spring Boot (Java)
 - DB: PostgreSQL
 
 ## 샘플 이미지
