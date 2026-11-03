@@ -1,0 +1,44 @@
+.shell {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 32px 20px 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px 32px;
+  border-bottom: 2px solid var(--color-text);
+  padding-bottom: 20px;
+}
+
+.titles {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.title {
+  font-size: 34px;
+  line-height: 1.15;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--color-muted);
+}
+
+.source {
+  font-family: var(--font-code);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-muted);
+}

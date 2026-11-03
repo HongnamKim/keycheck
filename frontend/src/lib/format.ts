@@ -1,3 +1,5 @@
+import type { Category, Subcategory } from "./api";
+
 /**
  * 조회수 표기 (설계 5장)
  * - 1,000 미만: 그대로 (999)
@@ -14,14 +16,85 @@ export function formatViews(views: number): string {
   return decimal === 0 ? `${whole}만+` : `${whole}.${decimal}만+`;
 }
 
-/** 조회수를 마지막으로 확인한 시각을 상대 시간으로 표기 (예: 3시간 전 확인) */
-export function formatCheckedAt(checkedAt: Date, now: Date = new Date()): string {
-  const minutes = Math.floor((now.getTime() - checkedAt.getTime()) / 60_000);
-  if (minutes < 1) return "방금 확인";
-  if (minutes < 60) return `${minutes}분 전 확인`;
+/** 지난 시간을 상대 시간으로 표기 (예: 방금, 5분 전, 3시간 전, 2일 전). now보다 늦은 시각도 방금으로 본다 */
+export function formatAgo(date: Date, now: Date = new Date()): string {
+  const minutes = Math.floor((now.getTime() - date.getTime()) / 60_000);
+  if (minutes < 1) return "방금";
+  if (minutes < 60) return `${minutes}분 전`;
 
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}시간 전 확인`;
+  if (hours < 24) return `${hours}시간 전`;
 
-  return `${Math.floor(hours / 24)}일 전 확인`;
+  return `${Math.floor(hours / 24)}일 전`;
+}
+
+/** 조회수를 마지막으로 확인한 시각을 상대 시간으로 표기 (예: 3시간 전 확인) */
+export function formatCheckedAt(checkedAt: Date, now: Date = new Date()): string {
+  return `${formatAgo(checkedAt, now)} 확인`;
+}
+
+const KST_OFFSET_MS = 9 * 60 * 60 * 1_000;
+
+/** 원문 작성일을 한국 시간 날짜로 표기 (예: 2026.10.30) */
+export function formatPostedAt(iso: string): string {
+  const kst = new Date(new Date(iso).getTime() + KST_OFFSET_MS);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${kst.getUTCFullYear()}.${pad(kst.getUTCMonth() + 1)}.${pad(kst.getUTCDate())}`;
+}
+
+/**
+ * 작성일 표기. 정확한 작성일(postedAt)이 있으면 그것을, 없으면 글 번호로 추정한 날짜에 "쯤"을 붙인다.
+ * 둘 다 없으면 null.
+ */
+export function formatPostedDate(
+  postedAt: string | null,
+  estimatedPostedAt: string | null,
+): { text: string; estimated: boolean } | null {
+  if (postedAt) return { text: `${formatPostedAt(postedAt)} 작성`, estimated: false };
+  if (estimatedPostedAt) return { text: `${formatPostedAt(estimatedPostedAt)}쯤 작성`, estimated: true };
+  return null;
+}
+
+/** 마지막 댓글 시각 (예: 마지막 댓글 3일 전). 댓글이 없으면 마지막 게시물이 원글이라 null */
+export function formatLastPost(lastPostAt: string | null, replies: number, now: Date = new Date()): string | null {
+  if (!lastPostAt || replies <= 0) return null;
+  return `마지막 댓글 ${formatAgo(new Date(lastPostAt), now)}`;
+}
+
+const CATEGORY_LABELS: Record<Category, string> = {
+  KEYBOARD: "키보드",
+  KEYCAP: "키캡",
+  OTHER: "기타",
+  UNCLASSIFIED: "미분류",
+};
+
+export function categoryLabel(category: Category): string {
+  return CATEGORY_LABELS[category];
+}
+
+const SUBCATEGORY_LABELS: Record<Subcategory, string> = {
+  KB_100: "100%",
+  KB_96: "96%·1800",
+  KB_80: "80%",
+  KB_75: "75%",
+  KB_65: "65%",
+  KB_60: "60%",
+  KB_40: "40% 이하",
+  KB_ERGO: "앨리스·스플릿",
+  KB_ETC: "그 외",
+  KC_GMK: "GMK",
+  KC_SP: "SP",
+  KC_MW: "MW",
+  KC_KKB: "KKB",
+  KC_PBTFANS: "PBTfans",
+  KC_ETC: "그 외",
+};
+
+export function subcategoryLabel(subcategory: Subcategory): string {
+  return SUBCATEGORY_LABELS[subcategory];
+}
+
+/** 카드·상세의 분류 표시 (예: 키보드 · 65%). 세부 분류가 없으면 분류만 */
+export function postCategoryLabel(category: Category, subcategory: Subcategory | null): string {
+  return subcategory ? `${categoryLabel(category)} · ${subcategoryLabel(subcategory)}` : categoryLabel(category);
 }

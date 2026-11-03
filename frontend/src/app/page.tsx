@@ -1,69 +1,28 @@
-import Image from "next/image";
+import { Suspense } from "react";
+import FilterBar from "@/components/FilterBar";
+import PostFeed from "@/components/PostFeed";
+import { getPosts } from "@/lib/api";
+import { listHref, parseListQuery } from "@/lib/query";
 import styles from "./page.module.css";
 
-export default function Home() {
+export default function Home({ searchParams }: PageProps<"/">) {
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>
-            To get started, edit the{" "}
-            <code className={styles.code}>page.tsx</code> file.
-          </h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <Suspense fallback={<p className={styles.message}>글을 불러오는 중이에요</p>}>
+      <PostList searchParams={searchParams} />
+    </Suspense>
+  );
+}
+
+async function PostList({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
+  const query = parseListQuery(await searchParams);
+  const first = await getPosts(query.category, query.sort, null, query.sub);
+  const renderedAt = new Date().toISOString();
+
+  return (
+    <div className={styles.feed}>
+      <FilterBar query={query} />
+      {/* 필터·정렬이 바뀌면(다른 주소) 목록을 새로 시작한다 */}
+      <PostFeed key={listHref(query)} query={query} initial={first} renderedAt={renderedAt} />
     </div>
   );
 }
