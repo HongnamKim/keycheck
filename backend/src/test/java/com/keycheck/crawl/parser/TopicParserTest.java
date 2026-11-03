@@ -23,7 +23,7 @@ class TopicParserTest {
 
   // MutableClock은 2026-11-01T00:00:00Z. 시카고에서는 10월 31일 19:00(CDT, UTC-5)이다.
   private final TopicParser parser =
-      new TopicParser(ZoneId.of("America/Chicago"), new MutableClock());
+      new TopicParser(new GeekhackTimeParser(ZoneId.of("America/Chicago"), new MutableClock()));
   private String external;
   private String attachment;
 

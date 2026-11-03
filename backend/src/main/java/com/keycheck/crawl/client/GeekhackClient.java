@@ -1,5 +1,6 @@
 package com.keycheck.crawl.client;
 
+import java.net.URI;
 import java.nio.charset.Charset;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.client.RestClient;
@@ -16,10 +17,22 @@ public class GeekhackClient {
   private final RestClient restClient;
 
   /**
+   * 기본 정렬(마지막 댓글순) 목록. 새 글과 댓글이 달린 글이 앞에 온다.
+   *
    * @param page 0부터
    */
   public String fetchBoardPage(int page) {
     return get("/index.php?board=" + BOARD_ID + "." + page * TOPICS_PER_PAGE);
+  }
+
+  /**
+   * 작성순(글 번호 내림차순) 목록. 기본 정렬은 쪽 경계가 계속 바뀌어 과거 글을 차례로 받을 수 없다.
+   *
+   * @param page 0부터
+   */
+  public String fetchBoardPageByFirstPost(int page) {
+    return get(
+        "/index.php?board=" + BOARD_ID + "." + page * TOPICS_PER_PAGE + ";sort=first_post;desc");
   }
 
   public String fetchTopic(long topicId) {
@@ -31,8 +44,9 @@ public class GeekhackClient {
     return get("/index.php?topic=" + topicId + ".999999");
   }
 
+  /** URI 템플릿으로 넘기면 쿼리 값 안의 '='가 %3D로 바뀌므로, 만든 주소를 그대로 보낸다 */
   private String get(String path) {
-    byte[] bytes = restClient.get().uri(path).retrieve().body(byte[].class);
+    byte[] bytes = restClient.get().uri(URI.create(path)).retrieve().body(byte[].class);
     return bytes == null ? "" : new String(bytes, RESPONSE_CHARSET);
   }
 }

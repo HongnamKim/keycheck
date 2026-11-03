@@ -1,10 +1,20 @@
 spring:
   application:
     name: keycheck
+  config:
+    # 로컬 비밀값(ANTHROPIC_API_KEY 등). bootRun은 backend/, IDE는 저장소 루트에서 실행될 수 있다
+    import:
+      - optional:file:.env[.properties]
+      - optional:file:backend/.env[.properties]
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/keycheck}
     username: ${DB_USERNAME:keycheck}
     password: ${DB_PASSWORD:keycheck}
+  task:
+    scheduling:
+      pool:
+        # 정기 수집과 요약 작업이 서로 기다리지 않게 한다
+        size: 2
   jpa:
     hibernate:
       ddl-auto: validate
@@ -14,7 +24,26 @@ springdoc:
   paths-to-match: /api/**
 
 keycheck:
-  summarizer: fake
+  # fake | claude
+  summarizer: ${SUMMARIZER:fake}
+  claude:
+    # 기본 Sonnet 5.5. 더 싸게는 claude-haiku-5-5 (KEYCHECK_CLAUDE_MODEL로 바꿀 수 있다)
+    model: claude-sonnet-5-5
+    effort: low
+    # 생각(thinking)도 여기에 포함된다
+    max-tokens: 8192
+    timeout: 2m
+    # 분류기가 거절하면 Anthropic이 권하는 다른 모델로 서버에서 다시 시도한다 (server-side fallbacks "default").
+    # Haiku는 지원하지 않아 이 값과 상관없이 보내지 않는다
+    fallbacks: true
+  summary:
+    # 요약 대기(PENDING) 글을 하나씩 요약하는 작업
+    enabled: true
+    interval: 5s
+    # true면 가짜 요약기로 만든 요약(summarized_by = 'fake')도 다시 요약한다
+    redo-fake: false
+    # true면 세부 분류가 없는 키보드·키캡 요약(Claude 요약 포함)도 다시 요약한다. 실행마다 글당 한 번. 가짜 요약기에서는 무시
+    redo-missing-subcategory: false
   crawl:
     # 켜면 기동 직후와 이후 interval마다 실제 geekhack에 요청한다
     enabled: ${CRAWL_ENABLED:false}

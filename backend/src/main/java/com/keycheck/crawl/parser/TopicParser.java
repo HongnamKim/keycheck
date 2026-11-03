@@ -4,16 +4,9 @@ import com.keycheck.crawl.dto.RawImage;
 import com.keycheck.crawl.dto.TopicPage;
 import com.keycheck.crawl.dto.TopicStats;
 import com.keycheck.image.domain.ImageSource;
-import java.time.Clock;
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
@@ -27,14 +20,9 @@ public class TopicParser {
   private static final Pattern VIEWS = Pattern.compile("Read (\\d+) times");
   private static final Pattern REPLY_NUMBER = Pattern.compile("Reply #(\\d+)");
   private static final Pattern POSTED_AT = Pattern.compile("on:\\s*(.+?)\\s*»");
-  private static final Pattern RELATIVE_DATE =
-      Pattern.compile("(Today|Yesterday) at (\\d{2}:\\d{2}:\\d{2})");
-  private static final DateTimeFormatter FULL_DATE =
-      DateTimeFormatter.ofPattern("EEE, dd MMMM yyyy, HH:mm:ss", Locale.ENGLISH);
   private static final String ATTACHMENT_MARK = "action=dlattach";
 
-  private final ZoneId timeZone;
-  private final Clock clock;
+  private final GeekhackTimeParser timeParser;
 
   /**
    * @throws IllegalStateException 글이 없는 페이지(삭제된 글, 차단·오류 페이지 등)
@@ -90,17 +78,7 @@ public class TopicParser {
     if (!postedAt.find()) {
       throw new IllegalStateException("작성일을 찾지 못했다");
     }
-    return toInstant(postedAt.group(1));
-  }
-
-  private Instant toInstant(String text) {
-    Matcher relative = RELATIVE_DATE.matcher(text);
-    if (!relative.matches()) {
-      return LocalDateTime.parse(text, FULL_DATE).atZone(timeZone).toInstant();
-    }
-    LocalDate today = clock.instant().atZone(timeZone).toLocalDate();
-    LocalDate date = relative.group(1).equals("Today") ? today : today.minusDays(1);
-    return date.atTime(LocalTime.parse(relative.group(2))).atZone(timeZone).toInstant();
+    return timeParser.parse(postedAt.group(1));
   }
 
   /** 본문 이미지 다음에 첨부 영역 이미지. 서명과 아바타는 이 범위 밖이라 읽지 않는다. */

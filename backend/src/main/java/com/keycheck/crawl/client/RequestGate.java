@@ -10,6 +10,7 @@ import java.util.function.Consumer;
  *
  * <ul>
  *   <li>사용자 조회: tryAcquire() — 간격이 안 찼으면 즉시 false
+ *   <li>사용자 조회(목록 확보·글 채우기): tryAcquire(maxWait) — maxWait 안에 간격이 차면 기다렸다 통과
  *   <li>정기 수집: acquire() — 간격이 찰 때까지 기다림
  * </ul>
  */
@@ -37,15 +38,29 @@ public class RequestGate {
     return true;
   }
 
+  public boolean tryAcquire(Duration maxWait) {
+    return acquireBefore(clock.instant().plus(maxWait));
+  }
+
   public void acquire() {
+    acquireBefore(null);
+  }
+
+  /**
+   * @param deadline 이 시각까지 간격이 차지 않으면 기다리지 않고 false. null이면 끝까지 기다린다.
+   */
+  private boolean acquireBefore(Instant deadline) {
     while (true) {
       Duration wait;
       synchronized (this) {
         wait = remainingWait();
         if (wait.isZero()) {
           lastAcquiredAt = clock.instant();
-          return;
+          return true;
         }
+      }
+      if (deadline != null && clock.instant().plus(wait).isAfter(deadline)) {
+        return false;
       }
       sleeper.accept(wait);
     }

@@ -2,6 +2,7 @@ package com.keycheck.post.dto;
 
 import com.keycheck.post.domain.Category;
 import com.keycheck.post.domain.Post;
+import com.keycheck.post.domain.Subcategory;
 import com.keycheck.post.domain.SummaryStatus;
 import java.time.Instant;
 import java.util.List;
@@ -14,6 +15,10 @@ public class PostCardResponse {
   private final Long id;
   private final String title;
   private final Category category;
+
+  /** 세부 분류 코드(KB_65, KC_GMK 등). 기타·미분류 글이나 아직 정하지 않았으면 null. */
+  private final Subcategory subcategory;
+
   private final String representativeImageUrl;
   private final SummaryStatus summaryStatus;
 
@@ -25,7 +30,16 @@ public class PostCardResponse {
   private final Instant statsCheckedAt;
   private final Instant postedAt;
 
-  public static PostCardResponse from(Post post, String imageUrl) {
+  /** postedAt이 없는 글(틀 글)의 글 번호로 추정한 작성일. postedAt이 있거나 추정할 수 없으면 null. */
+  private final Instant estimatedPostedAt;
+
+  /** 게시판 목록에서 읽은 마지막 게시물(댓글) 시각. 아직 읽지 못했으면 null. */
+  private final Instant lastPostAt;
+
+  /** false면 틀 글: 본문·이미지를 아직 읽지 않았다(대표 이미지·작성일 없음). */
+  private final boolean detailLoaded;
+
+  public static PostCardResponse from(Post post, String imageUrl, Instant estimatedPostedAt) {
     List<String> lines = post.getSummaryLines();
     boolean hasFirstLine =
         post.getSummaryStatus() == SummaryStatus.DONE && lines != null && !lines.isEmpty();
@@ -33,12 +47,16 @@ public class PostCardResponse {
         post.getId(),
         post.getTitle(),
         post.getCategory(),
+        post.getSubcategory(),
         imageUrl,
         post.getSummaryStatus(),
         hasFirstLine ? lines.get(0) : null,
         post.getViews(),
         post.getReplies(),
         post.getStatsCheckedAt(),
-        post.getPostedAt());
+        post.getPostedAt(),
+        estimatedPostedAt,
+        post.getLastPostAt(),
+        post.isDetailLoaded());
   }
 }

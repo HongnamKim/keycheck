@@ -45,6 +45,34 @@ class RequestGateTest {
   }
 
   @Test
+  @DisplayName("tryAcquire(maxWait)는 간격이 찼으면 기다리지 않고 통과한다")
+  void tryAcquireWithWaitPassesImmediately() {
+    assertThat(gate.tryAcquire(Duration.ofSeconds(3))).isTrue();
+    assertThat(sleeps).isEmpty();
+  }
+
+  @Test
+  @DisplayName("tryAcquire(maxWait)는 남은 시간이 maxWait 이내면 기다린 뒤 통과한다")
+  void tryAcquireWithWaitWaitsWithinLimit() {
+    gate.acquire();
+    clock.advance(Duration.ofMillis(500));
+
+    assertThat(gate.tryAcquire(Duration.ofMillis(1500))).isTrue();
+    assertThat(sleeps).containsExactly(Duration.ofMillis(1500));
+  }
+
+  @Test
+  @DisplayName("tryAcquire(maxWait)는 남은 시간이 maxWait보다 길면 기다리지 않고 false")
+  void tryAcquireWithWaitGivesUpBeyondLimit() {
+    gate.acquire();
+    clock.advance(Duration.ofMillis(500));
+
+    assertThat(gate.tryAcquire(Duration.ofMillis(1499))).isFalse();
+    assertThat(sleeps).isEmpty();
+    assertThat(gate.tryAcquire()).isFalse();
+  }
+
+  @Test
   @DisplayName("acquire가 통과하면 그 뒤 tryAcquire는 막힌다")
   void tryAcquireBlockedAfterAcquire() {
     gate.acquire();
