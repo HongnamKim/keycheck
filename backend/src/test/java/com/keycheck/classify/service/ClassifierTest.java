@@ -29,6 +29,10 @@ class ClassifierTest {
     "[IC] Linear Switches v2, OTHER",
     "[IC] Coiled Cables, OTHER",
     "[IC] Dragon Artisan, OTHER",
+    // 샘플 점검(Task 12)에서 보강: 키캡 브랜드 PBTfans는 PBT 단어 경계에 걸리지 않는다
+    "[IC] PBTfans Genius, KEYCAP",
+    "[IC] Studio PCB Stabilizer V3, OTHER",
+    "[IC] Screw-in Stabilisers, OTHER",
   })
   @DisplayName("제목으로 분류한다")
   void classifiesByTitle(String title, Category expected) {

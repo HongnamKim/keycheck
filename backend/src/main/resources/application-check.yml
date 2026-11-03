@@ -1,0 +1,15 @@
+# 샘플 점검(SampleCheckRunner)용. 웹 서버 없이 한 번 실행하고 끝난다.
+spring:
+  main:
+    web-application-type: none
+    banner-mode: off
+
+logging:
+  level:
+    root: warn
+
+keycheck:
+  crawl:
+    enabled: false
+  summary:
+    enabled: false

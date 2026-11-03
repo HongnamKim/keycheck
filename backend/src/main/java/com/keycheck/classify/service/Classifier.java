@@ -12,10 +12,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class Classifier {
   private static final List<Pattern> KEYCAP_TITLE_TERMS =
-      terms("GMK", "KAT", "MT3", "SA", "DSA", "DCS", "XDA", "e?PBT", "keycaps?", "keysets?");
+      terms(
+          "GMK", "KAT", "MT3", "SA", "DSA", "DCS", "XDA", "e?PBT", "PBTfans", "keycaps?", "keysets?");
 
   private static final List<Pattern> OTHER_TITLE_TERMS =
-      terms("deskmats?", "desk ?mats?", "switch(?:es)?", "artisans?", "cables?");
+      terms(
+          "deskmats?", "desk ?mats?", "switch(?:es)?", "artisans?", "cables?", "stabili[sz]ers?");
 
   /** 키보드 사양 항목 단어 (종류 수를 센다) */
   private static final List<Pattern> KEYBOARD_BODY_TERMS =
