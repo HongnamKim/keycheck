@@ -12,3 +12,8 @@ build/
 
 # geekhack 원문 HTML 저장본 (저작권, scripts/fetch-geekhack-samples.sh로 생성)
 samples/
+
+# 로컬 비밀값 (ANTHROPIC_API_KEY 등). 절대 커밋하지 않는다
+.env
+.env.*
+!.env.example

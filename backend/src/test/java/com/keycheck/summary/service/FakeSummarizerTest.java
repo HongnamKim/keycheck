@@ -17,6 +17,8 @@ class FakeSummarizerTest {
 
     assertThat(result.getLines()).containsExactly("[가짜 요약] [IC] Example", "가".repeat(100));
     assertThat(result.getSpecs()).isEmpty();
+    assertThat(result.getCategory()).isNull();
+    assertThat(result.getSummarizedBy()).isEqualTo("fake");
   }
 
   @Test
