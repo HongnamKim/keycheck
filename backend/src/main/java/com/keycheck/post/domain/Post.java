@@ -39,6 +39,12 @@ public class Post {
   @Column(unique = true)
   private Long topicId;
 
+  /** 글을 읽어 온 게시판. 운영자가 글을 다른 게시판으로 옮기면 그 게시판 목록에서 읽을 때 바뀐다. */
+  @Setter
+  @Enumerated(EnumType.STRING)
+  @Column(length = 10)
+  private Board board;
+
   @Setter
   @Column(length = 500)
   private String title;
@@ -111,6 +117,7 @@ public class Post {
 
   /** 글 첫 페이지까지 읽은 글 */
   public static Post create(
+      Board board,
       Long topicId,
       String title,
       String author,
@@ -122,6 +129,7 @@ public class Post {
       String originalUrl,
       String bodyText) {
     Post post = new Post();
+    post.board = board;
     post.topicId = topicId;
     post.title = title;
     post.author = author;
@@ -138,6 +146,7 @@ public class Post {
 
   /** 게시판 목록에서만 읽은 틀 글. 본문·작성일·이미지는 상세를 처음 열 때 채운다(fillDetail). */
   public static Post createSkeleton(
+      Board board,
       Long topicId,
       String title,
       String author,
@@ -146,6 +155,7 @@ public class Post {
       Instant statsCheckedAt,
       String originalUrl) {
     Post post = new Post();
+    post.board = board;
     post.topicId = topicId;
     post.title = title;
     post.author = author;

@@ -8,6 +8,7 @@ import com.anthropic.client.okhttp.AnthropicOkHttpClient;
 import com.anthropic.models.beta.AnthropicBeta;
 import com.anthropic.models.beta.messages.BetaOutputConfig;
 import com.anthropic.models.beta.messages.MessageCreateParams;
+import com.keycheck.post.domain.Board;
 import com.keycheck.post.domain.Category;
 import com.keycheck.post.domain.SpecItem;
 import com.keycheck.post.domain.Subcategory;
@@ -28,7 +29,7 @@ import tools.jackson.databind.json.JsonMapper;
 /** 실제 Anthropic API 대신 FakeAnthropicServer(127.0.0.1)에 요청한다 */
 class ClaudeSummarizerTest {
   private static final PostSource SOURCE =
-      new PostSource("[IC] Test Board", "A 65% gasket mount board. Aluminum case.");
+      new PostSource(Board.IC, "[IC] Test Board", "A 65% gasket mount board. Aluminum case.");
 
   private FakeAnthropicServer server;
   private AnthropicClient client;
@@ -156,7 +157,7 @@ class ClaudeSummarizerTest {
     JsonNode message = body.get("messages").get(0);
     assertThat(message.get("role").asString()).isEqualTo("user");
     assertThat(message.get("content").toString())
-        .contains("[IC] Test Board", "A 65% gasket mount board.");
+        .contains("<board>\\nIC\\n</board>", "[IC] Test Board", "A 65% gasket mount board.");
     assertThat(server.requestHeaders.getFirst("anthropic-beta"))
         .contains("server-side-fallback-2026-07-01");
   }
@@ -183,6 +184,30 @@ class ClaudeSummarizerTest {
     assertThat(ClaudeSummarizer.SYSTEM_PROMPT)
         .contains("subcategory", "KB_96", "TKL", "HHKB", "KB_ERGO", "KC_SP", "KC_ETC")
         .contains("Signature Plastics");
+  }
+
+  @Test
+  @DisplayName("GB 글이면 사용자 메시지에 GB 게시판을 표시한다")
+  void sendsGbBoard() {
+    server.responseBody = response("end_turn", SUMMARY_JSON);
+
+    summarizer(true)
+        .summarize(
+            new PostSource(Board.GB, "[GB] Test Board", "Group buy runs Nov 1 - Nov 30. MOQ 100."));
+
+    JsonNode message = JsonMapper.shared().readTree(server.requestBody).get("messages").get(0);
+    assertThat(message.get("content").toString())
+        .contains("<board>\\nGB\\n</board>", "[GB] Test Board")
+        .doesNotContain("<board>\\nIC");
+  }
+
+  @Test
+  @DisplayName("지시문은 게시판 표시를 설명하고, GB 글이면 공동구매 정보를 스펙에 먼저 뽑으라고 한다")
+  void systemPromptDescribesBoards() {
+    assertThat(ClaudeSummarizer.SYSTEM_PROMPT)
+        .contains("<board>", "Interest Checks", "Group Buys and Preorders")
+        .contains("공동구매 기간", "벤더", "가격", "MOQ")
+        .contains("해요체");
   }
 
   @Test

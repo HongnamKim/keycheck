@@ -1,5 +1,6 @@
 package com.keycheck.post.repository;
 
+import com.keycheck.post.domain.Board;
 import com.keycheck.post.domain.Category;
 import com.keycheck.post.domain.Post;
 import com.keycheck.post.domain.SpecItem;
@@ -27,18 +28,21 @@ public interface PostRepository extends JpaRepository<Post, Long> {
    *
    * @param floorTopicId 이 번호 이상만 (커버리지)
    * @param beforeTopicId 이 번호 미만만 (cursor)
+   * @param board null이면 두 게시판 모두
    * @param category null이면 전체
    * @param subcategory null이면 세부 분류로 거르지 않는다
    */
   @Query(
       "select p from Post p where p.hidden = false"
           + " and p.topicId >= :floorTopicId and p.topicId < :beforeTopicId"
+          + " and (:board is null or p.board = :board)"
           + " and (:category is null or p.category = :category)"
           + " and (:subcategory is null or p.subcategory = :subcategory)"
           + " order by p.topicId desc")
   List<Post> findRecent(
       long floorTopicId,
       long beforeTopicId,
+      Board board,
       Category category,
       Subcategory subcategory,
       Limit limit);
@@ -48,17 +52,24 @@ public interface PostRepository extends JpaRepository<Post, Long> {
    *
    * @param views cursor의 조회수
    * @param topicId cursor의 글 번호. (views, topicId)보다 뒤에 오는 글만 준다.
+   * @param board null이면 두 게시판 모두
    * @param category null이면 전체
    * @param subcategory null이면 세부 분류로 거르지 않는다
    */
   @Query(
       "select p from Post p where p.hidden = false"
           + " and (p.views < :views or (p.views = :views and p.topicId < :topicId))"
+          + " and (:board is null or p.board = :board)"
           + " and (:category is null or p.category = :category)"
           + " and (:subcategory is null or p.subcategory = :subcategory)"
           + " order by p.views desc, p.topicId desc")
   List<Post> findByViews(
-      int views, long topicId, Category category, Subcategory subcategory, Limit limit);
+      int views,
+      long topicId,
+      Board board,
+      Category category,
+      Subcategory subcategory,
+      Limit limit);
 
   /**
    * 작성일 추정의 기준점(작성일이 있는 글, 숨김 포함). 주어진 글 번호마다 앞뒤로 가장 가까운 글 하나씩과, 글 번호가 가장 작은·가장 큰 글을

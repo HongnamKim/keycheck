@@ -1,6 +1,10 @@
 package com.keycheck.crawl.domain;
 
+import com.keycheck.post.domain.Board;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.util.Collections;
@@ -10,19 +14,20 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * 과거 글 확보 상태 (한 줄, V2 마이그레이션이 만든다).
+ * 게시판 하나의 과거 글 확보 상태 (게시판마다 한 줄, V2·V6 마이그레이션이 만든다).
  *
- * <p>작성순 목록의 0..nextPage-1 쪽을 받아 두었고, 글 번호가 floorTopicId 이상인 글은 모두 DB에 있다(커버리지).
- * floorTopicId가 null이면 아무것도 커버하지 않는다.
+ * <p>그 게시판 작성순 목록의 0..nextPage-1 쪽을 받아 두었고, 그 게시판 글 중 글 번호가 floorTopicId 이상인 글은 모두 DB에 있다
+ * (커버리지). floorTopicId가 null이면 아무것도 커버하지 않는다.
  */
 @Entity
 @Getter
 @Table(name = "board_backfill")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class BoardBackfill {
-  public static final int ID = 1;
-
-  @Id private Integer id;
+  @Id
+  @Enumerated(EnumType.STRING)
+  @Column(length = 10)
+  private Board board;
 
   private int nextPage;
 
@@ -31,9 +36,9 @@ public class BoardBackfill {
   /** 목록 끝까지 받았다 */
   private boolean exhausted;
 
-  public static BoardBackfill create() {
+  public static BoardBackfill create(Board board) {
     BoardBackfill backfill = new BoardBackfill();
-    backfill.id = ID;
+    backfill.board = board;
     return backfill;
   }
 

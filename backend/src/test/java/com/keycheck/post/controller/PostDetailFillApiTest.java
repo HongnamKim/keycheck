@@ -17,6 +17,7 @@ import com.keycheck.MutableClock;
 import com.keycheck.TestcontainersConfiguration;
 import com.keycheck.crawl.client.GeekhackClient;
 import com.keycheck.crawl.client.RequestGate;
+import com.keycheck.post.domain.Board;
 import com.keycheck.post.domain.Category;
 import com.keycheck.post.domain.Post;
 import com.keycheck.post.repository.PostImageRepository;
@@ -75,6 +76,7 @@ class PostDetailFillApiTest {
   private Post saveSkeleton() {
     return postRepository.saveAndFlush(
         Post.createSkeleton(
+            Board.IC,
             TOPIC_ID,
             "[IC] Test Board",
             "bob",
@@ -164,6 +166,7 @@ class PostDetailFillApiTest {
     Post post =
         postRepository.saveAndFlush(
             Post.create(
+                Board.IC,
                 TOPIC_ID,
                 "[IC] Test Board",
                 "bob",

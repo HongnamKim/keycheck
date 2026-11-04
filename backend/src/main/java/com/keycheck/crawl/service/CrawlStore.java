@@ -6,6 +6,7 @@ import com.keycheck.crawl.dto.TopicContent;
 import com.keycheck.crawl.dto.TopicPage;
 import com.keycheck.crawl.repository.BoardBackfillRepository;
 import com.keycheck.image.dto.Selection;
+import com.keycheck.post.domain.Board;
 import com.keycheck.post.domain.Post;
 import com.keycheck.post.domain.PostImage;
 import com.keycheck.post.repository.PostRepository;
@@ -32,13 +33,15 @@ public class CrawlStore {
   }
 
   /**
+   * @param board topic을 읽은 목록의 게시판. 저장된 글의 게시판과 다르면(운영자가 옮긴 경우) 바꾼다.
    * @return 이미 저장된 글이면 갱신한 글, 없으면 empty
    */
   @Transactional
-  public Optional<Post> updateIfExists(BoardTopic topic, Instant now) {
+  public Optional<Post> updateIfExists(Board board, BoardTopic topic, Instant now) {
     Optional<Post> found = postRepository.findByTopicId(topic.getTopicId());
     found.ifPresent(
         post -> {
+          post.setBoard(board);
           post.setTitle(topic.getTitle());
           post.setViews(topic.getViews());
           post.setReplies(topic.getReplies());
@@ -80,11 +83,14 @@ public class CrawlStore {
     return true;
   }
 
-  /** 작성순 목록 page쪽의 글을 모두 반영한 뒤 부른다. 이어서 받은 쪽이면 커버리지를 넓힌다 (BoardBackfill.recordPage). */
+  /**
+   * board 작성순 목록 page쪽의 글을 모두 반영한 뒤 부른다. 이어서 받은 쪽이면 그 게시판의 커버리지를 넓힌다
+   * (BoardBackfill.recordPage).
+   */
   @Transactional
-  public void recordBoardPage(int page, int shownPage, List<BoardTopic> topics) {
+  public void recordBoardPage(Board board, int page, int shownPage, List<BoardTopic> topics) {
     backfillRepository
-        .lockCurrent()
+        .lockCurrent(board)
         .recordPage(page, shownPage, topics.stream().map(BoardTopic::getTopicId).toList());
   }
 

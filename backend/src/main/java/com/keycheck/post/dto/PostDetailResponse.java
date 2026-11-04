@@ -1,5 +1,6 @@
 package com.keycheck.post.dto;
 
+import com.keycheck.post.domain.Board;
 import com.keycheck.post.domain.Category;
 import com.keycheck.post.domain.Post;
 import com.keycheck.post.domain.PostImage;
@@ -17,6 +18,10 @@ public class PostDetailResponse {
   private final Long id;
   private final String title;
   private final String author;
+
+  /** 글을 읽어 온 geekhack 게시판 (IC, GB) */
+  private final Board board;
+
   private final Category category;
 
   /** 세부 분류 코드(KB_65, KC_GMK 등). 기타·미분류 글이나 아직 정하지 않았으면 null. */
@@ -54,6 +59,7 @@ public class PostDetailResponse {
         post.getId(),
         post.getTitle(),
         post.getAuthor(),
+        post.getBoard(),
         post.getCategory(),
         post.getSubcategory(),
         imageUrl,

@@ -9,6 +9,7 @@ import com.keycheck.TestcontainersConfiguration;
 import com.keycheck.crawl.client.GeekhackClient;
 import com.keycheck.crawl.domain.BoardBackfill;
 import com.keycheck.crawl.repository.BoardBackfillRepository;
+import com.keycheck.post.domain.Board;
 import com.keycheck.post.domain.Category;
 import com.keycheck.post.domain.Post;
 import com.keycheck.post.domain.PostImage;
@@ -67,11 +68,18 @@ class CrawlServiceTest {
     setBackfill(0, null, false);
     board = read("/fixtures/board-list.html");
     client.reset();
-    client.boardPages.put(0, board);
-    client.boardPages.put(1, EMPTY_BOARD);
-    client.firstPostPages.put(0, board);
+    client.boardPages.put(key(Board.IC, 0), board);
+    client.boardPages.put(key(Board.IC, 1), EMPTY_BOARD);
+    client.boardPages.put(key(Board.GB, 0), EMPTY_BOARD);
+    client.boardPages.put(key(Board.GB, 1), EMPTY_BOARD);
+    client.firstPostPages.put(key(Board.IC, 0), board);
     client.topics.put(2000L, read("/fixtures/topic-attachment.html"));
     client.topics.put(3000L, read("/fixtures/topic-external.html"));
+  }
+
+  /** FakeGeekhackClient의 목록 키 */
+  private static String key(Board board, int page) {
+    return board + " " + page;
   }
 
   /** 픽스처의 쪽 번호 목록이 page쪽(0부터)을 가리키게 바꾼다 */
@@ -97,8 +105,9 @@ class CrawlServiceTest {
         exhausted);
   }
 
+  /** IC 게시판의 확보 상태 */
   private BoardBackfill backfill() {
-    return backfillRepository.current();
+    return backfillRepository.current(Board.IC);
   }
 
   @Test
@@ -121,7 +130,7 @@ class CrawlServiceTest {
   @Test
   @DisplayName("새 글을 제목과 본문으로 분류한다")
   void classifiesNewPost() {
-    client.boardPages.put(0, board.replace("[IC] Multi Page Topic", "[IC] GMK Ocean"));
+    client.boardPages.put(key(Board.IC, 0), board.replace("[IC] Multi Page Topic", "[IC] GMK Ocean"));
 
     crawlService.crawl();
 
@@ -169,7 +178,7 @@ class CrawlServiceTest {
     client.fetchedTopics.clear();
     clock.advance(Duration.ofMinutes(30));
     client.boardPages.put(
-        0,
+        key(Board.IC, 0),
         board
             .replace("82388 Views", "90000 Views")
             .replace("78 Replies", "80 Replies")
@@ -191,7 +200,7 @@ class CrawlServiceTest {
   @DisplayName("목록에서 마지막 게시물 시각을 읽지 못하면 저장된 값을 그대로 둔다")
   void keepsLastPostAtWhenUnreadable() {
     crawlService.crawl();
-    client.boardPages.put(0, board.replace("Sat, 31 October 2026, 20:00:00", "알 수 없음"));
+    client.boardPages.put(key(Board.IC, 0), board.replace("Sat, 31 October 2026, 20:00:00", "알 수 없음"));
 
     crawlService.crawl();
 
@@ -236,8 +245,8 @@ class CrawlServiceTest {
   @Test
   @DisplayName("목록 한 페이지를 읽지 못해도 다음 페이지를 처리한다")
   void boardPageFailureDoesNotStopNextPage() {
-    client.boardPages.remove(0);
-    client.boardPages.put(1, board);
+    client.boardPages.remove(key(Board.IC, 0));
+    client.boardPages.put(key(Board.IC, 1), board);
 
     crawlService.crawl();
 
@@ -247,7 +256,7 @@ class CrawlServiceTest {
   @Test
   @DisplayName("제목이 deleted인 새 글은 글 페이지를 읽지 않고 저장하지도 않는다")
   void skipsNewDeletedTopic() {
-    client.boardPages.put(0, board.replace("[IC] Multi Page Topic", "deleted"));
+    client.boardPages.put(key(Board.IC, 0), board.replace("[IC] Multi Page Topic", "deleted"));
 
     crawlService.crawl();
 
@@ -260,7 +269,7 @@ class CrawlServiceTest {
   void hidesExistingPostWhenDeleted() {
     crawlService.crawl();
     assertThat(post(3000).isHidden()).isFalse();
-    client.boardPages.put(0, board.replace("[IC] Multi Page Topic", "deleted"));
+    client.boardPages.put(key(Board.IC, 0), board.replace("[IC] Multi Page Topic", "deleted"));
 
     crawlService.crawl();
 
@@ -282,7 +291,8 @@ class CrawlServiceTest {
   void crawlReadsDefaultOrderWithoutCoverage() {
     crawlService.crawl();
 
-    assertThat(client.fetchedBoardPages).containsExactly(0, 1);
+    assertThat(client.fetchedBoardPages)
+        .containsExactly(key(Board.IC, 0), key(Board.IC, 1), key(Board.GB, 0), key(Board.GB, 1));
     assertThat(client.fetchedFirstPostPages).isEmpty();
     assertThat(backfill().getNextPage()).isZero();
     assertThat(backfill().getFloorTopicId()).isNull();
@@ -292,7 +302,7 @@ class CrawlServiceTest {
   @Test
   @DisplayName("정기 수집은 0~1쪽에 있는 틀 글을 글 첫 페이지로 채운다")
   void crawlFillsSkeletonOnFirstPages() {
-    crawlService.backfillNextPage(Duration.ZERO);
+    crawlService.backfillNextPage(Board.IC, Duration.ZERO);
     assertThat(post(3000).isDetailLoaded()).isFalse();
     clock.advance(Duration.ofMinutes(30));
 
@@ -314,9 +324,9 @@ class CrawlServiceTest {
   @DisplayName("과거 글 확보는 작성순 목록 다음 쪽의 새 글을 글 페이지 없이 미분류 틀로 저장한다")
   void backfillSavesSkeletons() {
     setBackfill(1, 5000L, false);
-    client.firstPostPages.put(1, onPage(board.replace("[IC] Multi Page Topic", "[IC] GMK Ocean"), 1));
+    client.firstPostPages.put(key(Board.IC, 1), onPage(board.replace("[IC] Multi Page Topic", "[IC] GMK Ocean"), 1));
 
-    assertThat(crawlService.backfillNextPage(Duration.ZERO)).isTrue();
+    assertThat(crawlService.backfillNextPage(Board.IC, Duration.ZERO)).isTrue();
 
     Post post = post(3000);
     assertThat(client.fetchedTopics).isEmpty();
@@ -342,17 +352,18 @@ class CrawlServiceTest {
   @Test
   @DisplayName("과거 글 확보는 받은 쪽으로 커버리지를 넓힌다")
   void backfillRecordsCoverage() {
-    client.firstPostPages.put(1, BoardHtml.page(1, 1500, 1400));
+    client.firstPostPages.put(key(Board.IC, 1), BoardHtml.page(1, 1500, 1400));
 
-    crawlService.backfillNextPage(Duration.ZERO);
+    crawlService.backfillNextPage(Board.IC, Duration.ZERO);
     assertThat(backfill().getNextPage()).isEqualTo(1);
     assertThat(backfill().getFloorTopicId()).isEqualTo(2000L);
 
-    crawlService.backfillNextPage(Duration.ZERO);
+    crawlService.backfillNextPage(Board.IC, Duration.ZERO);
     assertThat(backfill().getNextPage()).isEqualTo(2);
     assertThat(backfill().getFloorTopicId()).isEqualTo(1400L);
     assertThat(postRepository.findByTopicId(1400L)).isPresent();
-    assertThat(client.fetchedFirstPostPages).containsExactly(0, 1);
+    assertThat(client.fetchedFirstPostPages)
+        .containsExactly(key(Board.IC, 0), key(Board.IC, 1));
     assertThat(client.fetchedBoardPages).isEmpty();
   }
 
@@ -360,9 +371,9 @@ class CrawlServiceTest {
   @DisplayName("끝을 넘은 쪽을 달라고 해 앞 쪽(마지막 쪽)이 오면 끝까지 받은 것으로 기록한다")
   void backfillClampedPageExhausts() {
     setBackfill(2, 1400L, false);
-    client.firstPostPages.put(2, BoardHtml.page(1, 1500, 1400));
+    client.firstPostPages.put(key(Board.IC, 2), BoardHtml.page(1, 1500, 1400));
 
-    assertThat(crawlService.backfillNextPage(Duration.ZERO)).isTrue();
+    assertThat(crawlService.backfillNextPage(Board.IC, Duration.ZERO)).isTrue();
 
     assertThat(backfill().getNextPage()).isEqualTo(2);
     assertThat(backfill().getFloorTopicId()).isEqualTo(1400L);
@@ -372,9 +383,9 @@ class CrawlServiceTest {
   @Test
   @DisplayName("글을 한 건도 읽지 못한 쪽은 받지 못한 것으로 보고 커버리지를 바꾸지 않는다")
   void backfillEmptyPageIsFailure() {
-    client.firstPostPages.put(0, BoardHtml.page(0));
+    client.firstPostPages.put(key(Board.IC, 0), BoardHtml.page(0));
 
-    assertThat(crawlService.backfillNextPage(Duration.ZERO)).isFalse();
+    assertThat(crawlService.backfillNextPage(Board.IC, Duration.ZERO)).isFalse();
 
     assertThat(backfill().getNextPage()).isZero();
     assertThat(backfill().getFloorTopicId()).isNull();
@@ -387,14 +398,14 @@ class CrawlServiceTest {
     crawlService.crawl();
     setBackfill(0, null, false);
     client.firstPostPages.put(
-        0,
+        key(Board.IC, 0),
         board
             .replace("82388 Views", "90000 Views")
             .replace("Sat, 31 October 2026, 20:00:00", "Sun, 01 November 2026, 08:00:00")
             .replace("[IC] Foo &amp; Bar &#8212; A &quot;Test&quot; Board", "deleted"));
     postRepository.delete(post(2000));
 
-    crawlService.backfillNextPage(Duration.ZERO);
+    crawlService.backfillNextPage(Board.IC, Duration.ZERO);
 
     assertThat(post(3000).getViews()).isEqualTo(90000);
     assertThat(post(3000).getLastPostAt()).isEqualTo(Instant.parse("2026-11-01T14:00:00Z"));
@@ -407,7 +418,7 @@ class CrawlServiceTest {
   void backfillSkipsWhenExhausted() {
     setBackfill(3, 100L, true);
 
-    assertThat(crawlService.backfillNextPage(Duration.ZERO)).isFalse();
+    assertThat(crawlService.backfillNextPage(Board.IC, Duration.ZERO)).isFalse();
 
     assertThat(client.fetchedFirstPostPages).isEmpty();
   }
@@ -415,9 +426,9 @@ class CrawlServiceTest {
   @Test
   @DisplayName("과거 글 확보에서 목록을 받지 못하면 false이고 커버리지는 그대로다")
   void backfillFailureKeepsCoverage() {
-    client.firstPostPages.remove(0);
+    client.firstPostPages.remove(key(Board.IC, 0));
 
-    assertThat(crawlService.backfillNextPage(Duration.ZERO)).isFalse();
+    assertThat(crawlService.backfillNextPage(Board.IC, Duration.ZERO)).isFalse();
 
     assertThat(backfill().getNextPage()).isZero();
     assertThat(backfill().isExhausted()).isFalse();
@@ -434,15 +445,101 @@ class CrawlServiceTest {
           await(release);
         };
     CompletableFuture<Boolean> first =
-        CompletableFuture.supplyAsync(() -> crawlService.backfillNextPage(Duration.ZERO));
+        CompletableFuture.supplyAsync(() -> crawlService.backfillNextPage(Board.IC, Duration.ZERO));
     assertThat(fetching.await(10, TimeUnit.SECONDS)).isTrue();
 
-    boolean second = crawlService.backfillNextPage(Duration.ZERO);
+    boolean second = crawlService.backfillNextPage(Board.IC, Duration.ZERO);
     release.countDown();
 
     assertThat(second).isFalse();
     assertThat(first.get(10, TimeUnit.SECONDS)).isTrue();
-    assertThat(client.fetchedFirstPostPages).containsExactly(0);
+    assertThat(client.fetchedFirstPostPages).containsExactly(key(Board.IC, 0));
+  }
+
+  @Test
+  @DisplayName("정기 수집은 두 게시판을 읽고 글마다 읽은 게시판을 저장한다")
+  void crawlSavesBoardOfEachList() throws IOException {
+    client.boardPages.put(key(Board.GB, 0), BoardHtml.page(0, 4000));
+    client.topics.put(4000L, read("/fixtures/topic-external.html"));
+
+    crawlService.crawl();
+
+    assertThat(post(3000).getBoard()).isEqualTo(Board.IC);
+    assertThat(post(2000).getBoard()).isEqualTo(Board.IC);
+    assertThat(post(4000).getBoard()).isEqualTo(Board.GB);
+    assertThat(post(4000).isDetailLoaded()).isTrue();
+  }
+
+  @Test
+  @DisplayName("글 첫 페이지를 읽지 못해 틀로 저장한 GB 글도 게시판을 저장한다")
+  void skeletonFromFailureSavesBoard() {
+    client.boardPages.put(key(Board.GB, 0), BoardHtml.page(0, 4000));
+
+    crawlService.crawl();
+
+    assertThat(post(4000).isDetailLoaded()).isFalse();
+    assertThat(post(4000).getBoard()).isEqualTo(Board.GB);
+  }
+
+  @Test
+  @DisplayName("이미 저장한 글이 다른 게시판 목록에 보이면(운영자가 옮긴 경우) 그 게시판으로 바꾼다")
+  void movedPostUpdatesBoard() {
+    crawlService.crawl();
+    assertThat(post(3000).getBoard()).isEqualTo(Board.IC);
+    client.boardPages.put(key(Board.IC, 0), BoardHtml.page(0, 2000));
+    client.boardPages.put(key(Board.GB, 0), BoardHtml.page(0, 3000));
+    client.fetchedTopics.clear();
+
+    crawlService.crawl();
+
+    assertThat(post(3000).getBoard()).isEqualTo(Board.GB);
+    assertThat(post(3000).isDetailLoaded()).isTrue();
+    assertThat(post(2000).getBoard()).isEqualTo(Board.IC);
+    assertThat(client.fetchedTopics).isEmpty();
+  }
+
+  @Test
+  @DisplayName("GB 과거 글 확보는 GB 작성순 목록을 받아 GB 틀 글로 저장하고 GB 커버리지만 넓힌다")
+  void backfillGbUsesGbCoverage() {
+    setBackfill(1, 2000L, false);
+    jdbcTemplate.update(
+        "update board_backfill set next_page = 0, floor_topic_id = null, exhausted = false"
+            + " where board = 'GB'");
+    client.firstPostPages.put(key(Board.GB, 0), BoardHtml.page(0, 4100, 4000));
+
+    assertThat(crawlService.backfillNextPage(Board.GB, Duration.ZERO)).isTrue();
+
+    assertThat(client.fetchedFirstPostPages).containsExactly(key(Board.GB, 0));
+    assertThat(post(4100).getBoard()).isEqualTo(Board.GB);
+    assertThat(post(4000).isDetailLoaded()).isFalse();
+    BoardBackfill gb = backfillRepository.current(Board.GB);
+    assertThat(gb.getNextPage()).isEqualTo(1);
+    assertThat(gb.getFloorTopicId()).isEqualTo(4000L);
+    assertThat(backfill().getNextPage()).isEqualTo(1);
+    assertThat(backfill().getFloorTopicId()).isEqualTo(2000L);
+  }
+
+  @Test
+  @DisplayName("IC 게시판을 확보하는 중이면 GB 게시판 확보도 기다리지 않고 포기한다 (게시판과 상관없이 한 번에 한 요청)")
+  void backfillOfOtherBoardGivesUpWhileBusy() throws Exception {
+    CountDownLatch fetching = new CountDownLatch(1);
+    CountDownLatch release = new CountDownLatch(1);
+    client.onBoardFetch =
+        () -> {
+          fetching.countDown();
+          await(release);
+        };
+    client.firstPostPages.put(key(Board.GB, 0), BoardHtml.page(0, 4000));
+    CompletableFuture<Boolean> first =
+        CompletableFuture.supplyAsync(() -> crawlService.backfillNextPage(Board.IC, Duration.ZERO));
+    assertThat(fetching.await(10, TimeUnit.SECONDS)).isTrue();
+
+    boolean second = crawlService.backfillNextPage(Board.GB, Duration.ZERO);
+    release.countDown();
+
+    assertThat(second).isFalse();
+    assertThat(first.get(10, TimeUnit.SECONDS)).isTrue();
+    assertThat(client.fetchedFirstPostPages).containsExactly(key(Board.IC, 0));
   }
 
   private static void await(CountDownLatch latch) {
@@ -470,16 +567,16 @@ class CrawlServiceTest {
 
   /** 실제 사이트 대신 픽스처를 돌려준다. 등록되지 않은 페이지는 요청 실패처럼 예외를 던진다. */
   static class FakeGeekhackClient extends GeekhackClient {
-    /** 기본 정렬 목록 */
-    final Map<Integer, String> boardPages = new HashMap<>();
+    /** 기본 정렬 목록. 키는 key(게시판, 쪽) */
+    final Map<String, String> boardPages = new HashMap<>();
 
-    /** 작성순 목록 */
-    final Map<Integer, String> firstPostPages = new HashMap<>();
+    /** 작성순 목록. 키는 key(게시판, 쪽) */
+    final Map<String, String> firstPostPages = new HashMap<>();
 
     final Map<Long, String> topics = new HashMap<>();
     final List<Long> fetchedTopics = new ArrayList<>();
-    final List<Integer> fetchedBoardPages = new ArrayList<>();
-    final List<Integer> fetchedFirstPostPages = new ArrayList<>();
+    final List<String> fetchedBoardPages = new ArrayList<>();
+    final List<String> fetchedFirstPostPages = new ArrayList<>();
 
     /** 작성순 목록 요청 중에 실행할 일 (동시성 테스트용) */
     Runnable onBoardFetch = () -> {};
@@ -499,22 +596,24 @@ class CrawlServiceTest {
     }
 
     @Override
-    public String fetchBoardPage(int page) {
-      fetchedBoardPages.add(page);
-      if (!boardPages.containsKey(page)) {
+    public String fetchBoardPage(Board board, int page) {
+      String key = key(board, page);
+      fetchedBoardPages.add(key);
+      if (!boardPages.containsKey(key)) {
         throw new IllegalStateException("목록 요청 실패");
       }
-      return boardPages.get(page);
+      return boardPages.get(key);
     }
 
     @Override
-    public String fetchBoardPageByFirstPost(int page) {
-      fetchedFirstPostPages.add(page);
+    public String fetchBoardPageByFirstPost(Board board, int page) {
+      String key = key(board, page);
+      fetchedFirstPostPages.add(key);
       onBoardFetch.run();
-      if (!firstPostPages.containsKey(page)) {
+      if (!firstPostPages.containsKey(key)) {
         throw new IllegalStateException("목록 요청 실패");
       }
-      return firstPostPages.get(page);
+      return firstPostPages.get(key);
     }
 
     @Override

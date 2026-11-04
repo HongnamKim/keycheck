@@ -17,6 +17,7 @@ import com.keycheck.BoardHtml;
 import com.keycheck.TestcontainersConfiguration;
 import com.keycheck.crawl.client.GeekhackClient;
 import com.keycheck.crawl.client.RequestGate;
+import com.keycheck.post.domain.Board;
 import com.keycheck.post.domain.Category;
 import com.keycheck.post.domain.Post;
 import com.keycheck.post.repository.PostRepository;
@@ -33,7 +34,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-/** 목록이 모자랄 때 geekhack 작성순 목록에서 과거 글을 확보하는 동작 */
+/** 목록이 모자랄 때 geekhack 작성순 목록에서 과거 글을 확보하는 동작 (한 게시판: IC. 두 게시판을 합친 목록은 PostBoardListApiTest) */
 @SpringBootTest
 @AutoConfigureMockMvc
 @Import(TestcontainersConfiguration.class)
@@ -49,13 +50,16 @@ class PostListApiTest {
   @BeforeEach
   void setUp() {
     postRepository.deleteAll();
-    setBackfill(0, null, false);
+    jdbcTemplate.update(
+        "update board_backfill set next_page = 0, floor_topic_id = null, exhausted = false");
     when(gate.tryAcquire(any(Duration.class))).thenReturn(true);
   }
 
+  /** IC 게시판의 확보 상태 */
   private void setBackfill(int nextPage, Long floorTopicId, boolean exhausted) {
     jdbcTemplate.update(
-        "update board_backfill set next_page = ?, floor_topic_id = ?, exhausted = ?",
+        "update board_backfill set next_page = ?, floor_topic_id = ?, exhausted = ?"
+            + " where board = 'IC'",
         nextPage,
         floorTopicId,
         exhausted);
@@ -64,6 +68,7 @@ class PostListApiTest {
   private void save(long topicId, int views) {
     postRepository.saveAndFlush(
         Post.create(
+            Board.IC,
             topicId,
             "글 " + topicId,
             "maker",
@@ -91,17 +96,18 @@ class PostListApiTest {
     save(3000, 0);
 
     mockMvc
-        .perform(get("/api/posts"))
+        .perform(get("/api/posts?board=ic"))
         .andExpect(jsonPath("$.items[*].title", contains("글 3000", "글 2000")));
   }
 
   @Test
   @DisplayName("모자라면 작성순 목록 다음 쪽을 한 번 받아 틀 글로 저장하고 다시 조회한다")
   void backfillsOnceWhenShort() throws Exception {
-    when(client.fetchBoardPageByFirstPost(0)).thenReturn(BoardHtml.page(0, 3000, 2000));
+    when(client.fetchBoardPageByFirstPost(Board.IC, 0))
+        .thenReturn(BoardHtml.page(0, 3000, 2000));
 
     mockMvc
-        .perform(get("/api/posts"))
+        .perform(get("/api/posts?board=ic"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.items[*].title", contains("[IC] Board 3000", "[IC] Board 2000")))
         .andExpect(jsonPath("$.items[0].detailLoaded").value(false))
@@ -113,7 +119,7 @@ class PostListApiTest {
         .andExpect(jsonPath("$.hasMore").value(true));
 
     // 다시 조회해도 20건이 안 되지만, 한 요청에 geekhack 목록은 한 번만 받는다
-    verify(client, times(1)).fetchBoardPageByFirstPost(anyInt());
+    verify(client, times(1)).fetchBoardPageByFirstPost(any(Board.class), anyInt());
     verify(gate).tryAcquire(Duration.ofSeconds(3));
   }
 
@@ -124,12 +130,12 @@ class PostListApiTest {
     saveRange(2000, 2004);
 
     mockMvc
-        .perform(get("/api/posts?category=keyboard"))
+        .perform(get("/api/posts?board=ic&category=keyboard"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.items", hasSize(5)))
         .andExpect(jsonPath("$.hasMore").value(false));
 
-    verify(client, never()).fetchBoardPageByFirstPost(anyInt());
+    verify(client, never()).fetchBoardPageByFirstPost(any(Board.class), anyInt());
     verify(gate, never()).tryAcquire(any(Duration.class));
   }
 
@@ -141,12 +147,12 @@ class PostListApiTest {
     jdbcTemplate.update("update post set subcategory = 'KB_65' where topic_id <= 2002");
 
     mockMvc
-        .perform(get("/api/posts?category=keyboard&sub=65"))
+        .perform(get("/api/posts?board=ic&category=keyboard&sub=65"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.items", hasSize(3)))
         .andExpect(jsonPath("$.hasMore").value(false));
 
-    verify(client, never()).fetchBoardPageByFirstPost(anyInt());
+    verify(client, never()).fetchBoardPageByFirstPost(any(Board.class), anyInt());
     verify(gate, never()).tryAcquire(any(Duration.class));
   }
 
@@ -157,7 +163,7 @@ class PostListApiTest {
     saveRange(2000, 2019);
 
     mockMvc
-        .perform(get("/api/posts?category=keyboard"))
+        .perform(get("/api/posts?board=ic&category=keyboard"))
         .andExpect(jsonPath("$.items", hasSize(20)))
         .andExpect(jsonPath("$.hasMore").value(true));
   }
@@ -165,11 +171,16 @@ class PostListApiTest {
   @Test
   @DisplayName("미분류 틀 글은 전체에만 보이고 분류 필터에는 나오지 않는다")
   void unclassifiedOnlyInAll() throws Exception {
-    when(client.fetchBoardPageByFirstPost(0)).thenReturn(BoardHtml.page(0, 3000, 2000));
-    mockMvc.perform(get("/api/posts")).andExpect(jsonPath("$.items", hasSize(2)));
+    when(client.fetchBoardPageByFirstPost(Board.IC, 0))
+        .thenReturn(BoardHtml.page(0, 3000, 2000));
+    mockMvc.perform(get("/api/posts?board=ic")).andExpect(jsonPath("$.items", hasSize(2)));
 
-    mockMvc.perform(get("/api/posts?category=keyboard")).andExpect(jsonPath("$.items", hasSize(0)));
-    mockMvc.perform(get("/api/posts?category=keycap")).andExpect(jsonPath("$.items", hasSize(0)));
+    mockMvc
+        .perform(get("/api/posts?board=ic&category=keyboard"))
+        .andExpect(jsonPath("$.items", hasSize(0)));
+    mockMvc
+        .perform(get("/api/posts?board=ic&category=keycap"))
+        .andExpect(jsonPath("$.items", hasSize(0)));
   }
 
   @Test
@@ -179,12 +190,12 @@ class PostListApiTest {
     saveRange(2000, 2019);
 
     mockMvc
-        .perform(get("/api/posts"))
+        .perform(get("/api/posts?board=ic"))
         .andExpect(jsonPath("$.items", hasSize(20)))
         .andExpect(jsonPath("$.nextCursor").value("2000"))
         .andExpect(jsonPath("$.hasMore").value(true));
 
-    verify(client, never()).fetchBoardPageByFirstPost(anyInt());
+    verify(client, never()).fetchBoardPageByFirstPost(any(Board.class), anyInt());
   }
 
   @Test
@@ -192,10 +203,10 @@ class PostListApiTest {
   void cursorContinuesIntoBackfill() throws Exception {
     setBackfill(1, 2000L, false);
     saveRange(2000, 2019);
-    when(client.fetchBoardPageByFirstPost(1)).thenReturn(BoardHtml.page(1, 1999, 1998));
+    when(client.fetchBoardPageByFirstPost(Board.IC, 1)).thenReturn(BoardHtml.page(1, 1999, 1998));
 
     mockMvc
-        .perform(get("/api/posts?cursor=2000"))
+        .perform(get("/api/posts?board=ic&cursor=2000"))
         .andExpect(jsonPath("$.items[*].title", contains("[IC] Board 1999", "[IC] Board 1998")))
         .andExpect(jsonPath("$.nextCursor").value("1998"))
         .andExpect(jsonPath("$.hasMore").value(true));
@@ -210,11 +221,11 @@ class PostListApiTest {
     save(2001, 0);
 
     mockMvc
-        .perform(get("/api/posts"))
+        .perform(get("/api/posts?board=ic"))
         .andExpect(jsonPath("$.items", hasSize(2)))
         .andExpect(jsonPath("$.hasMore").value(true));
 
-    verify(client, never()).fetchBoardPageByFirstPost(anyInt());
+    verify(client, never()).fetchBoardPageByFirstPost(any(Board.class), anyInt());
   }
 
   @Test
@@ -224,7 +235,7 @@ class PostListApiTest {
     save(3000, 0);
 
     mockMvc
-        .perform(get("/api/posts"))
+        .perform(get("/api/posts?board=ic"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.items", hasSize(0)))
         .andExpect(jsonPath("$.nextCursor").value(nullValue()))
@@ -238,7 +249,7 @@ class PostListApiTest {
     setBackfill(1, 2000L, false);
 
     mockMvc
-        .perform(get("/api/posts?cursor=1500"))
+        .perform(get("/api/posts?board=ic&cursor=1500"))
         .andExpect(jsonPath("$.items", hasSize(0)))
         .andExpect(jsonPath("$.nextCursor").value("1500"))
         .andExpect(jsonPath("$.hasMore").value(true));
@@ -247,12 +258,13 @@ class PostListApiTest {
   @Test
   @DisplayName("목록 요청이 실패해도 200으로 지금 있는 것만 준다")
   void boardFailureReturnsCurrent() throws Exception {
-    when(client.fetchBoardPageByFirstPost(anyInt())).thenThrow(new IllegalStateException("요청 실패"));
+    when(client.fetchBoardPageByFirstPost(any(Board.class), anyInt()))
+        .thenThrow(new IllegalStateException("요청 실패"));
     setBackfill(1, 2000L, false);
     save(2000, 0);
 
     mockMvc
-        .perform(get("/api/posts"))
+        .perform(get("/api/posts?board=ic"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.items", hasSize(1)))
         .andExpect(jsonPath("$.hasMore").value(true));
@@ -265,12 +277,12 @@ class PostListApiTest {
     save(2000, 0);
 
     mockMvc
-        .perform(get("/api/posts"))
+        .perform(get("/api/posts?board=ic"))
         .andExpect(jsonPath("$.items", hasSize(1)))
         .andExpect(jsonPath("$.hasMore").value(false));
 
     verify(gate, never()).tryAcquire(any(Duration.class));
-    verify(client, never()).fetchBoardPageByFirstPost(anyInt());
+    verify(client, never()).fetchBoardPageByFirstPost(any(Board.class), anyInt());
   }
 
   @Test
@@ -279,7 +291,7 @@ class PostListApiTest {
     setBackfill(5, 2000L, true);
     saveRange(2000, 2019);
 
-    mockMvc.perform(get("/api/posts")).andExpect(jsonPath("$.hasMore").value(true));
+    mockMvc.perform(get("/api/posts?board=ic")).andExpect(jsonPath("$.hasMore").value(true));
   }
 
   @Test
@@ -302,7 +314,7 @@ class PostListApiTest {
         .andExpect(jsonPath("$.nextCursor").value(nullValue()))
         .andExpect(jsonPath("$.hasMore").value(false));
 
-    verify(client, never()).fetchBoardPageByFirstPost(anyInt());
+    verify(client, never()).fetchBoardPageByFirstPost(any(Board.class), anyInt());
   }
 
   @Test

@@ -5,6 +5,7 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
+import com.keycheck.post.domain.Board;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
@@ -21,7 +22,7 @@ class GeekhackClientTest {
   private final GeekhackClient client = new GeekhackClient(builder.build());
 
   @Test
-  @DisplayName("게시판 페이지를 기본 정렬로 요청하고 Windows-1252로 디코딩한다")
+  @DisplayName("IC 게시판(132) 페이지를 기본 정렬로 요청하고 Windows-1252로 디코딩한다")
   void decodesBoardPageAsWindows1252() {
     // 0x97은 Windows-1252의 em dash, 0xE9는 é. ISO-8859-1로 읽으면 0x97이 제어 문자가 된다.
     byte[] body = {0x43, 0x61, 0x66, (byte) 0xE9, 0x20, (byte) 0x97, 0x20, 0x41};
@@ -30,18 +31,33 @@ class GeekhackClientTest {
         .andExpect(header(HttpHeaders.USER_AGENT, "keycheck-test"))
         .andRespond(withSuccess(body, MediaType.TEXT_HTML));
 
-    assertThat(client.fetchBoardPage(1)).isEqualTo("Café — A");
+    assertThat(client.fetchBoardPage(Board.IC, 1)).isEqualTo("Café — A");
     server.verify();
   }
 
   @Test
-  @DisplayName("작성순 게시판 페이지는 최신 글 먼저 정렬을 붙여 요청한다")
+  @DisplayName("작성순 IC 게시판 페이지는 최신 글 먼저 정렬을 붙여 요청한다")
   void requestsBoardPageByFirstPost() {
     server
         .expect(requestTo("https://geekhack.test/index.php?board=132.100;sort=first_post;desc"))
         .andRespond(withSuccess("<html></html>", MediaType.TEXT_HTML));
 
-    assertThat(client.fetchBoardPageByFirstPost(2)).isEqualTo("<html></html>");
+    assertThat(client.fetchBoardPageByFirstPost(Board.IC, 2)).isEqualTo("<html></html>");
+    server.verify();
+  }
+
+  @Test
+  @DisplayName("GB 게시판(70)은 게시판 번호만 바꿔 같은 주소 형식으로 요청한다")
+  void requestsGbBoardPages() {
+    server
+        .expect(requestTo("https://geekhack.test/index.php?board=70.0"))
+        .andRespond(withSuccess("<html>gb</html>", MediaType.TEXT_HTML));
+    server
+        .expect(requestTo("https://geekhack.test/index.php?board=70.50;sort=first_post;desc"))
+        .andRespond(withSuccess("<html>gb first</html>", MediaType.TEXT_HTML));
+
+    assertThat(client.fetchBoardPage(Board.GB, 0)).isEqualTo("<html>gb</html>");
+    assertThat(client.fetchBoardPageByFirstPost(Board.GB, 1)).isEqualTo("<html>gb first</html>");
     server.verify();
   }
 

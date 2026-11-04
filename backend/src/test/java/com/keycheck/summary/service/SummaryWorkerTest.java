@@ -8,6 +8,7 @@ import com.anthropic.core.http.Headers;
 import com.anthropic.errors.AnthropicIoException;
 import com.anthropic.errors.UnauthorizedException;
 import com.keycheck.TestcontainersConfiguration;
+import com.keycheck.post.domain.Board;
 import com.keycheck.post.domain.Category;
 import com.keycheck.post.domain.Post;
 import com.keycheck.post.domain.SpecItem;
@@ -65,6 +66,7 @@ class SummaryWorkerTest {
   private Post saveLoaded(long topicId, Consumer<Post> customize) {
     Post post =
         Post.create(
+            Board.IC,
             topicId,
             "[IC] 글 " + topicId,
             "maker",
@@ -116,8 +118,8 @@ class SummaryWorkerTest {
     assertThat(saved.getCategory()).isEqualTo(Category.KEYCAP);
     assertThat(saved.getSubcategory()).isEqualTo(Subcategory.KC_GMK);
     assertThat(summarizer.sources)
-        .extracting(PostSource::getTitle, PostSource::getBodyText)
-        .containsExactly(tuple("[IC] 글 2000", "본문 2000"));
+        .extracting(PostSource::getBoard, PostSource::getTitle, PostSource::getBodyText)
+        .containsExactly(tuple(Board.IC, "[IC] 글 2000", "본문 2000"));
   }
 
   @Test
@@ -169,6 +171,7 @@ class SummaryWorkerTest {
   void skipsNonTargets() {
     postRepository.saveAndFlush(
         Post.createSkeleton(
+            Board.IC,
             5000L, "[IC] 틀", "maker", 1, 0, CHECKED_AT, "https://geekhack.test/?topic=5000.0"));
     saveLoaded(4000, post -> post.setHidden(true));
     saveLoaded(3000, post -> post.setSummaryStatus(SummaryStatus.FAILED));

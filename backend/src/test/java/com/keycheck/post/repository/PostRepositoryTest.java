@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.keycheck.TestcontainersConfiguration;
 import com.keycheck.image.domain.ImageSource;
+import com.keycheck.post.domain.Board;
 import com.keycheck.post.domain.Category;
 import com.keycheck.post.domain.Post;
 import com.keycheck.post.domain.PostImage;
@@ -27,6 +28,7 @@ class PostRepositoryTest {
 
   private Post newPost(long topicId) {
     return Post.create(
+        Board.IC,
         topicId,
         "[IC] Example 65% Keyboard",
         "maker",

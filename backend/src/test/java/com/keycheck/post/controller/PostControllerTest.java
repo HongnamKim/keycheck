@@ -12,6 +12,7 @@ import com.keycheck.TestcontainersConfiguration;
 import com.keycheck.crawl.client.GeekhackClient;
 import com.keycheck.crawl.client.RequestGate;
 import com.keycheck.image.domain.ImageSource;
+import com.keycheck.post.domain.Board;
 import com.keycheck.post.domain.Category;
 import com.keycheck.post.domain.Post;
 import com.keycheck.post.domain.SpecItem;
@@ -57,6 +58,7 @@ class PostControllerTest {
   private Post save(long topicId, Consumer<Post> customize) {
     Post post =
         Post.create(
+            Board.IC,
             topicId,
             "글 " + topicId,
             "maker",
@@ -213,6 +215,19 @@ class PostControllerTest {
     mockMvc
         .perform(get("/api/posts/" + post.getId()))
         .andExpect(jsonPath("$.subcategory").value("KB_65"));
+  }
+
+  @Test
+  @DisplayName("카드와 상세에 글을 읽어 온 게시판(IC, GB)을 담는다")
+  void cardAndDetailHaveBoard() throws Exception {
+    Post gb = save(2, p -> p.setBoard(Board.GB));
+    Post ic = save(1, p -> {});
+
+    mockMvc
+        .perform(get("/api/posts"))
+        .andExpect(jsonPath("$.items[*].board", contains("GB", "IC")));
+    mockMvc.perform(get("/api/posts/" + gb.getId())).andExpect(jsonPath("$.board").value("GB"));
+    mockMvc.perform(get("/api/posts/" + ic.getId())).andExpect(jsonPath("$.board").value("IC"));
   }
 
   @Test

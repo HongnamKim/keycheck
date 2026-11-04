@@ -1,5 +1,6 @@
 package com.keycheck;
 
+import static org.hamcrest.Matchers.contains;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -29,7 +30,11 @@ class OpenApiTest {
         .andExpect(jsonPath("$.paths['/api/posts/{id}'].get.summary").value("글 상세"))
         .andExpect(jsonPath("$.paths['/api/posts'].get.parameters[0].schema.enum").isArray())
         .andExpect(jsonPath("$.paths['/api/posts'].get.parameters[1].name").value("sub"))
-        .andExpect(jsonPath("$.paths['/api/posts'].get.parameters[1].schema.enum").isArray());
+        .andExpect(jsonPath("$.paths['/api/posts'].get.parameters[1].schema.enum").isArray())
+        .andExpect(jsonPath("$.paths['/api/posts'].get.parameters[4].name").value("board"))
+        .andExpect(
+            jsonPath("$.paths['/api/posts'].get.parameters[4].schema.enum")
+                .value(contains("all", "ic", "gb")));
   }
 
   @Test

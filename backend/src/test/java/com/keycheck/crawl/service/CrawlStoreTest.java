@@ -9,6 +9,7 @@ import com.keycheck.crawl.dto.TopicContent;
 import com.keycheck.crawl.dto.TopicPage;
 import com.keycheck.image.domain.ImageSource;
 import com.keycheck.image.dto.Selection;
+import com.keycheck.post.domain.Board;
 import com.keycheck.post.domain.Category;
 import com.keycheck.post.domain.Post;
 import com.keycheck.post.domain.SummaryStatus;
@@ -49,6 +50,7 @@ class CrawlStoreTest {
     skeleton =
         postRepository.saveAndFlush(
             Post.createSkeleton(
+                Board.IC,
                 2000L,
                 "[IC] Board",
                 "maker",
@@ -155,7 +157,7 @@ class CrawlStoreTest {
     new TransactionTemplate(transactionManager)
         .executeWithoutResult(
             status -> {
-              store.updateIfExists(topic, NOW);
+              store.updateIfExists(Board.IC, topic, NOW);
               // 수집이 글을 읽은 뒤, 커밋 전에 요약 작업이 요약을 저장한 상황
               jdbcTemplate.update(
                   "update post set summary_status = 'DONE', summarized_by = 'claude',"

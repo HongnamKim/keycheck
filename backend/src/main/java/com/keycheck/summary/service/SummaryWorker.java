@@ -69,7 +69,8 @@ public class SummaryWorker {
     }
     SummaryResult result;
     try {
-      result = summarizer.summarize(new PostSource(post.getTitle(), post.getBodyText()));
+      result = summarizer.summarize(
+              new PostSource(post.getBoard(), post.getTitle(), post.getBodyText()));
     } catch (RuntimeException e) {
       if (isApiUnavailable(e)) {
         log.error("요약 API를 쓸 수 없어 {} 쉰다: topic={}", ERROR_PAUSE, post.getTopicId(), e);

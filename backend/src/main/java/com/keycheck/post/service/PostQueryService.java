@@ -3,6 +3,7 @@ package com.keycheck.post.service;
 import com.keycheck.crawl.domain.BoardBackfill;
 import com.keycheck.crawl.repository.BoardBackfillRepository;
 import com.keycheck.crawl.service.CrawlService;
+import com.keycheck.post.domain.Board;
 import com.keycheck.post.domain.Post;
 import com.keycheck.post.domain.PostImage;
 import com.keycheck.post.domain.Subcategory;
@@ -17,12 +18,15 @@ import com.keycheck.post.repository.PostRepository;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Limit;
@@ -49,62 +53,155 @@ public class PostQueryService {
   private final Clock clock;
 
   /**
+   * @param board null이면 두 게시판 모두(all)
    * @param subcategory null이면 세부 분류로 거르지 않는다. 있으면 filter의 분류에 속한다.
    * @param cursor 이전 응답의 nextCursor. 첫 요청이면 null.
    */
   public PostListResponse getPosts(
-      CategoryFilter filter, Subcategory subcategory, PostSort sort, String cursor) {
+      Board board, CategoryFilter filter, Subcategory subcategory, PostSort sort, String cursor) {
     return sort == PostSort.VIEWS
-        ? getByViews(filter, subcategory, cursor)
-        : getRecent(filter, subcategory, cursor);
+        ? getByViews(board, filter, subcategory, cursor)
+        : getRecent(board, filter, subcategory, cursor);
   }
 
   /**
    * 커버리지 안의 글을 글 번호 내림차순으로. 모자라고 끝까지 받지 않았으면 작성순 목록 다음 쪽을 한 번 받아 다시 조회한다. cursor는 마지막 글 번호.
    *
+   * <p>한 게시판이면 그 게시판의 커버리지를 쓴다. 두 게시판(all)이면 두 게시판 모두 빠짐없이 받아 둔 범위만 보여 주고(floorTopicId),
+   * 모자라면 덜 받은 게시판(backfillTarget)의 다음 쪽을 받는다. 두 게시판 모두 끝까지 받았을 때만 끝난다.
+   *
    * <p>분류 필터(키보드·키캡, 세부 분류 포함)는 과거 글을 확보하지 않는다. 확보한 틀 글은 미분류라 필터 목록에 붙지 않기 때문이다. 그래서 필터
-   * 목록은 지금 분류된 글이 다하면 끝난다.
+   * 목록은 지금 분류된 글이 다하면 끝난다. 필터 목록의 all은 게시판별 필터 목록을 합친 것이다(게시판마다 그 게시판의 커버리지로 거른다). 큰
+   * floor로 자르면 덜 받은 게시판 때문에 커버리지 안의 다른 게시판 글이 가려지는데, 필터 목록은 그 범위를 넓힐 수 없기 때문이다.
    */
   private PostListResponse getRecent(
-      CategoryFilter filter, Subcategory subcategory, String cursor) {
+      Board board, CategoryFilter filter, Subcategory subcategory, String cursor) {
     long beforeTopicId =
         cursor == null ? Long.MAX_VALUE : parseCursor(cursor, cursor, 1, Long.MAX_VALUE);
-    BoardBackfill backfill = backfillRepository.current();
-    List<Post> posts = findRecent(filter, subcategory, backfill, beforeTopicId);
+    List<BoardBackfill> backfills = backfills(board);
+    List<Post> posts = findRecent(board, filter, subcategory, backfills, beforeTopicId);
     boolean canBackfill = filter.getCategory() == null;
+    Board target = backfillTarget(backfills);
     if (canBackfill
         && posts.size() < PAGE_SIZE
-        && !backfill.isExhausted()
-        && crawlService.backfillNextPage(BACKFILL_WAIT)) {
-      backfill = backfillRepository.current();
-      posts = findRecent(filter, subcategory, backfill, beforeTopicId);
+        && target != null
+        && crawlService.backfillNextPage(target, BACKFILL_WAIT)) {
+      backfills = backfills(board);
+      posts = findRecent(board, filter, subcategory, backfills, beforeTopicId);
     }
 
-    boolean ended = (backfill.isExhausted() || !canBackfill) && posts.size() < PAGE_SIZE;
+    boolean exhausted = backfills.stream().allMatch(BoardBackfill::isExhausted);
+    boolean ended = (exhausted || !canBackfill) && posts.size() < PAGE_SIZE;
     boolean hasMore = !ended;
     String nextCursor = posts.isEmpty() ? cursor : String.valueOf(posts.getLast().getTopicId());
     return new PostListResponse(cards(posts), nextCursor, hasMore);
   }
 
-  private List<Post> findRecent(
-      CategoryFilter filter, Subcategory subcategory, BoardBackfill backfill, long beforeTopicId) {
-    if (backfill.getFloorTopicId() == null) {
-      return List.of();
+  /** board가 null이면 두 게시판의 확보 상태 (Board 순서) */
+  private List<BoardBackfill> backfills(Board board) {
+    if (board != null) {
+      return List.of(backfillRepository.current(board));
     }
-    return postRepository.findRecent(
-        backfill.getFloorTopicId(),
-        beforeTopicId,
-        filter.getCategory(),
-        subcategory,
-        Limit.of(PAGE_SIZE));
+    return Arrays.stream(Board.values()).map(backfillRepository::current).toList();
+  }
+
+  private List<Post> findRecent(
+      Board board,
+      CategoryFilter filter,
+      Subcategory subcategory,
+      List<BoardBackfill> backfills,
+      long beforeTopicId) {
+    return findInCoverage(
+        board,
+        filter,
+        backfills,
+        (floorTopicId, queryBoard) ->
+            postRepository.findRecent(
+                floorTopicId,
+                beforeTopicId,
+                queryBoard,
+                filter.getCategory(),
+                subcategory,
+                Limit.of(PAGE_SIZE)),
+        Comparator.comparing(Post::getTopicId).reversed(),
+        PAGE_SIZE);
   }
 
   /**
-   * 저장된 글 전체를 조회수순으로. cursor는 마지막 글의 "조회수_글 번호". 오프셋 대신 이 값보다 뒤의 글을 주므로, 이어 받는 사이 앞쪽에 글이
+   * 최근순 목록의 커버리지 규칙(getRecent 참고)으로 query를 부른다. query는 (floorTopicId, board) 범위에서 order 순서로 최대
+   * limit개를 읽는다. 분류 필터의 all이면 게시판마다 그 게시판의 floor로 부르고 order로 합쳐 limit개를 남긴다. 아니면 한 번 부른다.
+   */
+  private List<Post> findInCoverage(
+      Board board,
+      CategoryFilter filter,
+      List<BoardBackfill> backfills,
+      BiFunction<Long, Board, List<Post>> query,
+      Comparator<Post> order,
+      int limit) {
+    if (board == null && filter.getCategory() != null) {
+      return backfills.stream()
+          .filter(backfill -> backfill.getFloorTopicId() != null)
+          .flatMap(
+              backfill -> query.apply(backfill.getFloorTopicId(), backfill.getBoard()).stream())
+          .sorted(order)
+          .limit(limit)
+          .toList();
+    }
+    Long floorTopicId = floorTopicId(board, backfills);
+    if (floorTopicId == null) {
+      return List.of();
+    }
+    return query.apply(floorTopicId, board);
+  }
+
+  /**
+   * 빠짐없이 보여 줄 수 있는 글 번호의 하한. null이면 아직 보여 줄 수 있는 글이 없다.
+   *
+   * <p>한 게시판이면 그 게시판의 floor. 두 게시판이면 게시판별 유효 floor(끝까지 받았으면 0, 아무것도 받지 않았으면 무한대, 아니면 floor) 중
+   * 큰 값이다. 그보다 작은 번호에는 덜 받은 게시판의 글이 빠져 있을 수 있다.
+   */
+  private static Long floorTopicId(Board board, List<BoardBackfill> backfills) {
+    if (board != null) {
+      return backfills.getFirst().getFloorTopicId();
+    }
+    long floor = 0;
+    for (BoardBackfill backfill : backfills) {
+      if (backfill.isExhausted()) {
+        continue;
+      }
+      if (backfill.getFloorTopicId() == null) {
+        return null;
+      }
+      floor = Math.max(floor, backfill.getFloorTopicId());
+    }
+    return floor;
+  }
+
+  /**
+   * 다음에 받을 게시판: 끝까지 받지 않은 게시판 중 floor가 가장 큰(아무것도 받지 않았으면 무한대) 게시판. 같으면 Board 순서가 앞인 것. 모두
+   * 끝까지 받았으면 null.
+   */
+  private static Board backfillTarget(List<BoardBackfill> backfills) {
+    BoardBackfill target = null;
+    for (BoardBackfill backfill : backfills) {
+      if (!backfill.isExhausted()
+          && (target == null || effectiveFloor(backfill) > effectiveFloor(target))) {
+        target = backfill;
+      }
+    }
+    return target == null ? null : target.getBoard();
+  }
+
+  private static long effectiveFloor(BoardBackfill backfill) {
+    return backfill.getFloorTopicId() == null ? Long.MAX_VALUE : backfill.getFloorTopicId();
+  }
+
+  /**
+   * 저장된 글 전체(board가 있으면 그 게시판 글)를 조회수순으로. 커버리지와 상관없다. cursor는 마지막 글의 "조회수_글 번호". 오프셋 대신 이 값보다 뒤의 글을 주므로, 이어 받는 사이 앞쪽에 글이
    * 늘어도 같은 글이 다시 오지 않는다.
    */
   private PostListResponse getByViews(
-      CategoryFilter filter, Subcategory subcategory, String cursor) {
+      Board board, CategoryFilter filter, Subcategory subcategory, String cursor) {
     int views = Integer.MAX_VALUE;
     long beforeTopicId = Long.MAX_VALUE;
     if (cursor != null) {
@@ -117,7 +214,12 @@ public class PostQueryService {
     }
     List<Post> posts =
         postRepository.findByViews(
-            views, beforeTopicId, filter.getCategory(), subcategory, Limit.of(PAGE_SIZE + 1));
+            views,
+            beforeTopicId,
+            board,
+            filter.getCategory(),
+            subcategory,
+            Limit.of(PAGE_SIZE + 1));
 
     boolean hasMore = posts.size() > PAGE_SIZE;
     if (hasMore) {

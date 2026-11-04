@@ -1,5 +1,6 @@
 package com.keycheck.post.controller;
 
+import com.keycheck.post.dto.BoardFilter;
 import com.keycheck.post.dto.CategoryFilter;
 import com.keycheck.post.dto.PostDetailResponse;
 import com.keycheck.post.dto.PostListResponse;
@@ -19,7 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-@Tag(name = "글", description = "수집한 IC 글 조회")
+@Tag(name = "글", description = "수집한 geekhack IC·GB 글 조회")
 @RestController
 @RequestMapping("/api/posts")
 @RequiredArgsConstructor
@@ -39,10 +40,16 @@ public class PostController {
           "숨김 글을 뺀 목록을 최대 20건씩 이어서 돌려준다(무한 스크롤). hasMore가 true면 nextCursor를 cursor로 넘겨"
               + " 다음을 요청한다(nextCursor가 null이면 cursor 없이). items가 비었는데 hasMore가 true면 geekhack에서"
               + " 더 가져오지 못한 순간이므로 잠시 뒤 같은 cursor로 다시 요청한다."
+              + " board: geekhack 게시판. ic(Interest Checks), gb(Group Buys and Preorders), all(둘 다, 기본)."
+              + " 카드·상세의 board는 글을 읽어 온 게시판 코드(IC, GB)다."
               + " recent: 확보한 범위의 글을 글 번호(작성순) 내림차순으로 준다. 20건이 안 되면 geekhack 작성순 목록의"
               + " 다음 쪽을 한 번 읽어 본문·이미지 없는 틀 글(detailLoaded=false)로 저장한 뒤 다시 조회한다."
-              + " views: 저장된 글 전체를 조회수순으로 주고 geekhack을 호출하지 않는다."
+              + " all이면 두 게시판 모두 빠짐없이 받아 둔 범위만 주고, 모자라면 덜 받은 게시판의 다음 쪽을 한 번 읽는다."
+              + " 그래서 두 게시판을 모두 조금이라도 받기 전에는 items가 비고 hasMore=true일 수 있다."
+              + " all은 두 게시판 모두 끝까지 받았을 때만 모자라면 hasMore=false다."
+              + " views: 저장된 글 전체(board가 있으면 그 게시판 글)를 조회수순으로 주고 geekhack을 호출하지 않는다."
               + " 분류·세부 분류 필터는 recent여도 과거 글을 확보하지 않고, 지금 분류된 글이 다하면 hasMore=false다."
+              + " 이때 all은 게시판별 필터 목록을 합친 것이다(게시판마다 그 게시판에서 확보한 범위로 거른다)."
               + " subcategory: 세부 분류 코드. KEYBOARD는 배열(KB_100, KB_96, KB_80, KB_75, KB_65, KB_60,"
               + " KB_40, KB_ERGO, KB_ETC), KEYCAP은 제조사(KC_GMK, KC_SP, KC_MW, KC_KKB, KC_PBTFANS, KC_ETC)."
               + " 기타·미분류 글이나 아직 정하지 않았으면 null."
@@ -50,7 +57,8 @@ public class PostController {
   @ApiResponse(responseCode = "200", description = "성공")
   @ApiResponse(
       responseCode = "400",
-      description = "허용되지 않는 category·sub·sort·cursor 값, category가 all이거나 분류와 맞지 않는 sub")
+      description =
+          "허용되지 않는 board·category·sub·sort·cursor 값, category가 all이거나 분류와 맞지 않는 sub")
   @GetMapping
   public PostListResponse getPosts(
       @Parameter(
@@ -77,10 +85,16 @@ public class PostController {
           @RequestParam(defaultValue = "recent")
           String sort,
       @Parameter(description = "이전 응답의 nextCursor. 첫 요청은 생략") @RequestParam(required = false)
-          String cursor) {
+          String cursor,
+      @Parameter(
+              description =
+                  "게시판 필터 (ic: Interest Checks, gb: Group Buys and Preorders, all: 둘 다)",
+              schema = @Schema(allowableValues = {"all", "ic", "gb"}))
+          @RequestParam(defaultValue = "all")
+          String board) {
     CategoryFilter filter = CategoryFilter.from(category);
     return postQueryService.getPosts(
-        filter, filter.subcategory(sub), PostSort.from(sort), cursor);
+        BoardFilter.from(board), filter, filter.subcategory(sub), PostSort.from(sort), cursor);
   }
 
   @Operation(

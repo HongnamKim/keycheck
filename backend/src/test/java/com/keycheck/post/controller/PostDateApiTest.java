@@ -12,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.keycheck.TestcontainersConfiguration;
 import com.keycheck.crawl.client.GeekhackClient;
 import com.keycheck.crawl.client.RequestGate;
+import com.keycheck.post.domain.Board;
 import com.keycheck.post.domain.Category;
 import com.keycheck.post.domain.Post;
 import com.keycheck.post.repository.PostRepository;
@@ -58,6 +59,7 @@ class PostDateApiTest {
   private Post saveFull(long topicId, Instant postedAt, boolean hidden) {
     Post post =
         Post.create(
+            Board.IC,
             topicId,
             "글 " + topicId,
             "maker",
@@ -76,6 +78,7 @@ class PostDateApiTest {
   private Post saveSkeleton(long topicId, Instant lastPostAt) {
     Post post =
         Post.createSkeleton(
+            Board.IC,
             topicId,
             "틀 " + topicId,
             "maker",

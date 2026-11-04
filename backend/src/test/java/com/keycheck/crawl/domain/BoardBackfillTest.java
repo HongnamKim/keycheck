@@ -2,12 +2,13 @@ package com.keycheck.crawl.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.keycheck.post.domain.Board;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 class BoardBackfillTest {
-  private final BoardBackfill backfill = BoardBackfill.create();
+  private final BoardBackfill backfill = BoardBackfill.create(Board.GB);
 
   private void assertState(int nextPage, Long floorTopicId, boolean exhausted) {
     assertThat(backfill.getNextPage()).isEqualTo(nextPage);
@@ -16,8 +17,9 @@ class BoardBackfillTest {
   }
 
   @Test
-  @DisplayName("처음에는 아무것도 커버하지 않는다")
+  @DisplayName("게시판마다 만들고, 처음에는 아무것도 커버하지 않는다")
   void startsEmpty() {
+    assertThat(backfill.getBoard()).isEqualTo(Board.GB);
     assertState(0, null, false);
   }
 

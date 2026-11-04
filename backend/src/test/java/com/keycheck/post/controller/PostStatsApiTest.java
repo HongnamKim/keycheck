@@ -13,6 +13,7 @@ import com.keycheck.MutableClock;
 import com.keycheck.TestcontainersConfiguration;
 import com.keycheck.crawl.client.GeekhackClient;
 import com.keycheck.crawl.client.RequestGate;
+import com.keycheck.post.domain.Board;
 import com.keycheck.post.domain.Category;
 import com.keycheck.post.domain.Post;
 import com.keycheck.post.repository.PostRepository;
@@ -66,6 +67,7 @@ class PostStatsApiTest {
   private Post savePostCheckedAgo(Duration ago) {
     return postRepository.saveAndFlush(
         Post.create(
+            Board.IC,
             TOPIC_ID,
             "글",
             "maker",

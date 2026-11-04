@@ -1,5 +1,6 @@
 package com.keycheck.crawl.client;
 
+import com.keycheck.post.domain.Board;
 import java.net.URI;
 import java.nio.charset.Charset;
 import lombok.RequiredArgsConstructor;
@@ -8,7 +9,6 @@ import org.springframework.web.client.RestClient;
 /** geekhack HTML을 받아오는 클라이언트. 간격 제한은 직접 쓰지 않는다. 호출자가 RequestGate를 통과한 뒤 부른다. */
 @RequiredArgsConstructor
 public class GeekhackClient {
-  private static final int BOARD_ID = 132;
   private static final int TOPICS_PER_PAGE = 50;
 
   /** 페이지는 ISO-8859-1로 선언하지만 실제 바이트는 Windows-1252다 (docs/geekhack-html-notes.md) */
@@ -21,8 +21,8 @@ public class GeekhackClient {
    *
    * @param page 0부터
    */
-  public String fetchBoardPage(int page) {
-    return get("/index.php?board=" + BOARD_ID + "." + page * TOPICS_PER_PAGE);
+  public String fetchBoardPage(Board board, int page) {
+    return get(boardPath(board, page));
   }
 
   /**
@@ -30,9 +30,8 @@ public class GeekhackClient {
    *
    * @param page 0부터
    */
-  public String fetchBoardPageByFirstPost(int page) {
-    return get(
-        "/index.php?board=" + BOARD_ID + "." + page * TOPICS_PER_PAGE + ";sort=first_post;desc");
+  public String fetchBoardPageByFirstPost(Board board, int page) {
+    return get(boardPath(board, page) + ";sort=first_post;desc");
   }
 
   public String fetchTopic(long topicId) {
@@ -42,6 +41,11 @@ public class GeekhackClient {
   /** 오프셋을 글 수보다 크게 주면 geekhack이 마지막 페이지를 돌려준다 */
   public String fetchTopicLastPage(long topicId) {
     return get("/index.php?topic=" + topicId + ".999999");
+  }
+
+  /** 두 게시판의 목록 HTML 구조와 쪽당 글 수는 같다 */
+  private static String boardPath(Board board, int page) {
+    return "/index.php?board=" + board.getGeekhackBoardId() + "." + page * TOPICS_PER_PAGE;
   }
 
   /** URI 템플릿으로 넘기면 쿼리 값 안의 '='가 %3D로 바뀌므로, 만든 주소를 그대로 보낸다 */
