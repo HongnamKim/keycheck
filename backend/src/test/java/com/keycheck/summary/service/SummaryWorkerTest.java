@@ -18,6 +18,7 @@ import com.keycheck.post.repository.PostRepository;
 import com.keycheck.summary.config.SummaryProperties;
 import com.keycheck.summary.dto.PostSource;
 import com.keycheck.summary.dto.SummaryResult;
+import java.sql.Timestamp;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -151,8 +152,15 @@ class SummaryWorkerTest {
     assertThat(saved.getSubcategory()).isNull();
   }
 
+  private void markDetailFetchedAt(Post post, Instant fetchedAt) {
+    jdbcTemplate.update(
+        "update post set detail_fetched_at = ? where id = ?",
+        Timestamp.from(fetchedAt),
+        post.getId());
+  }
+
   @Test
-  @DisplayName("글 번호가 큰(최근) 글부터 한 번에 하나씩 요약한다")
+  @DisplayName("본문을 채운 시각이 같으면 글 번호가 큰(최근) 글부터 한 번에 하나씩 요약한다")
   void summarizesRecentFirstOneAtATime() {
     saveLoaded(2000);
     saveLoaded(3000);
@@ -164,6 +172,45 @@ class SummaryWorkerTest {
     assertThat(summarizer.titles()).containsExactly("[IC] 글 3000", "[IC] 글 2000");
 
     assertThat(worker(false).summarizeNext()).isFalse();
+  }
+
+  @Test
+  @DisplayName("방금 본문을 채운 글은 글 번호가 작아도 먼저 요약한다")
+  void summarizesJustFilledFirst() {
+    saveLoaded(3000);
+    markDetailFetchedAt(saveLoaded(1000), CHECKED_AT.plusSeconds(60));
+
+    SummaryWorker worker = worker(false);
+    worker.summarizeNext();
+    worker.summarizeNext();
+
+    assertThat(summarizer.titles()).containsExactly("[IC] 글 1000", "[IC] 글 3000");
+  }
+
+  @Test
+  @DisplayName("다시 요약할 글은 요약 대기 글 다음에, 본문을 채운 시각이 늦은 글부터 요약한다")
+  void redoTargetsAfterPendingByFilledAt() {
+    Post newerFake = saveLoaded(1000);
+    markSummarizedBy(newerFake, FakeSummarizer.ID);
+    markDetailFetchedAt(newerFake, CHECKED_AT.plusSeconds(120));
+    Post olderMissing = saveMissingSubcategory(4000, Category.KEYCAP);
+    markDetailFetchedAt(olderMissing, CHECKED_AT.plusSeconds(60));
+    saveLoaded(2000);
+    summarizer.result =
+        new SummaryResult(
+            List.of("다시 쓴 요약"),
+            List.of(),
+            Category.KEYBOARD,
+            Subcategory.KB_65,
+            "claude-opus-5-5");
+
+    SummaryWorker worker = worker(true, true);
+    while (worker.summarizeNext()) {
+      // 대상이 없을 때까지
+    }
+
+    assertThat(summarizer.titles())
+        .containsExactly("[IC] 글 2000", "[IC] 글 1000", "[IC] 글 4000");
   }
 
   @Test

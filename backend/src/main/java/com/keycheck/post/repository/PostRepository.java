@@ -155,7 +155,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
   /**
    * 요약 대상. 본문까지 읽은 숨기지 않은 글 중 요약 대기(PENDING)인 글, redoFake면 가짜 요약기('fake', FakeSummarizer.ID)로
-   * 요약한 글, redoMissingSubcategory면 세부 분류가 없는 키보드·키캡 요약까지. 최근 글(글 번호가 큰 글)부터.
+   * 요약한 글, redoMissingSubcategory면 세부 분류가 없는 키보드·키캡 요약까지. 요약 대기 글을 먼저, 그 안에서는 본문을 늦게 채운
+   * 글(방금 상세를 연 틀 글)부터, 같으면 글 번호가 큰 글부터.
    */
   @Query(
       "select p from Post p where p.hidden = false and p.detailFetchedAt is not null"
@@ -167,7 +168,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
           + " and p.subcategory is null"
           + " and p.category in (com.keycheck.post.domain.Category.KEYBOARD,"
           + " com.keycheck.post.domain.Category.KEYCAP)))"
-          + " order by p.topicId desc")
+          + " order by case when p.summaryStatus = com.keycheck.post.domain.SummaryStatus.PENDING"
+          + " then 0 else 1 end, p.detailFetchedAt desc, p.topicId desc")
   List<Post> findSummaryTargets(boolean redoFake, boolean redoMissingSubcategory, Limit limit);
 
   /**
