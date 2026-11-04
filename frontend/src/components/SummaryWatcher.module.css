@@ -1,0 +1,32 @@
+.status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--color-muted);
+}
+
+/* 작은 원형 스피너. 테두리는 구분선 색, 도는 한 조각은 강조색 */
+.spinner {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--color-divider);
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 움직임을 줄이는 설정이면 돌리지 않고 멈춘 고리만 보인다 */
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
+}

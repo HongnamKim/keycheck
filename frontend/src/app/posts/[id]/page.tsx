@@ -7,6 +7,7 @@ import NeighborList from "@/components/NeighborList";
 import PostDates from "@/components/PostDates";
 import RemoteImage from "@/components/RemoteImage";
 import StatsLive from "@/components/StatsLive";
+import SummaryWatcher from "@/components/SummaryWatcher";
 import { getPost } from "@/lib/api";
 import { postCategoryLabel } from "@/lib/format";
 import { backHref, parseDetailQuery, parsePostId, postHref } from "@/lib/query";
@@ -92,15 +93,23 @@ async function PostDetail({ params, searchParams }: PageProps<"/posts/[id]">) {
             <>
               <section className={styles.section}>
                 <h3 className={styles.sectionTitle}>핵심 요약</h3>
-                {hasSummary ? (
-                  <ul className={styles.points}>
-                    {post.summaryLines.map((line, i) => (
-                      <li key={i}>{line}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className={styles.pending}>요약 준비 중</p>
-                )}
+                {/* 요약 대기 안내가 요약으로 바뀌어도 이 라이브 영역은 남아 화면 낭독기가 도착을 읽어 준다 */}
+                <div aria-live="polite">
+                  {hasSummary ? (
+                    <ul className={styles.points}>
+                      {post.summaryLines.map((line, i) => (
+                        <li key={i}>{line}</li>
+                      ))}
+                    </ul>
+                  ) : post.summaryStatus === "PENDING" ? (
+                    // 요약 작업이 끝나면 새로고침 없이 이 자리에 요약이 들어온다
+                    <SummaryWatcher postId={post.id} />
+                  ) : post.summaryStatus === "FAILED" ? (
+                    <p className={styles.pending}>요약을 만들지 못했어요</p>
+                  ) : (
+                    <p className={styles.pending}>요약 준비 중</p>
+                  )}
+                </div>
               </section>
 
               {post.specs.length > 0 && (

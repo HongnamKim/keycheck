@@ -131,9 +131,9 @@ export async function getPosts(
   return res.json();
 }
 
-/** 없거나 숨김인 글이면 null */
-export async function getPost(id: number): Promise<PostDetail | null> {
-  const res = await fetch(`${API_BASE_URL}/api/posts/${id}`);
+/** 없거나 숨김인 글이면 null. 서버에서 부르고, 상세 화면의 요약 대기 중에는 브라우저에서도 부른다. */
+export async function getPost(id: number, signal?: AbortSignal): Promise<PostDetail | null> {
+  const res = await fetch(`${API_BASE_URL}/api/posts/${id}`, { signal });
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`상세 조회 실패: ${res.status}`);
   return res.json();
