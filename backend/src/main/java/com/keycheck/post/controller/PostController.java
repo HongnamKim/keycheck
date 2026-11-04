@@ -4,6 +4,7 @@ import com.keycheck.post.dto.BoardFilter;
 import com.keycheck.post.dto.CategoryFilter;
 import com.keycheck.post.dto.PostDetailResponse;
 import com.keycheck.post.dto.PostListResponse;
+import com.keycheck.post.dto.PostNeighborsResponse;
 import com.keycheck.post.dto.PostSort;
 import com.keycheck.post.dto.PostStatsResponse;
 import com.keycheck.post.service.PostQueryService;
@@ -110,6 +111,53 @@ public class PostController {
   public PostDetailResponse getPost(
       @Parameter(description = "글 ID (키체크 내부 ID)") @PathVariable Long id) {
     return postQueryService.getPost(id);
+  }
+
+  @Operation(
+      summary = "글 앞뒤 목록",
+      description =
+          "상세 아래에 보여 줄 목록. 같은 board·category·sub·sort의 글 목록(GET /api/posts와 같은 필터·정렬·커버리지 규칙)에서"
+              + " 이 글 바로 위 최대 size개(before)와 바로 아래 최대 size개(after)를 준다. 둘 다 목록 순서대로라"
+              + " before의 마지막 원소가 바로 위 글, after의 첫 원소가 바로 아래 글이다. 이 글은 들어 있지 않다."
+              + " 이 글이 그 목록 조건(게시판·분류·커버리지)에 맞지 않아도 그 정렬 기준의 위치로 계산한다."
+              + " 과거 글을 확보하지 않으므로(geekhack 요청 없음) 확보한 범위의 끝에서는 after가 size보다 적을 수 있다."
+              + " 카드 형식은 목록과 같다."
+              + DATES_DESCRIPTION)
+  @ApiResponse(responseCode = "200", description = "성공")
+  @ApiResponse(
+      responseCode = "400",
+      description =
+          "허용되지 않는 board·category·sub·sort 값, category가 all이거나 분류와 맞지 않는 sub, 1~10 밖의 size")
+  @ApiResponse(responseCode = "404", description = "없거나 숨김 처리된 글")
+  @GetMapping("/{id}/neighbors")
+  public PostNeighborsResponse getNeighbors(
+      @Parameter(description = "글 ID (키체크 내부 ID)") @PathVariable Long id,
+      @Parameter(
+              description = "게시판 필터. 목록과 같다",
+              schema = @Schema(allowableValues = {"all", "ic", "gb"}))
+          @RequestParam(defaultValue = "all")
+          String board,
+      @Parameter(
+              description = "분류 필터. 목록과 같다",
+              schema = @Schema(allowableValues = {"all", "keyboard", "keycap"}))
+          @RequestParam(defaultValue = "all")
+          String category,
+      @Parameter(description = "세부 분류 필터. 목록과 같다(category를 정해야 쓸 수 있다)")
+          @RequestParam(required = false)
+          String sub,
+      @Parameter(
+              description = "정렬. 목록과 같다",
+              schema = @Schema(allowableValues = {"recent", "views"}))
+          @RequestParam(defaultValue = "recent")
+          String sort,
+      @Parameter(
+              description = "앞뒤 각각 최대 개수",
+              schema = @Schema(minimum = "1", maximum = "10", defaultValue = "5"))
+          @RequestParam(defaultValue = "5")
+          int size) {
+    CategoryFilter filter = CategoryFilter.from(category);
+    return postQueryService.getNeighbors(
+        id, BoardFilter.from(board), filter, filter.subcategory(sub), PostSort.from(sort), size);
   }
 
   @Operation(

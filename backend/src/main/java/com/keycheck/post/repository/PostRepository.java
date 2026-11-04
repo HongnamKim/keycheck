@@ -48,6 +48,26 @@ public interface PostRepository extends JpaRepository<Post, Long> {
       Limit limit);
 
   /**
+   * 최근순 목록에서 afterTopicId 글보다 위(글 번호가 큰) 글을 가까운 것부터(글 번호 오름차순). 매개변수는 findRecent와 같다.
+   *
+   * @param afterTopicId 이 번호 초과만
+   */
+  @Query(
+      "select p from Post p where p.hidden = false"
+          + " and p.topicId >= :floorTopicId and p.topicId > :afterTopicId"
+          + " and (:board is null or p.board = :board)"
+          + " and (:category is null or p.category = :category)"
+          + " and (:subcategory is null or p.subcategory = :subcategory)"
+          + " order by p.topicId asc")
+  List<Post> findRecentAbove(
+      long floorTopicId,
+      long afterTopicId,
+      Board board,
+      Category category,
+      Subcategory subcategory,
+      Limit limit);
+
+  /**
    * 조회수순(조회수 내림차순, 같으면 글 번호 내림차순) 목록
    *
    * @param views cursor의 조회수
@@ -64,6 +84,25 @@ public interface PostRepository extends JpaRepository<Post, Long> {
           + " and (:subcategory is null or p.subcategory = :subcategory)"
           + " order by p.views desc, p.topicId desc")
   List<Post> findByViews(
+      int views,
+      long topicId,
+      Board board,
+      Category category,
+      Subcategory subcategory,
+      Limit limit);
+
+  /**
+   * 조회수순 목록에서 (views, topicId)보다 앞에 오는 글을 가까운 것부터(조회수 오름차순, 같으면 글 번호 오름차순). 매개변수는
+   * findByViews와 같다.
+   */
+  @Query(
+      "select p from Post p where p.hidden = false"
+          + " and (p.views > :views or (p.views = :views and p.topicId > :topicId))"
+          + " and (:board is null or p.board = :board)"
+          + " and (:category is null or p.category = :category)"
+          + " and (:subcategory is null or p.subcategory = :subcategory)"
+          + " order by p.views asc, p.topicId asc")
+  List<Post> findByViewsAbove(
       int views,
       long topicId,
       Board board,

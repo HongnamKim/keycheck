@@ -4,6 +4,7 @@ import com.keycheck.crawl.domain.BoardBackfill;
 import com.keycheck.crawl.repository.BoardBackfillRepository;
 import com.keycheck.crawl.service.CrawlService;
 import com.keycheck.post.domain.Board;
+import com.keycheck.post.domain.Category;
 import com.keycheck.post.domain.Post;
 import com.keycheck.post.domain.PostImage;
 import com.keycheck.post.domain.Subcategory;
@@ -11,6 +12,7 @@ import com.keycheck.post.dto.CategoryFilter;
 import com.keycheck.post.dto.PostCardResponse;
 import com.keycheck.post.dto.PostDetailResponse;
 import com.keycheck.post.dto.PostListResponse;
+import com.keycheck.post.dto.PostNeighborsResponse;
 import com.keycheck.post.dto.PostSort;
 import com.keycheck.post.dto.PostedAtAnchor;
 import com.keycheck.post.repository.PostImageRepository;
@@ -28,6 +30,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Limit;
 import org.springframework.http.HttpStatus;
@@ -45,6 +48,7 @@ public class PostQueryService {
   private static final int PAGE_SIZE = 20;
   private static final Duration BACKFILL_WAIT = Duration.ofSeconds(3);
   private static final Duration FILL_WAIT = Duration.ofSeconds(5);
+  public static final int NEIGHBOR_MAX_SIZE = 10;
 
   private final PostRepository postRepository;
   private final PostImageRepository postImageRepository;
@@ -270,6 +274,61 @@ public class PostQueryService {
     String imageUrl = representativeImageUrls(List.of(post)).get(post.getRepresentativeImageId());
     return PostDetailResponse.from(
         post, imageUrl, estimatedPostedAts(List.of(post)).get(post.getId()));
+  }
+
+  /**
+   * 상세 아래 목록: getPosts와 같은 조건의 목록에서 이 글 바로 위(before)·아래(after) 최대 size개씩, 둘 다 목록 순서대로. 이 글이 목록
+   * 조건에 맞지 않아도 그 정렬 기준 위치로 계산한다. 과거 글을 확보하지 않는다(geekhack 요청 없음).
+   *
+   * @param size 1 이상 NEIGHBOR_MAX_SIZE 이하
+   */
+  public PostNeighborsResponse getNeighbors(
+      Long id, Board board, CategoryFilter filter, Subcategory subcategory, PostSort sort, int size) {
+    if (size < 1 || size > NEIGHBOR_MAX_SIZE) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "size는 1 이상 " + NEIGHBOR_MAX_SIZE + " 이하: " + size);
+    }
+    Post post = visible(postRepository.findById(id));
+    Category category = filter.getCategory();
+    Limit limit = Limit.of(size);
+    List<Post> above;
+    List<Post> below;
+    if (sort == PostSort.VIEWS) {
+      above =
+          postRepository.findByViewsAbove(
+              post.getViews(), post.getTopicId(), board, category, subcategory, limit);
+      below =
+          postRepository.findByViews(
+              post.getViews(), post.getTopicId(), board, category, subcategory, limit);
+    } else {
+      List<BoardBackfill> backfills = backfills(board);
+      above =
+          findInCoverage(
+              board,
+              filter,
+              backfills,
+              (floorTopicId, queryBoard) ->
+                  postRepository.findRecentAbove(
+                      floorTopicId, post.getTopicId(), queryBoard, category, subcategory, limit),
+              Comparator.comparing(Post::getTopicId),
+              size);
+      below =
+          findInCoverage(
+              board,
+              filter,
+              backfills,
+              (floorTopicId, queryBoard) ->
+                  postRepository.findRecent(
+                      floorTopicId, post.getTopicId(), queryBoard, category, subcategory, limit),
+              Comparator.comparing(Post::getTopicId).reversed(),
+              size);
+    }
+    // above는 가까운 글부터라 목록 순서로 뒤집는다. 대표 이미지·추정 작성일은 한 번에 모아 읽는다.
+    List<Post> before = above.reversed();
+    List<PostCardResponse> cards =
+        cards(Stream.concat(before.stream(), below.stream()).toList());
+    return new PostNeighborsResponse(
+        cards.subList(0, before.size()), cards.subList(before.size(), cards.size()));
   }
 
   private Post visible(Optional<Post> post) {

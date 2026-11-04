@@ -28,6 +28,8 @@ class OpenApiTest {
         .andExpect(jsonPath("$.info.title").value("키체크 API"))
         .andExpect(jsonPath("$.paths['/api/posts'].get.summary").value("글 목록"))
         .andExpect(jsonPath("$.paths['/api/posts/{id}'].get.summary").value("글 상세"))
+        .andExpect(
+            jsonPath("$.paths['/api/posts/{id}/neighbors'].get.summary").value("글 앞뒤 목록"))
         .andExpect(jsonPath("$.paths['/api/posts'].get.parameters[0].schema.enum").isArray())
         .andExpect(jsonPath("$.paths['/api/posts'].get.parameters[1].name").value("sub"))
         .andExpect(jsonPath("$.paths['/api/posts'].get.parameters[1].schema.enum").isArray())
