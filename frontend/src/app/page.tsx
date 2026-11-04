@@ -1,28 +1,42 @@
-import { Suspense } from "react";
-import FilterBar from "@/components/FilterBar";
-import PostFeed from "@/components/PostFeed";
-import { getPosts } from "@/lib/api";
-import { listHref, parseListQuery } from "@/lib/query";
+import BoardColumn from "@/components/BoardColumn";
 import styles from "./page.module.css";
 
-export default function Home({ searchParams }: PageProps<"/">) {
+/** 메인. 짧은 소개와 IC·공동구매 최근 글 두 칸 */
+export default function Home() {
   return (
-    <Suspense fallback={<p className={styles.message}>글을 불러오는 중이에요</p>}>
-      <PostList searchParams={searchParams} />
-    </Suspense>
-  );
-}
+    <div className={styles.home}>
+      <section className={styles.hero} aria-labelledby="hero-title">
+        <div className={styles.intro}>
+          <h1 id="hero-title" className={styles.heroTitle}>
+            키보드·키캡 IC와 공동구매를
+            <br />
+            한국어로 먼저 훑어보세요
+          </h1>
+          <p className={styles.lead}>
+            geekhack의 인터레스트 체크와 공동구매 글을 모아 핵심만 한국어로 요약해요. 대표 이미지와 스펙을 보고, 관심 가는
+            글은 원문으로 바로 넘어가면 돼요.
+          </p>
+        </div>
+        <dl className={styles.facts}>
+          <div>
+            <dt>요약</dt>
+            <dd>한국어 3~4줄</dd>
+          </div>
+          <div>
+            <dt>확인 주기</dt>
+            <dd>30분마다</dd>
+          </div>
+          <div>
+            <dt>원문</dt>
+            <dd>geekhack</dd>
+          </div>
+        </dl>
+      </section>
 
-async function PostList({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
-  const query = parseListQuery(await searchParams);
-  const first = await getPosts(query.category, query.sort, null, query.sub);
-  const renderedAt = new Date().toISOString();
-
-  return (
-    <div className={styles.feed}>
-      <FilterBar query={query} />
-      {/* 필터·정렬이 바뀌면(다른 주소) 목록을 새로 시작한다 */}
-      <PostFeed key={listHref(query)} query={query} initial={first} renderedAt={renderedAt} />
+      <div className={styles.columns}>
+        <BoardColumn board="ic" />
+        <BoardColumn board="gb" />
+      </div>
     </div>
   );
 }

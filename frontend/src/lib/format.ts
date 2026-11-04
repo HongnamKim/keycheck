@@ -1,4 +1,4 @@
-import type { Category, Subcategory } from "./api";
+import type { Board, BoardFilter, Category, Subcategory } from "./api";
 
 /**
  * 조회수 표기 (설계 5장)
@@ -98,3 +98,14 @@ export function subcategoryLabel(subcategory: Subcategory): string {
 export function postCategoryLabel(category: Category, subcategory: Subcategory | null): string {
   return subcategory ? `${categoryLabel(category)} · ${subcategoryLabel(subcategory)}` : categoryLabel(category);
 }
+
+/** 글마다 붙는 게시판 배지 글자 */
+export function boardLabel(board: Board): string {
+  return board === "GB" ? "공동구매" : "IC";
+}
+
+/** 게시판 목록·메인 칸의 제목, 제목 옆 배지 글자, 한 줄 설명 (승인된 시안 문구) */
+export const BOARD_INFO: Record<BoardFilter, { title: string; badge: string; desc: string }> = {
+  ic: { title: "IC", badge: "IC", desc: "관심 조사 글이에요. 아직 판매 전이라 의견을 모으는 단계예요." },
+  gb: { title: "공동구매", badge: "GB", desc: "주문을 받는 중이거나 곧 받을 글이에요. 기간과 벤더를 확인해 보세요." },
+};

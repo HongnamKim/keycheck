@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  boardLabel,
   categoryLabel,
   formatAgo,
   formatCheckedAt,
@@ -161,5 +162,12 @@ describe("postCategoryLabel", () => {
   it("세부 분류가 없으면 분류만", () => {
     expect(postCategoryLabel("KEYBOARD", null)).toBe("키보드");
     expect(postCategoryLabel("OTHER", null)).toBe("기타");
+  });
+});
+
+describe("boardLabel", () => {
+  it("게시판 배지 글자. 공동구매는 한국어로", () => {
+    expect(boardLabel("IC")).toBe("IC");
+    expect(boardLabel("GB")).toBe("공동구매");
   });
 });

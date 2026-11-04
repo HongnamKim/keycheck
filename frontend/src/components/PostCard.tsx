@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { PostCard as PostCardData } from "@/lib/api";
 import { formatCheckedAt, formatViews, postCategoryLabel } from "@/lib/format";
+import BoardBadge from "./BoardBadge";
 import PostDates from "./PostDates";
 import RemoteImage from "./RemoteImage";
 import styles from "./PostCard.module.css";
@@ -42,7 +43,10 @@ export default function PostCard({
         <span className={`${styles.noImage} ${styles.notLoaded}`}>글을 열면 이미지를 불러와요</span>
       )}
       <div className={styles.body}>
-        <span className={styles.category}>{postCategoryLabel(post.category, post.subcategory)}</span>
+        <span className={styles.category}>
+          <BoardBadge board={post.board} />
+          <span>{postCategoryLabel(post.category, post.subcategory)}</span>
+        </span>
         <h2 className={styles.title}>{post.title}</h2>
         {summary ? (
           <span className={styles.summary}>{summary}</span>

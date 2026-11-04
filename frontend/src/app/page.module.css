@@ -1,9 +1,92 @@
-.feed {
+.home {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 36px;
 }
 
+.hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px 40px;
+  padding: 12px 0 28px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.intro {
+  flex: 1 1 520px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.heroTitle {
+  font-size: 40px;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  word-break: keep-all;
+}
+
+.lead {
+  max-width: 56ch;
+  font-size: 17px;
+  line-height: 1.65;
+  color: var(--color-text-body);
+}
+
+.facts {
+  flex: 0 1 380px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--color-border);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.facts > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px;
+  background: var(--color-surface);
+}
+
+.facts dt {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--color-muted);
+}
+
+.facts dd {
+  font-size: 15px;
+  line-height: 1.5;
+  font-weight: 600;
+}
+
+.columns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px;
+  align-items: flex-start;
+}
+
+/* 좁은 화면에서는 소개 제목을 줄인다 */
+@media (max-width: 640px) {
+  .heroTitle {
+    font-size: 30px;
+  }
+
+  .lead {
+    font-size: 16px;
+  }
+}
+
+/* 찾을 수 없는 페이지 안내 */
 .message {
   padding: 48px 0;
   font-size: 16px;

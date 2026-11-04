@@ -60,6 +60,11 @@ export function snapshotKey(listHref: string): string {
   return `${SNAPSHOT_PREFIX}${listHref}`;
 }
 
+/** 저장소 키 가운데 모든 목록의 저장본 키. 메뉴·전체 보기로 목록에 새로 들어갈 때 지운다 */
+export function snapshotKeys(keys: string[]): string[] {
+  return keys.filter((k) => k.startsWith(SNAPSHOT_PREFIX));
+}
+
 /** 저장소 키 가운데 지금 목록(current)이 아닌 다른 목록의 저장본 키 */
 export function otherSnapshotKeys(keys: string[], current: string): string[] {
   return keys.filter((k) => k.startsWith(SNAPSHOT_PREFIX) && k !== current);

@@ -6,6 +6,7 @@ import {
   otherSnapshotKeys,
   readSnapshot,
   snapshotKey,
+  snapshotKeys,
   startFeed,
   type FeedState,
 } from "./feed";
@@ -13,6 +14,7 @@ import {
 function card(id: number): PostCard {
   return {
     id,
+    board: "IC",
     title: `글 ${id}`,
     category: "KEYBOARD",
     subcategory: null,
@@ -85,14 +87,25 @@ describe("applyBatch", () => {
 
 describe("snapshotKey", () => {
   it("목록 주소마다 따로 저장한다", () => {
-    expect(snapshotKey("/")).not.toBe(snapshotKey("/?category=keycap"));
+    expect(snapshotKey("/ic")).not.toBe(snapshotKey("/ic?category=keycap"));
+  });
+
+  it("게시판이 다르면 같은 필터라도 따로 저장한다", () => {
+    expect(snapshotKey("/ic?category=keycap")).not.toBe(snapshotKey("/gb?category=keycap"));
   });
 });
 
 describe("otherSnapshotKeys", () => {
   it("지금 목록이 아닌 다른 목록의 저장본 키만 고른다 (다른 앱의 키는 건드리지 않는다)", () => {
-    const keys = [snapshotKey("/"), snapshotKey("/?category=keycap"), "other:key"];
-    expect(otherSnapshotKeys(keys, snapshotKey("/"))).toEqual([snapshotKey("/?category=keycap")]);
+    const keys = [snapshotKey("/ic"), snapshotKey("/ic?category=keycap"), snapshotKey("/gb"), "other:key"];
+    expect(otherSnapshotKeys(keys, snapshotKey("/ic"))).toEqual([snapshotKey("/ic?category=keycap"), snapshotKey("/gb")]);
+  });
+});
+
+describe("snapshotKeys", () => {
+  it("메뉴·전체 보기로 새로 들어갈 때 지울 모든 목록의 저장본 키를 고른다 (다른 앱의 키는 건드리지 않는다)", () => {
+    const keys = [snapshotKey("/ic"), "other:key", snapshotKey("/gb?category=keycap")];
+    expect(snapshotKeys(keys)).toEqual([snapshotKey("/ic"), snapshotKey("/gb?category=keycap")]);
   });
 });
 

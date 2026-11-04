@@ -23,6 +23,10 @@ export type Subcategory =
   | "KC_PBTFANS"
   | "KC_ETC";
 export type SummaryStatus = "PENDING" | "DONE" | "FAILED";
+/** 글이 올라온 geekhack 게시판. IC: Interest Checks, GB: Group Buys and Preorders */
+export type Board = "IC" | "GB";
+/** 목록 board 파라미터. 백엔드는 all(기본)도 받지만 화면은 게시판별로만 부른다 */
+export type BoardFilter = "ic" | "gb";
 export type CategoryFilter = "all" | "keyboard" | "keycap";
 export type PostSort = "recent" | "views";
 /** 목록 sub 파라미터(주소용 짧은 값). keyboard면 배열, keycap이면 제조사. etc는 둘 다 쓴다 */
@@ -30,6 +34,7 @@ export type SubFilter = "100" | "96" | "80" | "75" | "65" | "60" | "40" | "ergo"
 
 export interface PostCard {
   id: number;
+  board: Board;
   title: string;
   category: Category;
   subcategory: Subcategory | null;
@@ -66,6 +71,7 @@ export interface SpecItem {
 
 export interface PostDetail {
   id: number;
+  board: Board;
   title: string;
   author: string;
   category: Category;
@@ -100,12 +106,13 @@ export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://loca
 
 /** cursor 없이 부르면 첫 묶음. sub는 category와 맞는 값만 넘긴다(아니면 400). 서버와 브라우저 모두에서 부른다. */
 export async function getPosts(
+  board: BoardFilter,
   category: CategoryFilter,
   sort: PostSort,
   cursor?: string | null,
   sub?: SubFilter,
 ): Promise<PostBatch> {
-  const query = new URLSearchParams({ category, sort });
+  const query = new URLSearchParams({ board, category, sort });
   if (sub) query.set("sub", sub);
   if (cursor) query.set("cursor", cursor);
   const res = await fetch(`${API_BASE_URL}/api/posts?${query}`);

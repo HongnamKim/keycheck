@@ -36,6 +36,7 @@ interface Props {
  * 무한 스크롤 목록. 끝의 감시 요소가 보이면 다음 묶음을 브라우저에서 받아 붙인다.
  * 카드를 누를 때 보던 목록과 스크롤 위치를 목록 주소별로 sessionStorage에 남기고, 상세에서 돌아오면 한 번 이어서 보여준다.
  * 필터·정렬을 눌러 들어온 목록은 저장본이 없어 처음부터 시작한다(목록이 보일 때 다른 목록의 저장본은 버린다).
+ * 헤더 메뉴·메인의 전체 보기로 들어온 목록도 처음부터다(FreshListLink가 누를 때 저장본을 모두 지운다).
  */
 export default function PostFeed({ query, initial, renderedAt }: Props) {
   const [feed, setFeed] = useState(() => startFeed(initial));
@@ -50,7 +51,7 @@ export default function PostFeed({ query, initial, renderedAt }: Props) {
 
   function load(cursor: string | null) {
     setFeed((f) => ({ ...f, status: "loading" }));
-    getPosts(query.category, query.sort, cursor, query.sub)
+    getPosts(query.board, query.category, query.sort, cursor, query.sub)
       .then((batch) => setFeed((f) => applyBatch(f, batch)))
       .catch(() => setFeed((f) => ({ ...f, status: "failed" })));
   }

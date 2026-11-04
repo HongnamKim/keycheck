@@ -1,7 +1,11 @@
-import type { CategoryFilter, PostSort, SubFilter, Subcategory } from "./api";
+import type { BoardFilter, CategoryFilter, PostSort, SubFilter, Subcategory } from "./api";
 
-/** 목록 화면의 URL 쿼리. 목록은 무한 스크롤이라 페이지 번호가 없다. sub는 키보드·키캡일 때만 있다. */
+/**
+ * 게시판 목록 화면(/ic, /gb)의 상태. board는 경로에서, 나머지는 URL 쿼리에서 읽는다.
+ * 목록은 무한 스크롤이라 페이지 번호가 없다. sub는 키보드·키캡일 때만 있다.
+ */
 export interface ListQuery {
+  board: BoardFilter;
   category: CategoryFilter;
   sub?: SubFilter;
   sort: PostSort;
@@ -15,9 +19,11 @@ export interface SubOption {
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
+const BOARDS: readonly BoardFilter[] = ["ic", "gb"];
 const CATEGORIES: readonly CategoryFilter[] = ["all", "keyboard", "keycap"];
 const SORTS: readonly PostSort[] = ["recent", "views"];
-const DEFAULT_QUERY: ListQuery = { category: "all", sort: "recent" };
+const DEFAULT_CATEGORY: CategoryFilter = "all";
+const DEFAULT_SORT: PostSort = "recent";
 
 const SUB_OPTIONS: Record<CategoryFilter, readonly SubOption[]> = {
   all: [],
@@ -59,39 +65,70 @@ function pick<T extends string>(value: string | string[] | undefined, allowed: r
 }
 
 /**
- * 잘못된 값은 오류 없이 기본값(all, recent)으로 바꾼다. sub는 category와 맞을 때만 받고, 아니면 버린다.
- * 예전 주소의 page 쿼리는 무시한다.
+ * 게시판 목록의 쿼리. 잘못된 값은 오류 없이 기본값(all, recent)으로 바꾼다. sub는 category와 맞을 때만 받고, 아니면 버린다.
+ * 예전 주소의 page 쿼리와 board 쿼리는 무시한다(게시판은 경로가 정한다).
  */
-export function parseListQuery(params: SearchParams): ListQuery {
-  const category = pick(params.category, CATEGORIES, DEFAULT_QUERY.category);
+export function parseListQuery(board: BoardFilter, params: SearchParams): ListQuery {
+  const category = pick(params.category, CATEGORIES, DEFAULT_CATEGORY);
   const sub = subOptions(category).find((option) => option.sub === params.sub)?.sub;
-  const sort = pick(params.sort, SORTS, DEFAULT_QUERY.sort);
-  return sub ? { category, sub, sort } : { category, sort };
+  const sort = pick(params.sort, SORTS, DEFAULT_SORT);
+  return sub ? { board, category, sub, sort } : { board, category, sort };
+}
+
+/** 상세 주소의 쿼리로 보던 목록을 읽는다. board가 없거나 잘못됐으면 목록에서 온 것이 아니라 null(메인에서 열었다) */
+export function parseDetailQuery(params: SearchParams): ListQuery | null {
+  const board = BOARDS.find((item) => item === params.board);
+  return board ? parseListQuery(board, params) : null;
 }
 
 /** 분류를 고른 목록. 세부 분류는 분류마다 달라 비운다(같은 분류를 다시 고르면 그 분류 전체) */
 export function withCategory(query: ListQuery, category: CategoryFilter): ListQuery {
-  return { category, sort: query.sort };
+  return { board: query.board, category, sort: query.sort };
 }
 
-/** 기본값을 뺀 쿼리 문자열. 모두 기본값이면 빈 문자열 */
-function searchOf(query: ListQuery): string {
+/** 기본값을 뺀 category, sub, sort 쿼리. 모두 기본값이면 비어 있다 */
+function filterSearch(query: ListQuery): URLSearchParams {
   const search = new URLSearchParams();
-  if (query.category !== DEFAULT_QUERY.category) search.set("category", query.category);
+  if (query.category !== DEFAULT_CATEGORY) search.set("category", query.category);
   if (query.sub) search.set("sub", query.sub);
-  if (query.sort !== DEFAULT_QUERY.sort) search.set("sort", query.sort);
+  if (query.sort !== DEFAULT_SORT) search.set("sort", query.sort);
+  return search;
+}
+
+function withQuestionMark(search: URLSearchParams): string {
   const qs = search.toString();
   return qs ? `?${qs}` : "";
 }
 
-/** 기본값은 빼고 category, sub, sort 순서로 목록 주소를 만든다 (예: /?category=keycap&sub=gmk&sort=views) */
+/** 게시판 경로에 기본값을 뺀 category, sub, sort를 붙인다 (예: /gb?category=keycap&sub=gmk&sort=views) */
 export function listHref(query: ListQuery): string {
-  return `/${searchOf(query)}`;
+  return `/${query.board}${withQuestionMark(filterSearch(query))}`;
 }
 
-/** 상세 주소. 보던 목록의 쿼리를 실어 두어 "목록으로"가 같은 목록으로 돌아가게 한다 */
-export function postHref(id: number, query: ListQuery): string {
-  return `/posts/${id}${searchOf(query)}`;
+/**
+ * 상세 주소. 목록에서 열면 보던 목록(board 먼저)을 실어 두어 "목록으로"가 같은 목록으로 돌아가게 한다
+ * (예: /posts/12?board=gb&category=keycap). 메인에서 열면 쿼리 없이.
+ */
+export function postHref(id: number, from?: ListQuery | null): string {
+  if (!from) return `/posts/${id}`;
+  const search = new URLSearchParams({ board: from.board });
+  for (const [key, value] of filterSearch(from)) search.set(key, value);
+  return `/posts/${id}${withQuestionMark(search)}`;
+}
+
+/** 상세의 돌아가기 주소. 목록에서 왔으면 그 목록, 아니면 메인 */
+export function backHref(from: ListQuery | null): string {
+  return from ? listHref(from) : "/";
+}
+
+/**
+ * 헤더 게시판 메뉴의 aria-current. 그 게시판 목록이면 "page", 그 게시판 목록에서 연 상세면 "true".
+ * boardParam은 지금 주소의 board 쿼리.
+ */
+export function navCurrent(board: BoardFilter, pathname: string, boardParam: string | null): "page" | "true" | undefined {
+  if (pathname === `/${board}`) return "page";
+  if (pathname.startsWith("/posts/") && boardParam === board) return "true";
+  return undefined;
 }
 
 /** 상세 주소의 글 ID. 양의 정수가 아니면 null */

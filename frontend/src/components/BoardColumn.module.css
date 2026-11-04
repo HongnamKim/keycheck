@@ -1,0 +1,172 @@
+.column {
+  flex: 1 1 460px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--color-text);
+}
+
+.titles {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 22px;
+  line-height: 1.3;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* 칸 제목의 배지는 글 배지보다 한 단계 크게 */
+.title .titleBadge {
+  padding: 1px 9px;
+  font-size: 13px;
+  letter-spacing: 0;
+}
+
+.desc {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-muted);
+}
+
+.more {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.more:hover {
+  text-decoration: underline;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+}
+
+.list li {
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.item {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  padding: 12px 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.item:hover {
+  color: inherit;
+}
+
+.item:hover .name {
+  text-decoration: underline;
+}
+
+.thumb {
+  position: relative;
+  display: block;
+  width: 112px;
+  aspect-ratio: 16 / 10;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--color-surface);
+}
+
+.image {
+  object-fit: cover;
+}
+
+.noImage {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  color: var(--color-muted);
+  font-size: 11px;
+  line-height: 1.3;
+  text-align: center;
+}
+
+.body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.category {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-muted);
+}
+
+.name,
+.summary {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.name {
+  font-size: 16px;
+  line-height: 1.35;
+  font-weight: 700;
+}
+
+.summary {
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--color-text-body);
+}
+
+.pending {
+  color: var(--color-muted);
+}
+
+.meta {
+  font-family: var(--font-code);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--color-muted);
+  word-break: keep-all;
+}
+
+.message {
+  padding: 32px 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--color-muted);
+  text-align: center;
+}

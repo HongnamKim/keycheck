@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import BoardBadge from "@/components/BoardBadge";
 import Gallery from "@/components/Gallery";
 import PostDates from "@/components/PostDates";
 import RemoteImage from "@/components/RemoteImage";
 import StatsLive from "@/components/StatsLive";
 import { getPost } from "@/lib/api";
 import { postCategoryLabel } from "@/lib/format";
-import { listHref, parseListQuery, parsePostId, postHref } from "@/lib/query";
+import { backHref, parseDetailQuery, parsePostId, postHref } from "@/lib/query";
 import styles from "./page.module.css";
 
 export default function PostPage({ params, searchParams }: PageProps<"/posts/[id]">) {
@@ -25,17 +26,16 @@ async function PostDetail({ params, searchParams }: PageProps<"/posts/[id]">) {
   const post = await getPost(postId);
   if (!post) notFound();
 
-  // 목록 카드가 보던 필터·정렬을 상세 주소에 실어 보낸다(postHref). 그 목록으로 돌아간다.
-  const query = parseListQuery(await searchParams);
-  const backHref = listHref(query);
+  // 목록 카드는 보던 게시판·필터·정렬을 상세 주소에 실어 보낸다(postHref). 그 목록으로, 없으면(메인에서 열면) 메인으로 돌아간다.
+  const from = parseDetailQuery(await searchParams);
   const renderedAt = new Date().toISOString();
   const hasSummary = post.summaryStatus === "DONE" && post.summaryLines.length > 0;
 
   return (
     <div className={styles.detail}>
       <div>
-        <Link href={backHref} className="outline-button">
-          목록으로
+        <Link href={backHref(from)} className="outline-button">
+          {from ? "목록으로" : "메인으로"}
         </Link>
       </div>
       <div className={styles.columns}>
@@ -58,8 +58,11 @@ async function PostDetail({ params, searchParams }: PageProps<"/posts/[id]">) {
 
         <article className={styles.article}>
           <div className={styles.head}>
-            <p className={styles.category}>{postCategoryLabel(post.category, post.subcategory)}</p>
-            <h2 className={styles.title}>{post.title}</h2>
+            <p className={styles.category}>
+              <BoardBadge board={post.board} />
+              <span>{postCategoryLabel(post.category, post.subcategory)}</span>
+            </p>
+            <h1 className={styles.title}>{post.title}</h1>
             <p className={styles.byline}>
               작성자 {post.author}
               <PostDates
@@ -79,7 +82,7 @@ async function PostDetail({ params, searchParams }: PageProps<"/posts/[id]">) {
               <p className={styles.pending}>원문을 아직 불러오지 못했어요. 잠시 뒤 다시 열어 주세요</p>
               <div>
                 {/* 같은 주소를 새로 열어 백엔드가 원문을 다시 읽게 한다 */}
-                <a href={postHref(post.id, query)} className="outline-button">
+                <a href={postHref(post.id, from)} className="outline-button">
                   다시 시도
                 </a>
               </div>
@@ -101,7 +104,7 @@ async function PostDetail({ params, searchParams }: PageProps<"/posts/[id]">) {
 
               {post.specs.length > 0 && (
                 <section className={styles.section}>
-                  <h3 className={styles.sectionTitle}>스펙과 일정</h3>
+                  <h3 className={styles.sectionTitle}>{post.board === "GB" ? "공동구매 정보" : "스펙과 일정"}</h3>
                   <dl className={styles.specs}>
                     {post.specs.map((spec, i) => (
                       <div key={i} className={styles.specRow}>
