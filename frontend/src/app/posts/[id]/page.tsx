@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import BoardBadge from "@/components/BoardBadge";
 import Gallery from "@/components/Gallery";
+import NeighborList from "@/components/NeighborList";
 import PostDates from "@/components/PostDates";
 import RemoteImage from "@/components/RemoteImage";
 import StatsLive from "@/components/StatsLive";
@@ -149,6 +150,11 @@ async function PostDetail({ params, searchParams }: PageProps<"/posts/[id]">) {
           <Gallery urls={post.imageUrls} />
         </section>
       )}
+
+      {/* 보던 목록의 위아래 글. 따로 받아 본문을 막지 않고, 실패하면 섹션만 빠진다 */}
+      <Suspense fallback={null}>
+        <NeighborList post={post} board={post.board} from={from} />
+      </Suspense>
     </div>
   );
 }

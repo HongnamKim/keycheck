@@ -8,6 +8,7 @@ import {
   formatPostedAt,
   formatPostedDate,
   formatViews,
+  listTitle,
   postCategoryLabel,
   subcategoryLabel,
 } from "./format";
@@ -169,5 +170,23 @@ describe("boardLabel", () => {
   it("게시판 배지 글자. 공동구매는 한국어로", () => {
     expect(boardLabel("IC")).toBe("IC");
     expect(boardLabel("GB")).toBe("공동구매");
+  });
+});
+
+describe("listTitle", () => {
+  it("필터가 없으면 게시판 이름 목록", () => {
+    expect(listTitle({ board: "gb", category: "all", sort: "recent" })).toBe("공동구매 목록");
+    expect(listTitle({ board: "ic", category: "all", sort: "recent" })).toBe("IC 목록");
+  });
+
+  it("분류와 세부 분류를 · 로 잇는다", () => {
+    expect(listTitle({ board: "gb", category: "keycap", sort: "recent" })).toBe("공동구매 · 키캡 목록");
+    expect(listTitle({ board: "ic", category: "keyboard", sub: "65", sort: "recent" })).toBe("IC · 키보드 · 65% 목록");
+    expect(listTitle({ board: "ic", category: "keycap", sub: "etc", sort: "recent" })).toBe("IC · 키캡 · 그 외 목록");
+  });
+
+  it("조회순이면 끝에 조회순을 붙인다", () => {
+    expect(listTitle({ board: "gb", category: "all", sort: "views" })).toBe("공동구매 · 조회순 목록");
+    expect(listTitle({ board: "gb", category: "keyboard", sub: "ergo", sort: "views" })).toBe("공동구매 · 키보드 · 앨리스·스플릿 · 조회순 목록");
   });
 });

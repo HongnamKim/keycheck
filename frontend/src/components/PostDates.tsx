@@ -29,17 +29,27 @@ export default function PostDates({
   return (
     <>
       {leadingDot && " · "}
-      {posted &&
-        (posted.estimated ? (
-          <span className={styles.piece} title={ESTIMATED_HINT}>
-            {posted.text}
-            <span className="visually-hidden"> ({ESTIMATED_HINT})</span>
-          </span>
-        ) : (
-          <span className={styles.piece}>{posted.text}</span>
-        ))}
+      {posted && <PostedDate posted={posted} className={styles.piece} />}
       {posted && lastPost && " · "}
       {lastPost && <span className={styles.piece}>{lastPost}</span>}
     </>
+  );
+}
+
+/** 작성일 한 조각. 글 번호로 추정한 날짜면 그 사실을 title과 화면 읽기용 글로 알린다 */
+export function PostedDate({
+  posted,
+  className,
+}: {
+  posted: NonNullable<ReturnType<typeof formatPostedDate>>;
+  className?: string;
+}) {
+  return posted.estimated ? (
+    <span className={className} title={ESTIMATED_HINT}>
+      {posted.text}
+      <span className="visually-hidden"> ({ESTIMATED_HINT})</span>
+    </span>
+  ) : (
+    <span className={className}>{posted.text}</span>
   );
 }

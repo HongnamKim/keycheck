@@ -1,5 +1,7 @@
 /** 백엔드 응답 타입과 호출 함수. 응답 형식은 backend의 post/dto와 맞춘다. */
 
+import type { ListQuery } from "./query";
+
 /** UNCLASSIFIED: 틀 글이라 아직 분류하지 않음. "전체"에서만 보인다 */
 export type Category = "KEYBOARD" | "KEYCAP" | "OTHER" | "UNCLASSIFIED";
 /**
@@ -95,6 +97,15 @@ export interface PostDetail {
   detailLoaded: boolean;
 }
 
+/**
+ * 같은 조건의 목록에서 한 글의 위아래 글. 둘 다 목록 순서대로다.
+ * before의 마지막 원소가 바로 위 글, after의 첫 원소가 바로 아래 글.
+ */
+export interface PostNeighbors {
+  before: PostCard[];
+  after: PostCard[];
+}
+
 export interface PostStats {
   views: number;
   replies: number;
@@ -132,5 +143,14 @@ export async function getPost(id: number): Promise<PostDetail | null> {
 export async function getStats(id: number, signal?: AbortSignal): Promise<PostStats> {
   const res = await fetch(`${API_BASE_URL}/api/posts/${id}/stats`, { signal });
   if (!res.ok) throw new Error(`조회수 갱신 실패: ${res.status}`);
+  return res.json();
+}
+
+/** 상세 하단의 주변 글. query는 보던 목록 조건, size는 위아래 각각 최대 개수(1~10). 처음 페이지는 서버에서, 앞뒤 페이지는 브라우저에서 부른다. */
+export async function getNeighbors(id: number, query: ListQuery, size: number): Promise<PostNeighbors> {
+  const search = new URLSearchParams({ board: query.board, category: query.category, sort: query.sort, size: String(size) });
+  if (query.sub) search.set("sub", query.sub);
+  const res = await fetch(`${API_BASE_URL}/api/posts/${id}/neighbors?${search}`);
+  if (!res.ok) throw new Error(`주변 글 조회 실패: ${res.status}`);
   return res.json();
 }

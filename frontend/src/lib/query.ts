@@ -1,4 +1,4 @@
-import type { BoardFilter, CategoryFilter, PostSort, SubFilter, Subcategory } from "./api";
+import type { Board, BoardFilter, CategoryFilter, PostSort, SubFilter, Subcategory } from "./api";
 
 /**
  * 게시판 목록 화면(/ic, /gb)의 상태. board는 경로에서, 나머지는 URL 쿼리에서 읽는다.
@@ -79,6 +79,14 @@ export function parseListQuery(board: BoardFilter, params: SearchParams): ListQu
 export function parseDetailQuery(params: SearchParams): ListQuery | null {
   const board = BOARDS.find((item) => item === params.board);
   return board ? parseListQuery(board, params) : null;
+}
+
+/**
+ * 상세 하단 주변 글 목록의 조건. 목록에서 왔으면 그 목록, 메인에서 왔으면(from이 null) 그 글 게시판의 기본 목록.
+ * board는 그 글의 게시판.
+ */
+export function neighborsQuery(from: ListQuery | null, board: Board): ListQuery {
+  return from ?? { board: board === "GB" ? "gb" : "ic", category: DEFAULT_CATEGORY, sort: DEFAULT_SORT };
 }
 
 /** 분류를 고른 목록. 세부 분류는 분류마다 달라 비운다(같은 분류를 다시 고르면 그 분류 전체) */

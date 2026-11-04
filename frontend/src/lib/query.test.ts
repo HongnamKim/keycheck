@@ -3,6 +3,7 @@ import {
   backHref,
   listHref,
   navCurrent,
+  neighborsQuery,
   parseDetailQuery,
   parseListQuery,
   parsePostId,
@@ -229,4 +230,23 @@ describe("parsePostId", () => {
       expect(parsePostId(id)).toBeNull();
     },
   );
+});
+
+describe("neighborsQuery", () => {
+  it("목록에서 왔으면 그 목록 조건을 그대로 쓴다", () => {
+    const from = { board: "gb", category: "keycap", sub: "gmk", sort: "views" } as const;
+    expect(neighborsQuery(from, "IC")).toEqual(from);
+  });
+
+  it("메인에서 왔으면 그 글의 게시판 기본 목록(전체, 최근 작성순)", () => {
+    expect(neighborsQuery(null, "GB")).toEqual({ board: "gb", category: "all", sort: "recent" });
+    expect(neighborsQuery(null, "IC")).toEqual({ board: "ic", category: "all", sort: "recent" });
+  });
+
+  it("목록 전체 보기 주소는 메인에서 왔어도 그 게시판 목록이다", () => {
+    expect(listHref(neighborsQuery(null, "GB"))).toBe("/gb");
+    expect(listHref(neighborsQuery(null, "IC"))).toBe("/ic");
+    const from = { board: "gb", category: "keycap", sort: "views" } as const;
+    expect(listHref(neighborsQuery(from, "GB"))).toBe(backHref(from));
+  });
 });

@@ -1,4 +1,5 @@
 import type { Board, BoardFilter, Category, Subcategory } from "./api";
+import { subOptions, type ListQuery } from "./query";
 
 /**
  * 조회수 표기 (설계 5장)
@@ -109,3 +110,13 @@ export const BOARD_INFO: Record<BoardFilter, { title: string; badge: string; des
   ic: { title: "IC", badge: "IC", desc: "관심 조사 글이에요. 아직 판매 전이라 의견을 모으는 단계예요." },
   gb: { title: "공동구매", badge: "GB", desc: "주문을 받는 중이거나 곧 받을 글이에요. 기간과 벤더를 확인해 보세요." },
 };
+
+/** 보던 목록의 이름 (예: 공동구매 목록, IC · 키보드 · 65% · 조회순 목록). 상세 하단 주변 글 목록의 제목 */
+export function listTitle(query: ListQuery): string {
+  const parts = [BOARD_INFO[query.board].title];
+  if (query.category !== "all") parts.push(categoryLabel(query.category === "keyboard" ? "KEYBOARD" : "KEYCAP"));
+  const sub = subOptions(query.category).find((option) => option.sub === query.sub);
+  if (sub) parts.push(subcategoryLabel(sub.code));
+  if (query.sort === "views") parts.push("조회순");
+  return `${parts.join(" · ")} 목록`;
+}
