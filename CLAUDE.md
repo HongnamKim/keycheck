@@ -1,6 +1,6 @@
 # 키체크(keycheck)
 
-geekhack Interest Checks(board 132)의 키보드·키캡 글을 한국어 요약, 대표 이미지, 원문 링크로 보여주는 읽기 전용 서비스.
+geekhack Interest Checks(board 132)와 Group Buys and Preorders(board 70)의 키보드·키캡 글을 한국어 요약, 대표 이미지, 원문 링크로 보여주는 읽기 전용 서비스. 화면 문구에 "해외"를 쓰지 않는다.
 
 - 설계: `docs/superpowers/specs/2026-11-01-keycheck-design.md`
 - 구현 계획: `docs/superpowers/plans/2026-11-01-keycheck-mvp.md` (태스크 순서와 진행 원칙은 이 문서를 따른다)
