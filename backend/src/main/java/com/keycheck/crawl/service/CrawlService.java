@@ -7,6 +7,7 @@ import com.keycheck.crawl.config.CollectProperties;
 import com.keycheck.crawl.config.GeekhackProperties;
 import com.keycheck.crawl.domain.BoardBackfill;
 import com.keycheck.crawl.dto.BoardTopic;
+import com.keycheck.crawl.dto.PrefetchResult;
 import com.keycheck.crawl.dto.TopicContent;
 import com.keycheck.crawl.dto.TopicPage;
 import com.keycheck.crawl.parser.BoardListParser;
@@ -15,6 +16,7 @@ import com.keycheck.crawl.repository.BoardBackfillRepository;
 import com.keycheck.image.service.RepresentativeImageSelector;
 import com.keycheck.post.domain.Board;
 import com.keycheck.post.domain.Post;
+import com.keycheck.post.repository.PostRepository;
 import java.time.Clock;
 import java.time.Duration;
 import java.util.List;
@@ -34,6 +36,7 @@ import org.springframework.stereotype.Service;
  *   <li>과거 글 확보(backfillNextPage): 목록 API가 모자랄 때 한 게시판 작성순 목록의 다음 쪽 하나. 새 글은 틀 글로만
  *       저장한다.
  *   <li>틀 글 채우기(fillSkeleton): 상세 API가 틀 글을 열 때.
+ *   <li>틀 글 미리 읽기(prefetchSkeleton): PrefetchWorker가 빈 간격에 틀 글 하나를 채울 때.
  * </ul>
  *
  * <p>요청 간격을 기다리거나 geekhack 응답을 기다리는 동안 DB 트랜잭션을 잡지 않도록 저장은 CrawlStore에 맡긴다.
@@ -51,6 +54,7 @@ public class CrawlService {
   private final Classifier classifier;
   private final RepresentativeImageSelector imageSelector;
   private final CrawlStore store;
+  private final PostRepository postRepository;
   private final BoardBackfillRepository backfillRepository;
   private final GeekhackProperties properties;
   private final CollectProperties collectProperties;
@@ -131,8 +135,20 @@ public class CrawlService {
    */
   public void fillSkeleton(Post post, Duration maxWait) {
     if (gate.tryAcquire(maxWait)) {
-      readAndFill(post);
+      readAndFill(post, false);
     }
+  }
+
+  /**
+   * 틀 글을 글 첫 페이지로 채운다. 사용자 요청·정기 수집이 쓰지 않는 빈 간격만 쓰고(RequestGate.tryAcquireIdle) 기다리지 않는다.
+   *
+   * @param post 틀 글 (isDetailLoaded() == false)
+   */
+  public PrefetchResult prefetchSkeleton(Post post) {
+    if (!gate.tryAcquireIdle()) {
+      return PrefetchResult.NO_SLOT;
+    }
+    return readAndFill(post, true) ? PrefetchResult.FILLED : PrefetchResult.FAILED;
   }
 
   /**
@@ -160,7 +176,7 @@ public class CrawlService {
       Post post = existing.get();
       if (readTopics && !post.isDetailLoaded() && !post.isHidden() && !beforeSince) {
         gate.acquire();
-        readAndFill(post);
+        readAndFill(post, false);
       }
       return;
     }
@@ -185,12 +201,24 @@ public class CrawlService {
     store.saveNew(newPost(board, topic, content), content);
   }
 
-  private void readAndFill(Post post) {
+  /**
+   * 요청 간격을 기다리는 사이 다른 요청(상세 열기·미리 읽기·정기 수집)이 먼저 채운 글이면 geekhack에 다시 요청하지 않는다.
+   *
+   * @param prefetched 백그라운드 미리 읽기면 true (CrawlStore.fillSkeleton)
+   * @return 글 첫 페이지를 읽고 저장 단계가 예외 없이 끝났으면 true. 그사이 다른 요청이 먼저 채워 요청하지 않았거나 저장하지 않았어도
+   *     true다.
+   */
+  private boolean readAndFill(Post post, boolean prefetched) {
     try {
+      if (postRepository.findById(post.getId()).map(Post::isDetailLoaded).orElse(false)) {
+        return true;
+      }
       TopicContent content = readTopic(post.getTopicId(), post.getTitle());
-      store.fillSkeleton(post.getId(), content, clock.instant());
+      store.fillSkeleton(post.getId(), content, clock.instant(), prefetched);
+      return true;
     } catch (RuntimeException e) {
       log.warn("틀 글 채우기 실패: topic={}", post.getTopicId(), e);
+      return false;
     }
   }
 

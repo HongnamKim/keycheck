@@ -83,7 +83,7 @@ class CrawlStoreTest {
   @Test
   @DisplayName("틀 글을 본문·작성일·조회수·분류·이미지로 채우고 요약 대기로 둔다")
   void fillsSkeleton() {
-    assertThat(store.fillSkeleton(skeleton.getId(), content(), NOW)).isTrue();
+    assertThat(store.fillSkeleton(skeleton.getId(), content(), NOW, false)).isTrue();
 
     Post post = postRepository.findById(skeleton.getId()).orElseThrow();
     assertThat(post.isDetailLoaded()).isTrue();
@@ -105,9 +105,9 @@ class CrawlStoreTest {
   @Test
   @DisplayName("이미 채워진 글은 다시 채우지 않는다")
   void doesNotFillTwice() {
-    store.fillSkeleton(skeleton.getId(), content(), NOW);
+    store.fillSkeleton(skeleton.getId(), content(), NOW, false);
 
-    assertThat(store.fillSkeleton(skeleton.getId(), content(), NOW)).isFalse();
+    assertThat(store.fillSkeleton(skeleton.getId(), content(), NOW, false)).isFalse();
 
     assertThat(imageCount()).isEqualTo(2);
   }
@@ -136,7 +136,8 @@ class CrawlStoreTest {
     assertThat(locked.await(10, TimeUnit.SECONDS)).isTrue();
 
     CompletableFuture<Boolean> fill =
-        CompletableFuture.supplyAsync(() -> store.fillSkeleton(skeleton.getId(), content(), NOW));
+        CompletableFuture.supplyAsync(
+            () -> store.fillSkeleton(skeleton.getId(), content(), NOW, false));
     Thread.sleep(500);
     assertThat(fill).isNotDone();
     release.countDown();
@@ -151,7 +152,7 @@ class CrawlStoreTest {
   @Test
   @DisplayName("목록 값을 갱신하는 동안 저장된 요약·분류는 덮어쓰지 않는다")
   void updateDoesNotOverwriteConcurrentSummary() {
-    store.fillSkeleton(skeleton.getId(), content(), NOW);
+    store.fillSkeleton(skeleton.getId(), content(), NOW, false);
     BoardTopic topic = new BoardTopic(2000L, "[IC] 새 제목", "maker", 3, 900, NOW);
 
     new TransactionTemplate(transactionManager)

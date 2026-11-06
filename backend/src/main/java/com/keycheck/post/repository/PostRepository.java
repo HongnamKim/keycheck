@@ -159,12 +159,14 @@ public interface PostRepository extends JpaRepository<Post, Long> {
   void updateStats(Long id, int views, int replies, Instant checkedAt);
 
   /**
-   * 요약 대상. 본문까지 읽은 숨기지 않은 글 중 요약 대기(PENDING)인 글, redoFake면 가짜 요약기('fake', FakeSummarizer.ID)로
-   * 요약한 글, redoMissingSubcategory면 세부 분류가 없는 키보드·키캡 요약까지. 요약 대기 글을 먼저, 그 안에서는 본문을 늦게 채운
-   * 글(방금 상세를 연 틀 글)부터, 같으면 글 번호가 큰 글부터.
+   * 요약 대상. 수집 기간 안(글 번호가 sinceTopicId 이상)의 본문까지 읽은 숨기지 않은 글 중 요약 대기(PENDING)인 글, redoFake면 가짜
+   * 요약기('fake', FakeSummarizer.ID)로 요약한 글, redoMissingSubcategory면 세부 분류가 없는 키보드·키캡 요약까지. 요약 대기 글을
+   * 먼저, 그 안에서는 미리 읽기로 채우고 아직 아무도 열지 않은 글을 뒤로, 그다음 본문을 늦게 채운 글(방금 상세를 연 틀 글)부터, 같으면 글
+   * 번호가 큰 글부터. 사용자가 연 글보다 나중에 미리 읽은 글이 그 글의 요약을 늦추지 않게 한다.
    */
   @Query(
       "select p from Post p where p.hidden = false and p.detailFetchedAt is not null"
+          + " and p.topicId >= :sinceTopicId"
           + " and (p.summaryStatus = com.keycheck.post.domain.SummaryStatus.PENDING"
           + " or (:redoFake = true and p.summaryStatus = com.keycheck.post.domain.SummaryStatus.DONE"
           + " and p.summarizedBy = 'fake')"
@@ -174,8 +176,10 @@ public interface PostRepository extends JpaRepository<Post, Long> {
           + " and p.category in (com.keycheck.post.domain.Category.KEYBOARD,"
           + " com.keycheck.post.domain.Category.KEYCAP)))"
           + " order by case when p.summaryStatus = com.keycheck.post.domain.SummaryStatus.PENDING"
-          + " then 0 else 1 end, p.detailFetchedAt desc, p.topicId desc")
-  List<Post> findSummaryTargets(boolean redoFake, boolean redoMissingSubcategory, Limit limit);
+          + " then 0 else 1 end, case when p.prefetched = true then 1 else 0 end,"
+          + " p.detailFetchedAt desc, p.topicId desc")
+  List<Post> findSummaryTargets(
+      long sinceTopicId, boolean redoFake, boolean redoMissingSubcategory, Limit limit);
 
   /**
    * 요약을 넣고 DONE으로 바꾼다. category가 null이면(가짜 요약기) 분류와 세부 분류를 그대로 두고, 아니면 둘 다 결과로 바꾼다(세부 분류가
@@ -201,4 +205,26 @@ public interface PostRepository extends JpaRepository<Post, Long> {
   @Modifying
   @Query("update Post p set p.summaryStatus = :status where p.id = :id")
   void updateSummaryStatus(Long id, SummaryStatus status);
+
+  /**
+   * 미리 읽기 대상. 수집 기간 안(글 번호가 sinceTopicId 이상)의 숨기지 않은 틀 글 중 미리 읽기 실패가 maxFailures번 미만인 글, 글
+   * 번호가 큰(최근) 글부터.
+   */
+  @Query(
+      "select p from Post p where p.hidden = false and p.detailFetchedAt is null"
+          + " and p.topicId >= :sinceTopicId and p.prefetchFailures < :maxFailures"
+          + " order by p.topicId desc")
+  List<Post> findPrefetchTargets(long sinceTopicId, int maxFailures, Limit limit);
+
+  /** 미리 읽기 실패 횟수만 하나 늘린다. 그사이 다른 쓰기가 바꾼 값은 그대로 둔다. */
+  @Transactional
+  @Modifying
+  @Query("update Post p set p.prefetchFailures = p.prefetchFailures + 1 where p.id = :id")
+  void incrementPrefetchFailures(Long id);
+
+  /** 미리 읽은 글을 누군가 열었다. 미리 읽기 표시만 지운다(요약 순서에서 앞으로 온다). 다른 값은 그대로 둔다. */
+  @Transactional
+  @Modifying
+  @Query("update Post p set p.prefetched = false where p.id = :id")
+  void clearPrefetched(Long id);
 }

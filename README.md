@@ -40,6 +40,7 @@ CRAWL_ENABLED=true ./gradlew bootRun
 | 환경변수 | 기본값 | 설명 |
 |---|---|---|
 | `CRAWL_ENABLED` | `false` | geekhack 정기 수집 |
+| `PREFETCH_ENABLED` | `false` | 틀 글 미리 읽기. 본문을 아직 읽지 않은 글을 10초에 한 건씩, 요청 간격이 비어 있을 때만 geekhack에서 읽는다. 채운 글은 요약되므로 `SUMMARIZER=claude`면 글당 약 1.1센트 |
 | `DB_URL` | `jdbc:postgresql://localhost:5432/keycheck` | DB 주소 |
 | `DB_USERNAME`, `DB_PASSWORD` | `keycheck` | DB 계정 |
 | `KEYCHECK_CORS_ALLOWED_ORIGINS` | `http://localhost:3000` | 상세 화면의 조회수 갱신 요청을 허용할 프론트 주소 |
@@ -51,6 +52,12 @@ CRAWL_ENABLED=true ./gradlew bootRun
 ```bash
 cp backend/.env.example backend/.env   # ANTHROPIC_API_KEY 값을 넣는다
 cd backend && SUMMARIZER=claude ./gradlew bootRun
+```
+
+틀 글 미리 읽기는 한 글을 3번 읽지 못하면 그 글을 더 시도하지 않습니다(상세를 열면 계속 채웁니다). geekhack 장애처럼 글 탓이 아닌 실패로 빠진 글을 다시 넣으려면 DB에서 실패 횟수를 되돌립니다.
+
+```sql
+update post set prefetch_failures = 0 where detail_fetched_at is null;
 ```
 
 ### 3. 프론트

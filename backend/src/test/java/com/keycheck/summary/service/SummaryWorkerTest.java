@@ -8,6 +8,7 @@ import com.anthropic.core.http.Headers;
 import com.anthropic.errors.AnthropicIoException;
 import com.anthropic.errors.UnauthorizedException;
 import com.keycheck.TestcontainersConfiguration;
+import com.keycheck.crawl.config.CollectProperties;
 import com.keycheck.post.domain.Board;
 import com.keycheck.post.domain.Category;
 import com.keycheck.post.domain.Post;
@@ -60,6 +61,7 @@ class SummaryWorkerTest {
         postRepository,
         summarizer,
         new SummaryProperties(redoFake, redoMissingSubcategory),
+        new CollectProperties(0),
         clock);
   }
 
@@ -188,6 +190,21 @@ class SummaryWorkerTest {
   }
 
   @Test
+  @DisplayName("미리 읽기가 더 늦게 채운 글이 있어도 사용자가 연 글(미리 읽기로 채우지 않은 글)을 먼저 요약한다")
+  void summarizesOpenedBeforePrefetched() {
+    Post prefetched = saveLoaded(3000);
+    jdbcTemplate.update("update post set prefetched = true where id = ?", prefetched.getId());
+    markDetailFetchedAt(prefetched, CHECKED_AT.plusSeconds(60));
+    saveLoaded(2000);
+
+    SummaryWorker worker = worker(false);
+    worker.summarizeNext();
+    worker.summarizeNext();
+
+    assertThat(summarizer.titles()).containsExactly("[IC] 글 2000", "[IC] 글 3000");
+  }
+
+  @Test
   @DisplayName("다시 요약할 글은 요약 대기 글 다음에, 본문을 채운 시각이 늦은 글부터 요약한다")
   void redoTargetsAfterPendingByFilledAt() {
     Post newerFake = saveLoaded(1000);
@@ -227,6 +244,26 @@ class SummaryWorkerTest {
     assertThat(worker(false).summarizeNext()).isFalse();
 
     assertThat(summarizer.sources).isEmpty();
+  }
+
+  @Test
+  @DisplayName("수집 기간 경계 아래 글은 요약하지 않고, 경계 글 번호 그 글은 요약한다")
+  void skipsBeforeSince() {
+    saveLoaded(2499);
+    saveLoaded(2500);
+    SummaryWorker worker =
+        new SummaryWorker(
+            postRepository,
+            summarizer,
+            new SummaryProperties(false, false),
+            new CollectProperties(2500),
+            clock);
+
+    while (worker.summarizeNext()) {
+      // 대상이 없을 때까지
+    }
+
+    assertThat(summarizer.titles()).containsExactly("[IC] 글 2500");
   }
 
   @Test
@@ -364,7 +401,11 @@ class SummaryWorkerTest {
         "update post set summary_lines = '[\"Claude 요약\"]'::jsonb where id = ?", post.getId());
     SummaryWorker worker =
         new SummaryWorker(
-            postRepository, new FakeSummarizer(), new SummaryProperties(false, true), clock);
+            postRepository,
+            new FakeSummarizer(),
+            new SummaryProperties(false, true),
+            new CollectProperties(0),
+            clock);
 
     assertThat(worker.summarizeNext()).isFalse();
 

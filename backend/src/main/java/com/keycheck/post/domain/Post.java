@@ -82,6 +82,12 @@ public class Post {
   /** 글 첫 페이지를 읽어 본문·이미지를 채운 시각. null이면 틀 글(게시판 목록에서만 읽은 글). */
   private Instant detailFetchedAt;
 
+  /** 백그라운드 미리 읽기가 이 틀 글을 읽지 못한 횟수. PrefetchWorker.MAX_FAILURES에 닿으면 미리 읽기에서 뺀다. */
+  private int prefetchFailures;
+
+  /** 백그라운드 미리 읽기가 채웠고 아직 아무도 상세를 열지 않은 글. 요약·축소본 순서에서 뒤로 간다(사용자가 연 글이 먼저). */
+  private boolean prefetched;
+
   /** 게시판 목록에서 읽은 마지막 게시물(댓글, 없으면 원글) 시각. 아직 읽지 못했으면 null. */
   private Instant lastPostAt;
 
@@ -181,12 +187,16 @@ public class Post {
   /**
    * 틀 글을 글 첫 페이지에서 읽은 값으로 채운다. 이미지·분류·요약은 따로 넣는다. 글 첫 페이지에는 댓글 수가 없으므로 statsCheckedAt은 그대로
    * 두어, 통계 API가 조회수·댓글 수를 함께 다시 확인하게 한다.
+   *
+   * @param prefetched 백그라운드 미리 읽기가 채우면 true
    */
-  public void fillDetail(String bodyText, Instant postedAt, int views, Instant fetchedAt) {
+  public void fillDetail(
+      String bodyText, Instant postedAt, int views, Instant fetchedAt, boolean prefetched) {
     this.bodyText = bodyText;
     this.postedAt = postedAt;
     this.views = views;
     this.detailFetchedAt = fetchedAt;
+    this.prefetched = prefetched;
   }
 
   /**

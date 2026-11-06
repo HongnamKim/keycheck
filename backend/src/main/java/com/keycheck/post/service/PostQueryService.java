@@ -272,12 +272,18 @@ public class PostQueryService {
         .toList();
   }
 
-  /** 틀 글이면 geekhack 글 첫 페이지를 읽어 채운 뒤 돌려준다. 읽지 못하면 틀 그대로 돌려준다. */
+  /**
+   * 틀 글이면 geekhack 글 첫 페이지를 읽어 채운 뒤 돌려준다. 읽지 못하면 틀 그대로 돌려준다. 미리 읽기가 채운 글이면 미리 읽기 표시를
+   * 지워, 요약이 아직이면 미리 읽기로 채운 다른 글보다 먼저 요약되게 한다.
+   */
   public PostDetailResponse getPost(Long id) {
     Post post = visible(postRepository.findWithImagesById(id));
     if (!post.isDetailLoaded()) {
       crawlService.fillSkeleton(post, FILL_WAIT);
       post = visible(postRepository.findWithImagesById(id));
+    }
+    if (post.isPrefetched()) {
+      postRepository.clearPrefetched(post.getId());
     }
     String imageUrl = representativeImageUrls(List.of(post)).get(post.getRepresentativeImageId());
     return PostDetailResponse.from(

@@ -2,6 +2,7 @@ package com.keycheck.summary.service;
 
 import com.anthropic.errors.AnthropicException;
 import com.anthropic.errors.AnthropicInvalidDataException;
+import com.keycheck.crawl.config.CollectProperties;
 import com.keycheck.post.domain.Post;
 import com.keycheck.post.domain.SummaryStatus;
 import com.keycheck.post.repository.PostRepository;
@@ -33,6 +34,7 @@ public class SummaryWorker {
   private final PostRepository postRepository;
   private final Summarizer summarizer;
   private final SummaryProperties properties;
+  private final CollectProperties collectProperties;
   private final Clock clock;
 
   private Instant pausedUntil = Instant.MIN;
@@ -44,7 +46,7 @@ public class SummaryWorker {
   private final Set<Long> redone = new HashSet<>();
 
   /**
-   * 요약 대상 중 맨 앞 글(요약 대기 글 중 본문을 가장 늦게 채운 글) 하나를 요약한다. 글 때문에 요약할 수 없으면 FAILED로 두고 다시 시도하지 않는다. API를 쓸
+   * 요약 대상 중 맨 앞 글(요약 대기 글 중 본문을 가장 늦게 채운 글. 미리 읽기로 채우고 아무도 열지 않은 글은 뒤로) 하나를 요약한다. 글 때문에 요약할 수 없으면 FAILED로 두고 다시 시도하지 않는다. API를 쓸
    * 수 없으면 상태를 그대로 두고 ERROR_PAUSE 동안 쉰다. 요약이 있던 글은 한 실행에서 한 번만 다시 요약한다.
    *
    * @return 대상이 있었으면 true (쉬는 중이면 false)
@@ -58,7 +60,10 @@ public class SummaryWorker {
         properties.isRedoMissingSubcategory() && !(summarizer instanceof FakeSummarizer);
     List<Post> targets =
         postRepository.findSummaryTargets(
-            properties.isRedoFake(), redoMissingSubcategory, Limit.of(redone.size() + 1));
+            collectProperties.getSinceTopicId(),
+            properties.isRedoFake(),
+            redoMissingSubcategory,
+            Limit.of(redone.size() + 1));
     Post post =
         targets.stream()
             .filter(target -> !redone.contains(target.getId()))

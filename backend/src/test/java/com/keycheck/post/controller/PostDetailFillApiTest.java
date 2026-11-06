@@ -40,6 +40,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -54,6 +55,7 @@ class PostDetailFillApiTest {
   @Autowired private PostRepository postRepository;
   @Autowired private PostImageRepository postImageRepository;
   @Autowired private MutableClock clock;
+  @Autowired private JdbcTemplate jdbcTemplate;
 
   // 실제 geekhack을 호출하지 않는다. 파서와 DB는 실제 것을 쓴다.
   @MockitoBean private GeekhackClient client;
@@ -128,7 +130,56 @@ class PostDetailFillApiTest {
     Post saved = postRepository.findById(post.getId()).orElseThrow();
     assertThat(saved.getDetailFetchedAt()).isEqualTo(clock.instant());
     assertThat(saved.getBodyText()).isEqualTo("Test Board A small board — made up.");
+    assertThat(saved.isPrefetched()).isFalse();
     assertThat(postImageRepository.findAll()).hasSize(3);
+  }
+
+  /** 백그라운드 미리 읽기가 채운 것처럼 본문을 넣고 미리 읽기로 표시한다 */
+  private void fillAsPrefetch(Post post) {
+    jdbcTemplate.update(
+        "update post set detail_fetched_at = now(), body_text = '미리 읽은 본문', prefetched = true"
+            + " where id = ?",
+        post.getId());
+  }
+
+  private boolean isPrefetched(Post post) {
+    return postRepository.findById(post.getId()).orElseThrow().isPrefetched();
+  }
+
+  @Test
+  @DisplayName("미리 읽기가 채운 글을 열면 미리 읽기 표시를 지운다 (요약 순서에서 앞으로 온다)")
+  void openingPrefetchedPostClearsMark() throws Exception {
+    Post post = saveSkeleton();
+    fillAsPrefetch(post);
+
+    mockMvc
+        .perform(get("/api/posts/" + post.getId()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.detailLoaded").value(true));
+
+    assertThat(isPrefetched(post)).isFalse();
+    verify(client, never()).fetchTopic(anyLong());
+  }
+
+  @Test
+  @DisplayName("요청 간격을 기다리는 사이 미리 읽기가 먼저 채운 틀 글은 geekhack에 다시 요청하지 않는다")
+  void filledWhileWaitingIsNotFetchedAgain() throws Exception {
+    Post post = saveSkeleton();
+    when(gate.tryAcquire(any(Duration.class)))
+        .thenAnswer(
+            invocation -> {
+              fillAsPrefetch(post);
+              return true;
+            });
+
+    mockMvc
+        .perform(get("/api/posts/" + post.getId()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.detailLoaded").value(true));
+
+    verify(client, never()).fetchTopic(anyLong());
+    assertThat(isPrefetched(post)).isFalse();
+    assertThat(postImageRepository.findAll()).isEmpty();
   }
 
   @Test

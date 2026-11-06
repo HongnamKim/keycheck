@@ -68,16 +68,17 @@ public class CrawlStore {
   /**
    * 행을 잠그고 다시 읽어 아직 틀 글일 때만 채운다. 두 요청이 동시에 채워도 이미지가 두 번 들어가지 않는다.
    *
+   * @param prefetched 백그라운드 미리 읽기가 채우면 true (Post.fillDetail)
    * @return 채웠으면 true
    */
   @Transactional
-  public boolean fillSkeleton(Long postId, TopicContent content, Instant now) {
+  public boolean fillSkeleton(Long postId, TopicContent content, Instant now, boolean prefetched) {
     Post post = postRepository.findByIdForUpdate(postId).orElse(null);
     if (post == null || post.isDetailLoaded()) {
       return false;
     }
     TopicPage page = content.getPage();
-    post.fillDetail(page.getBodyText(), page.getPostedAt(), page.getViews(), now);
+    post.fillDetail(page.getBodyText(), page.getPostedAt(), page.getViews(), now, prefetched);
     post.setCategory(content.getCategory());
     writeContent(post, content);
     return true;

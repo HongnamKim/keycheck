@@ -12,6 +12,8 @@ import java.util.function.Consumer;
  *   <li>사용자 조회: tryAcquire() — 간격이 안 찼으면 즉시 false
  *   <li>사용자 조회(목록 확보·글 채우기): tryAcquire(maxWait) — maxWait 안에 간격이 차면 기다렸다 통과
  *   <li>정기 수집: acquire() — 간격이 찰 때까지 기다림
+ *   <li>백그라운드(미리 읽기·축소본): tryAcquireIdle() — 기다리는 요청이 없고 간격의 2배가 비었을 때만
+ *       통과, 기다리지 않음
  * </ul>
  */
 public class RequestGate {
@@ -19,6 +21,8 @@ public class RequestGate {
   private final Clock clock;
   private final Consumer<Duration> sleeper;
   private Instant lastAcquiredAt;
+  // acquire()·tryAcquire(maxWait) 안에서 간격을 기다리는 요청 수
+  private int waiting;
 
   public RequestGate(Duration minInterval, Clock clock) {
     this(minInterval, clock, RequestGate::sleep);
@@ -46,23 +50,50 @@ public class RequestGate {
     acquireBefore(null);
   }
 
+  /** 사용자 요청·정기 수집에 빈 간격을 내주도록, 기다리는 요청이 있으면 간격이 비어 있어도 양보한다. */
+  public synchronized boolean tryAcquireIdle() {
+    if (waiting > 0) {
+      return false;
+    }
+    Instant now = clock.instant();
+    if (lastAcquiredAt != null
+        && Duration.between(lastAcquiredAt, now).compareTo(minInterval.multipliedBy(2)) < 0) {
+      return false;
+    }
+    lastAcquiredAt = now;
+    return true;
+  }
+
   /**
    * @param deadline 이 시각까지 간격이 차지 않으면 기다리지 않고 false. null이면 끝까지 기다린다.
    */
   private boolean acquireBefore(Instant deadline) {
-    while (true) {
-      Duration wait;
-      synchronized (this) {
-        wait = remainingWait();
-        if (wait.isZero()) {
-          lastAcquiredAt = clock.instant();
-          return true;
+    boolean counted = false;
+    try {
+      while (true) {
+        Duration wait;
+        synchronized (this) {
+          wait = remainingWait();
+          if (wait.isZero()) {
+            lastAcquiredAt = clock.instant();
+            return true;
+          }
+          if (!counted) {
+            waiting++;
+            counted = true;
+          }
+        }
+        if (deadline != null && clock.instant().plus(wait).isAfter(deadline)) {
+          return false;
+        }
+        sleeper.accept(wait);
+      }
+    } finally {
+      if (counted) {
+        synchronized (this) {
+          waiting--;
         }
       }
-      if (deadline != null && clock.instant().plus(wait).isAfter(deadline)) {
-        return false;
-      }
-      sleeper.accept(wait);
     }
   }
 

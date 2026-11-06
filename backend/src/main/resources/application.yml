@@ -13,8 +13,8 @@ spring:
   task:
     scheduling:
       pool:
-        # 정기 수집과 요약 작업이 서로 기다리지 않게 한다
-        size: 2
+        # 정기 수집·요약·미리 읽기·축소본 작업이 서로 기다리지 않게 한다
+        size: 4
   jpa:
     hibernate:
       ddl-auto: validate
@@ -48,6 +48,10 @@ keycheck:
     # 켜면 기동 직후와 이후 interval마다 실제 geekhack에 요청한다
     enabled: ${CRAWL_ENABLED:false}
     interval: PT30M
+  prefetch:
+    # 켜면 틀 글을 하나씩 실제 geekhack에서 읽는다. 채운 글은 요약 작업이 요약하므로 SUMMARIZER=claude면 글당 약 1.1센트
+    enabled: ${PREFETCH_ENABLED:false}
+    interval: 10s
   collect:
     # 이 글 번호 이상인 글만 모으고 보여 준다. 2020-01-01 무렵 첫 글 번호.
     # DB의 작성일 기준점(102599 = 2019-09-24, 112165 = 2021-04-07)으로 보간한 추정값이며 며칠 오차는 괜찮다.

@@ -50,6 +50,8 @@ tasks.named('test') {
     // backend/.env에 무엇이 있어도 테스트는 실제 Claude API를 부르지 않는다. 요약 작업은 테스트가 직접 실행한다.
     systemProperty 'keycheck.summarizer', 'fake'
     systemProperty 'keycheck.summary.enabled', 'false'
+    // 미리 읽기는 실제 geekhack에 요청한다. 미리 읽기 작업도 테스트가 직접 실행한다.
+    systemProperty 'keycheck.prefetch.enabled', 'false'
     // 테스트 글 번호(2000, 3000 등)는 실제 수집 기간 경계보다 작다. 경계를 보는 테스트만 따로 정한다.
     systemProperty 'keycheck.collect.since-topic-id', '0'
 }
