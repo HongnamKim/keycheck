@@ -19,6 +19,7 @@ function card(id: number): PostCard {
     category: "KEYBOARD",
     subcategory: null,
     representativeImageUrl: null,
+    representativeThumbUrl: null,
     summaryStatus: "PENDING",
     summaryFirstLine: null,
     views: 10,

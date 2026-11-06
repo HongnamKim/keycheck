@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { PostCard as PostCardData } from "@/lib/api";
 import { formatCheckedAt, formatViews, postCategoryLabel } from "@/lib/format";
+import { imageSources } from "@/lib/image";
 import BoardBadge from "./BoardBadge";
 import PostDates from "./PostDates";
 import RemoteImage from "./RemoteImage";
@@ -22,13 +23,17 @@ export default function PostCard({
   eager?: boolean;
 }) {
   const summary = post.summaryStatus === "DONE" ? post.summaryFirstLine : null;
+  const image = post.representativeImageUrl
+    ? imageSources(post.representativeThumbUrl, post.representativeImageUrl)
+    : null;
 
   return (
     <Link href={href} className={styles.card}>
-      {post.representativeImageUrl ? (
+      {image ? (
         <span className={styles.media}>
           <RemoteImage
-            src={post.representativeImageUrl}
+            src={image.src}
+            fallbackSrc={image.fallback}
             alt=""
             fill
             loading={eager ? "eager" : "lazy"}

@@ -1,17 +1,22 @@
 "use client";
 
 import { useRef, useState, type KeyboardEvent, type MouseEvent, type TouchEvent } from "react";
+import type { PostImage } from "@/lib/api";
 import { stepIndex, swipeStep } from "@/lib/gallery";
+import { imageSources } from "@/lib/image";
 import RemoteImage from "./RemoteImage";
 import styles from "./Gallery.module.css";
 
-/** 원문 이미지 썸네일 목록. 누르면 페이지 안에서 크게 보여주고 좌우로(키보드·버튼·스와이프) 넘긴다. */
-export default function Gallery({ urls }: { urls: string[] }) {
+/**
+ * 원문 이미지 썸네일 목록. 칸은 축소본(없으면 원본)을 보여준다.
+ * 누르면 페이지 안에서 원본을 크게 보여주고 좌우로(키보드·버튼·스와이프) 넘긴다.
+ */
+export default function Gallery({ images }: { images: PostImage[] }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [index, setIndex] = useState(0);
   /** 한 손가락 터치를 시작한 위치. 두 손가락(확대) 중이면 null */
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
-  const many = urls.length > 1;
+  const many = images.length > 1;
 
   function open(i: number) {
     setIndex(i);
@@ -23,7 +28,7 @@ export default function Gallery({ urls }: { urls: string[] }) {
   }
 
   function step(delta: number) {
-    setIndex((current) => stepIndex(current, delta, urls.length));
+    setIndex((current) => stepIndex(current, delta, images.length));
   }
 
   function onKeyDown(e: KeyboardEvent<HTMLDialogElement>) {
@@ -57,18 +62,28 @@ export default function Gallery({ urls }: { urls: string[] }) {
   return (
     <>
       <ul className={styles.grid}>
-        {urls.map((url, i) => (
-          <li key={i}>
-            <button
-              type="button"
-              className={styles.thumb}
-              onClick={() => open(i)}
-              aria-label={`원문 이미지 ${i + 1} 크게 보기`}
-            >
-              <RemoteImage src={url} alt="" fill sizes="(max-width: 640px) 50vw, 240px" className={styles.thumbImage} />
-            </button>
-          </li>
-        ))}
+        {images.map((image, i) => {
+          const sources = imageSources(image.thumbUrl, image.url);
+          return (
+            <li key={i}>
+              <button
+                type="button"
+                className={styles.thumb}
+                onClick={() => open(i)}
+                aria-label={`원문 이미지 ${i + 1} 크게 보기`}
+              >
+                <RemoteImage
+                  src={sources.src}
+                  fallbackSrc={sources.fallback}
+                  alt=""
+                  fill
+                  sizes="(max-width: 640px) 50vw, 240px"
+                  className={styles.thumbImage}
+                />
+              </button>
+            </li>
+          );
+        })}
       </ul>
 
       <dialog
@@ -83,9 +98,9 @@ export default function Gallery({ urls }: { urls: string[] }) {
       >
         <div className={styles.bar}>
           <span className={styles.counter}>
-            {index + 1} / {urls.length}
+            {index + 1} / {images.length}
           </span>
-          <a href={urls[index]} target="_blank" rel="noopener noreferrer" className={styles.source}>
+          <a href={images[index].url} target="_blank" rel="noopener noreferrer" className={styles.source}>
             원본 열기
           </a>
           <button type="button" className={styles.close} onClick={close} aria-label="닫기">
@@ -97,10 +112,11 @@ export default function Gallery({ urls }: { urls: string[] }) {
 
         <div className={styles.stage} data-backdrop="">
           <div className={styles.frame} data-backdrop="">
-            {/* key로 이미지마다 새로 그려, 앞 이미지의 최적화 실패 상태가 다음 이미지로 넘어가지 않게 한다 */}
+            {/* 확대 보기는 원본을 그대로 읽는다. key로 이미지마다 새로 그려 앞 이미지의 상태가 다음 이미지로 넘어가지 않게 한다 */}
             <RemoteImage
-              key={urls[index]}
-              src={urls[index]}
+              key={images[index].url}
+              src={images[index].url}
+              fallbackSrc={null}
               alt={`원문 이미지 ${index + 1}`}
               fill
               sizes="100vw"

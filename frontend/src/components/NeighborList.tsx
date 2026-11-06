@@ -43,6 +43,7 @@ export default async function NeighborList({
     category: post.category,
     subcategory: post.subcategory,
     representativeImageUrl: post.representativeImageUrl,
+    representativeThumbUrl: post.representativeThumbUrl,
     detailLoaded: post.detailLoaded,
     postedAt: post.postedAt,
     estimatedPostedAt: post.estimatedPostedAt,

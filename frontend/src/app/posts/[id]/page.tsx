@@ -10,6 +10,7 @@ import StatsLive from "@/components/StatsLive";
 import SummaryWatcher from "@/components/SummaryWatcher";
 import { getPost } from "@/lib/api";
 import { postCategoryLabel } from "@/lib/format";
+import { imageSources } from "@/lib/image";
 import { backHref, parseDetailQuery, parsePostId, postHref } from "@/lib/query";
 import styles from "./page.module.css";
 
@@ -32,6 +33,10 @@ async function PostDetail({ params, searchParams }: PageProps<"/posts/[id]">) {
   const from = parseDetailQuery(await searchParams);
   const renderedAt = new Date().toISOString();
   const hasSummary = post.summaryStatus === "DONE" && post.summaryLines.length > 0;
+  // 맨 위 큰 이미지는 대표 이미지의 큰 축소본(1280px)을 쓴다
+  const image = post.representativeImageUrl
+    ? imageSources(post.representativeLargeUrl, post.representativeImageUrl)
+    : null;
 
   return (
     <div className={styles.detail}>
@@ -42,10 +47,11 @@ async function PostDetail({ params, searchParams }: PageProps<"/posts/[id]">) {
       </div>
       <div className={styles.columns}>
         <div className={styles.media}>
-          {post.representativeImageUrl ? (
+          {image ? (
             // 원본 크기를 모르므로 width·height는 비율용 값이고, 실제 크기는 CSS(width 100%, height auto)가 정한다
             <RemoteImage
-              src={post.representativeImageUrl}
+              src={image.src}
+              fallbackSrc={image.fallback}
               alt={post.title}
               width={1200}
               height={800}
@@ -151,12 +157,12 @@ async function PostDetail({ params, searchParams }: PageProps<"/posts/[id]">) {
         </article>
       </div>
 
-      {post.detailLoaded && post.imageUrls.length > 0 && (
+      {post.detailLoaded && post.images.length > 0 && (
         <section className={styles.gallery} aria-labelledby="gallery-title">
           <h3 id="gallery-title" className={styles.sectionTitle}>
-            원문 이미지 {post.imageUrls.length}장
+            원문 이미지 {post.images.length}장
           </h3>
-          <Gallery urls={post.imageUrls} />
+          <Gallery images={post.images} />
         </section>
       )}
 

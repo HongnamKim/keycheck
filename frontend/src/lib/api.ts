@@ -41,6 +41,8 @@ export interface PostCard {
   category: Category;
   subcategory: Subcategory | null;
   representativeImageUrl: string | null;
+  /** 대표 이미지 축소본(가로 최대 640px) 주소. 대표 이미지나 축소본이 없으면 null이고 화면은 원본을 쓴다 */
+  representativeThumbUrl: string | null;
   summaryStatus: SummaryStatus;
   summaryFirstLine: string | null;
   views: number;
@@ -71,6 +73,14 @@ export interface SpecItem {
   value: string;
 }
 
+/** 상세 갤러리 이미지 한 장 */
+export interface PostImage {
+  /** 원본 주소. 확대 보기와 원본 열기에 쓴다 */
+  url: string;
+  /** 축소본(가로 최대 640px) 주소. 아직 없으면 null이고 화면은 원본을 쓴다 */
+  thumbUrl: string | null;
+}
+
 export interface PostDetail {
   id: number;
   board: Board;
@@ -79,8 +89,12 @@ export interface PostDetail {
   category: Category;
   subcategory: Subcategory | null;
   representativeImageUrl: string | null;
-  /** 규칙에서 빠지지 않은 후보 이미지 전체, 본문 순서 (대표 이미지 포함) */
-  imageUrls: string[];
+  /** 대표 이미지 축소본(가로 최대 640px) 주소. 대표 이미지나 축소본이 없으면 null */
+  representativeThumbUrl: string | null;
+  /** 대표 이미지 큰 축소본(가로 최대 1280px) 주소. 상세 맨 위에 쓴다. 대표 이미지나 큰 축소본이 없으면 null */
+  representativeLargeUrl: string | null;
+  /** 규칙에서 빠지지 않은 후보 이미지 전체, 본문 순서, 주소 중복 제외 (대표 이미지 포함) */
+  images: PostImage[];
   summaryStatus: SummaryStatus;
   summaryLines: string[];
   specs: SpecItem[];

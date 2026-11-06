@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { unstable_rethrow } from "next/navigation";
 import { getPosts, type BoardFilter, type PostBatch, type PostCard } from "@/lib/api";
 import { BOARD_INFO, formatPostedDate, formatViews, postCategoryLabel } from "@/lib/format";
+import { imageSources } from "@/lib/image";
 import { listHref, postHref } from "@/lib/query";
 import BoardBadge from "./BoardBadge";
 import FreshListLink from "./FreshListLink";
@@ -67,12 +68,15 @@ async function RecentPosts({ board }: { board: BoardFilter }) {
 function RecentItem({ post }: { post: PostCard }) {
   const summary = post.summaryStatus === "DONE" ? post.summaryFirstLine : null;
   const posted = formatPostedDate(post.postedAt, post.estimatedPostedAt);
+  const image = post.representativeImageUrl
+    ? imageSources(post.representativeThumbUrl, post.representativeImageUrl)
+    : null;
 
   return (
     <Link href={postHref(post.id)} className={styles.item}>
       <span className={styles.thumb}>
-        {post.representativeImageUrl ? (
-          <RemoteImage src={post.representativeImageUrl} alt="" fill sizes="112px" className={styles.image} />
+        {image ? (
+          <RemoteImage src={image.src} fallbackSrc={image.fallback} alt="" fill sizes="112px" className={styles.image} />
         ) : (
           <span className={styles.noImage}>{post.detailLoaded ? "이미지 없음" : "열면 불러와요"}</span>
         )}

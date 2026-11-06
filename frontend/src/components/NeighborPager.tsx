@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import { getNeighbors, type PostCard } from "@/lib/api";
 import { formatPostedDate, formatViews, postCategoryLabel } from "@/lib/format";
+import { imageSources } from "@/lib/image";
 import { NEIGHBOR_PAGE_SIZE, nextPage, prevPage, type NeighborPage } from "@/lib/neighbors";
 import { postHref, type ListQuery } from "@/lib/query";
 import styles from "./NeighborList.module.css";
@@ -18,6 +19,7 @@ export type RowPost = Pick<
   | "category"
   | "subcategory"
   | "representativeImageUrl"
+  | "representativeThumbUrl"
   | "detailLoaded"
   | "postedAt"
   | "estimatedPostedAt"
@@ -132,13 +134,17 @@ export default function NeighborPager({
 
 function RowContent({ post }: { post: RowPost }) {
   const posted = formatPostedDate(post.postedAt, post.estimatedPostedAt);
+  const image = post.representativeImageUrl
+    ? imageSources(post.representativeThumbUrl, post.representativeImageUrl)
+    : null;
 
   return (
     <>
-      {post.representativeImageUrl ? (
+      {image ? (
         <span className={styles.thumb}>
           <RemoteImage
-            src={post.representativeImageUrl}
+            src={image.src}
+            fallbackSrc={image.fallback}
             alt=""
             fill
             sizes="(max-width: 640px) 128px, 208px"
