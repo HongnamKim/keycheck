@@ -1,8 +1,10 @@
 package com.keycheck.post.dto;
 
+import com.keycheck.image.service.ThumbUrls;
 import com.keycheck.post.domain.Board;
 import com.keycheck.post.domain.Category;
 import com.keycheck.post.domain.Post;
+import com.keycheck.post.domain.PostImage;
 import com.keycheck.post.domain.Subcategory;
 import com.keycheck.post.domain.SummaryStatus;
 import java.time.Instant;
@@ -25,6 +27,10 @@ public class PostCardResponse {
   private final Subcategory subcategory;
 
   private final String representativeImageUrl;
+
+  /** 대표 이미지 축소본(가로 최대 640px) 공개 주소. 대표 이미지나 축소본이 없으면 null이고 화면은 원본을 쓴다. */
+  private final String representativeThumbUrl;
+
   private final SummaryStatus summaryStatus;
 
   /** summaryStatus가 DONE일 때만 값이 있다 */
@@ -44,7 +50,9 @@ public class PostCardResponse {
   /** false면 틀 글: 본문·이미지를 아직 읽지 않았다(대표 이미지·작성일 없음). */
   private final boolean detailLoaded;
 
-  public static PostCardResponse from(Post post, String imageUrl, Instant estimatedPostedAt) {
+  /** representative는 대표 이미지. 없으면 null. */
+  public static PostCardResponse from(
+      Post post, PostImage representative, Instant estimatedPostedAt, ThumbUrls urls) {
     List<String> lines = post.getSummaryLines();
     boolean hasFirstLine =
         post.getSummaryStatus() == SummaryStatus.DONE && lines != null && !lines.isEmpty();
@@ -54,7 +62,8 @@ public class PostCardResponse {
         post.getBoard(),
         post.getCategory(),
         post.getSubcategory(),
-        imageUrl,
+        representative != null ? representative.getUrl() : null,
+        representative != null ? urls.url(representative.getThumbKey()) : null,
         post.getSummaryStatus(),
         hasFirstLine ? lines.get(0) : null,
         post.getViews(),

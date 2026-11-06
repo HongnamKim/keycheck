@@ -57,6 +57,18 @@ keycheck:
     # DB의 작성일 기준점(102599 = 2019-09-24, 112165 = 2021-04-07)으로 보간한 추정값이며 며칠 오차는 괜찮다.
     # 값을 낮추면 경계에 닿아 끝으로 둔 게시판이 다시 확보되도록 update board_backfill set exhausted = false; 를 실행한다
     since-topic-id: 104300
+  storage:
+    # Cloudflare R2(S3 호환). 비면 축소본 작업이 돌지 않고 화면은 원본을 쓴다
+    endpoint: ${R2_ENDPOINT:}
+    bucket: ${R2_BUCKET:}
+    access-key-id: ${R2_ACCESS_KEY_ID:}
+    secret-access-key: ${R2_SECRET_ACCESS_KEY:}
+    # 브라우저가 축소본을 받는 공개 주소 앞부분. 로컬은 버킷의 r2.dev 주소, 배포는 연결한 도메인
+    public-url: ${R2_PUBLIC_URL:}
+  thumbnail:
+    # 켜면 이미지 원본을 실제 이미지 호스트·geekhack에서 받아 축소본을 R2에 올린다. 저장소(R2_*) 설정이 없으면 돌지 않는다
+    enabled: ${THUMBNAIL_ENABLED:false}
+    interval: 3s
   cors:
     allowed-origins: http://localhost:3000
   geekhack:

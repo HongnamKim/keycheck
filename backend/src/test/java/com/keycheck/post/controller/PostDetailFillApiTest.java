@@ -96,7 +96,7 @@ class PostDetailFillApiTest {
         .andExpect(jsonPath("$.category").value("UNCLASSIFIED"))
         .andExpect(jsonPath("$.title").value("[IC] Test Board"))
         .andExpect(jsonPath("$.representativeImageUrl").value(nullValue()))
-        .andExpect(jsonPath("$.imageUrls", hasSize(0)))
+        .andExpect(jsonPath("$.images", hasSize(0)))
         .andExpect(jsonPath("$.summaryStatus").value("PENDING"))
         .andExpect(jsonPath("$.summaryLines", hasSize(0)))
         .andExpect(jsonPath("$.postedAt").value(nullValue()))
@@ -117,7 +117,7 @@ class PostDetailFillApiTest {
         .andExpect(jsonPath("$.representativeImageUrl").value("https://i.imgur.com/first.jpg"))
         .andExpect(
             jsonPath(
-                "$.imageUrls",
+                "$.images[*].url",
                 contains("https://i.imgur.com/first.jpg", "https://i.imgur.com/second.png")))
         // 요약은 SummaryWorker가 나중에 만든다
         .andExpect(jsonPath("$.summaryStatus").value("PENDING"))

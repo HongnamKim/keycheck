@@ -4,6 +4,7 @@ import com.keycheck.crawl.config.CollectProperties;
 import com.keycheck.crawl.domain.BoardBackfill;
 import com.keycheck.crawl.repository.BoardBackfillRepository;
 import com.keycheck.crawl.service.CrawlService;
+import com.keycheck.image.service.ThumbUrls;
 import com.keycheck.post.domain.Board;
 import com.keycheck.post.domain.Category;
 import com.keycheck.post.domain.Post;
@@ -30,6 +31,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
@@ -56,6 +58,7 @@ public class PostQueryService {
   private final BoardBackfillRepository backfillRepository;
   private final CrawlService crawlService;
   private final CollectProperties collectProperties;
+  private final ThumbUrls thumbUrls;
   private final Clock clock;
 
   /**
@@ -260,15 +263,16 @@ public class PostQueryService {
   }
 
   private List<PostCardResponse> cards(List<Post> posts) {
-    Map<Long, String> imageUrls = representativeImageUrls(posts);
+    Map<Long, PostImage> images = representativeImages(posts);
     Map<Long, Instant> estimates = estimatedPostedAts(posts);
     return posts.stream()
         .map(
             post ->
                 PostCardResponse.from(
                     post,
-                    imageUrls.get(post.getRepresentativeImageId()),
-                    estimates.get(post.getId())))
+                    images.get(post.getRepresentativeImageId()),
+                    estimates.get(post.getId()),
+                    thumbUrls))
         .toList();
   }
 
@@ -285,9 +289,10 @@ public class PostQueryService {
     if (post.isPrefetched()) {
       postRepository.clearPrefetched(post.getId());
     }
-    String imageUrl = representativeImageUrls(List.of(post)).get(post.getRepresentativeImageId());
+    PostImage representative =
+        representativeImages(List.of(post)).get(post.getRepresentativeImageId());
     return PostDetailResponse.from(
-        post, imageUrl, estimatedPostedAts(List.of(post)).get(post.getId()));
+        post, representative, estimatedPostedAts(List.of(post)).get(post.getId()), thumbUrls);
   }
 
   /**
@@ -382,13 +387,14 @@ public class PostQueryService {
     return estimates;
   }
 
-  private Map<Long, String> representativeImageUrls(List<Post> posts) {
+  /** 대표 이미지(이미지 ID → 이미지). 원본 주소와 축소본 객체 이름을 함께 쓴다. */
+  private Map<Long, PostImage> representativeImages(List<Post> posts) {
     List<Long> ids =
         posts.stream().map(Post::getRepresentativeImageId).filter(Objects::nonNull).toList();
     if (ids.isEmpty()) {
       return Collections.emptyMap();
     }
     return postImageRepository.findAllById(ids).stream()
-        .collect(Collectors.toMap(PostImage::getId, PostImage::getUrl));
+        .collect(Collectors.toMap(PostImage::getId, Function.identity()));
   }
 }

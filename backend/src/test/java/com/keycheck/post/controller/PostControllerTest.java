@@ -359,7 +359,7 @@ class PostControllerTest {
         .andExpect(status().isOk())
         .andExpect(
             jsonPath(
-                "$.imageUrls",
+                "$.images[*].url",
                 contains(
                     "https://i.imgur.com/first.jpg",
                     "https://i.imgur.com/second.jpg",
@@ -382,7 +382,8 @@ class PostControllerTest {
         .perform(get("/api/posts/" + post.getId()))
         .andExpect(status().isOk())
         .andExpect(
-            jsonPath("$.imageUrls", contains("https://i.imgur.com/a.jpg", "https://i.imgur.com/b.jpg")));
+            jsonPath(
+                "$.images[*].url", contains("https://i.imgur.com/a.jpg", "https://i.imgur.com/b.jpg")));
   }
 
   @Test
@@ -393,7 +394,7 @@ class PostControllerTest {
     mockMvc
         .perform(get("/api/posts/" + post.getId()))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.imageUrls", hasSize(0)));
+        .andExpect(jsonPath("$.images", hasSize(0)));
   }
 
   @Test
