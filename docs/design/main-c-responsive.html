@@ -1,0 +1,3432 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>메인 시안 C안 반응형</title>
+<style>
+  body { margin: 0; background: #e9eae6; color: #16181a; font-family: system-ui, -apple-system, "Apple SD Gothic Neo", sans-serif; }
+  .doc-head { max-width: 1120px; margin: 0 auto; padding: 32px 16px 8px; }
+  .doc-head h1 { margin: 0 0 8px; font-size: 24px; }
+  .doc-head p { margin: 0 0 4px; color: #4f555a; font-size: 14px; line-height: 1.6; }
+  .doc-label { font-size: 13px; font-weight: 600; color: #4f555a; margin: 0 0 8px; }
+  .doc-box { border: 1px solid #d5d7d2; border-radius: 12px; overflow: hidden; background: #f3f4f1; }
+  .doc-row { display: flex; gap: 32px; align-items: flex-start; overflow-x: auto; padding: 16px; }
+  .doc-col { flex: 0 0 auto; }
+</style>
+</head>
+<body>
+<header class="doc-head">
+<h1>메인 시안 · C안 벤토 갤러리 (IC·공동구매)</h1>
+<p>2026-11-07 사용자 승인. 같은 조각이 폭에 따라 데스크톱(1024px 이상) / 태블릿(600~1023px) / 모바일(599px 이하)로 바뀐다(컨테이너 쿼리).</p>
+<p>데이터는 시안을 만든 시점의 실제 글이고, 이미지는 원래 호스트 주소를 그대로 불러온다(저장소에 이미지를 두지 않는다). 하이라이트에 고르는 규칙은 시안 안의 "시안 메모"를 본다.</p>
+</header>
+<div class="doc-row"><div class="doc-col" style="width:1120px"><p class="doc-label">데스크톱 · 1120px</p><div class="doc-box" style="width:1120px"><style>
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap");
+
+/* 폭은 바깥 창이 아니라 이 틀을 기준으로 정한다 */
+.mc-frame { container-type: inline-size; container-name: kc; }
+
+.mc-frame .mc-root {
+  --mc-bg: #f3f4f1;
+  --mc-surface: #ffffff;
+  --mc-ink: #16181a;
+  --mc-body: #2e3236;
+  --mc-muted: #4f555a;
+  --mc-faint: #9ba09c;
+  --mc-accent: #b93a0b;
+  --mc-accent-dark: #8f2c07;
+  --mc-border: #d5d7d2;
+  --mc-divider: #e4e5e1;
+  --mc-sans: "IBM Plex Sans KR", system-ui, sans-serif;
+  --mc-mono: "IBM Plex Mono", ui-monospace, monospace;
+  box-sizing: border-box;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 24px 28px;
+  background: var(--mc-bg);
+  color: var(--mc-ink);
+  font-family: var(--mc-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+.mc-frame a { color: inherit; text-decoration: none; }
+
+/* ---------- 헤더 ---------- */
+.mc-frame .mc-header {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  margin: 0 -24px;
+  padding: 14px 24px;
+  border-bottom: 2px solid var(--mc-ink);
+}
+.mc-frame .mc-logo {
+  font-size: 28px;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.045em;
+}
+.mc-frame .mc-nav { display: flex; gap: 28px; }
+.mc-frame .mc-nav-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  border-bottom: 3px solid transparent;
+  color: var(--mc-muted);
+  font-size: 16px;
+  font-weight: 500;
+}
+.mc-frame .mc-nav-link:hover { color: var(--mc-ink); }
+.mc-frame .mc-login {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 14px 0 6px;
+  border: 1px dashed var(--mc-faint);
+  border-radius: 999px;
+  color: var(--mc-muted);
+  font-size: 13px;
+}
+.mc-frame .mc-login-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--mc-divider);
+}
+
+/* ---------- 날짜 띠 ---------- */
+.mc-frame .mc-dateline {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--mc-border);
+  font-family: var(--mc-mono);
+  font-size: 12px;
+  color: var(--mc-muted);
+  letter-spacing: 0.02em;
+}
+.mc-frame .mc-dateline-strong { color: var(--mc-ink); font-weight: 600; }
+
+/* ---------- 하이라이트 머리 ---------- */
+.mc-frame .mc-hl { padding-top: 34px; }
+.mc-frame .mc-hl-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 40px;
+  margin-bottom: 22px;
+}
+.mc-frame .mc-kicker {
+  margin: 0 0 10px;
+  font-family: var(--mc-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: var(--mc-accent);
+}
+.mc-frame .mc-hl-title {
+  margin: 0;
+  font-size: 46px;
+  line-height: 1.12;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  word-break: keep-all;
+}
+.mc-frame .mc-hl-lead {
+  margin: 0;
+  max-width: 33ch;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--mc-body);
+  word-break: keep-all;
+}
+
+/* ---------- 벤토 ---------- */
+.mc-frame .mc-bento {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: 244px 244px 196px;
+  grid-template-areas:
+    "a a b d"
+    "a a b e"
+    "c c c f";
+  gap: 12px;
+}
+.mc-frame .mc-cell {
+  position: relative;
+  isolation: isolate;
+  display: block;
+  overflow: hidden;
+  border-radius: 16px;
+  background-color: #2a2d30;
+  color: #ffffff;
+}
+.mc-frame .mc-cell-a { grid-area: a; }
+.mc-frame .mc-cell-b { grid-area: b; }
+.mc-frame .mc-cell-c { grid-area: c; }
+.mc-frame .mc-cell-d { grid-area: d; }
+.mc-frame .mc-cell-e { grid-area: e; }
+.mc-frame .mc-cell-f { grid-area: f; }
+.mc-frame .mc-cell-img {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  color: transparent; /* 이미지를 못 받으면 대체 글자 대신 칸 바탕색만 보이게 */
+  transition: transform 0.6s ease;
+}
+.mc-frame .mc-cell:hover .mc-cell-img { transform: scale(1.04); }
+.mc-frame .mc-cell-shade {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, rgba(12, 13, 14, 0) 28%, rgba(12, 13, 14, 0.9) 100%);
+}
+.mc-frame .mc-cell-a .mc-cell-shade {
+  background: linear-gradient(180deg, rgba(12, 13, 14, 0.05) 25%, rgba(12, 13, 14, 0.62) 55%, rgba(12, 13, 14, 0.92) 100%);
+}
+/* 원 두 개가 나란한 사진: 왼쪽 원을 보여준다 */
+.mc-frame .mc-cell-img-up { object-position: 0% 50%; }
+/* 밝은 사진 위 글자: 아래쪽을 더 일찍 어둡게 */
+.mc-frame .mc-cell-d .mc-cell-shade,
+.mc-frame .mc-cell-f .mc-cell-shade {
+  background: linear-gradient(180deg, rgba(12, 13, 14, 0) 22%, rgba(12, 13, 14, 0.9) 62%);
+}
+.mc-frame .mc-badges {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  display: flex;
+  gap: 6px;
+}
+.mc-frame .mc-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+.mc-frame .mc-badge-ic { background: #ffffff; color: var(--mc-ink); }
+.mc-frame .mc-badge-gb { background: var(--mc-accent); color: #ffffff; }
+/* 주황 띠 위의 공동구매 배지: 바탕과 겹치지 않게 흰 바탕에 주황 글자 */
+.mc-frame .mc-badge-gb-on { background: #ffffff; color: var(--mc-accent); }
+.mc-frame .mc-badge-tag {
+  background: rgba(22, 24, 26, 0.55);
+  color: #ffffff;
+  font-family: var(--mc-mono);
+  font-weight: 500;
+  backdrop-filter: blur(6px);
+}
+.mc-frame .mc-cell-body {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px;
+}
+.mc-frame .mc-cell-a .mc-cell-body { gap: 10px; padding: 24px; }
+.mc-frame .mc-cell-kicker {
+  font-family: var(--mc-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.8);
+}
+.mc-frame .mc-cell-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 17px;
+  line-height: 1.3;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.mc-frame .mc-cell-a .mc-cell-title { font-size: 44px; line-height: 1.05; letter-spacing: -0.04em; }
+.mc-frame .mc-cell-b .mc-cell-title { font-size: 23px; line-height: 1.22; letter-spacing: -0.025em; -webkit-line-clamp: 3; }
+.mc-frame .mc-cell-sum {
+  max-width: 46ch;
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.88);
+  word-break: keep-all;
+}
+.mc-frame .mc-cell-meta {
+  font-family: var(--mc-mono);
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.78);
+}
+/* 메타 토막(조회 · 댓글 · 날짜 등): 가운뎃점은 CSS가 토막 사이에 넣는다 */
+.mc-frame .mc-segs > * + *::before { content: " · "; }
+
+/* 큰 칸: 공동구매 기간과 geekhack 반응을 두 칸으로 */
+.mc-frame .mc-ledger {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.3);
+}
+.mc-frame .mc-ledger-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 12px 0 0;
+}
+.mc-frame .mc-ledger-item + .mc-ledger-item {
+  padding-left: 16px;
+  border-left: 1px solid rgba(255, 255, 255, 0.3);
+}
+.mc-frame .mc-ledger-k {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.mc-frame .mc-ledger-dot { width: 8px; height: 8px; border-radius: 2px; background: var(--mc-accent); }
+.mc-frame .mc-ledger-dot-quiet { background: #ffffff; }
+.mc-frame .mc-ledger-v {
+  font-family: var(--mc-mono);
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+}
+.mc-frame .mc-ledger-dday {
+  margin-left: 4px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--mc-accent);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* 마감 띠: 사진 대신 남은 날을 크게, 주황 바탕 + 키 배열 무늬 */
+.mc-frame .mc-keys::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: conic-gradient(from 90deg at 4px 4px, rgba(255, 255, 255, 0.1) 90deg, transparent 0) 0 0 / 30px 30px;
+  -webkit-mask-image: linear-gradient(115deg, transparent 30%, #000000 100%);
+  mask-image: linear-gradient(115deg, transparent 30%, #000000 100%);
+}
+.mc-frame .mc-panel-drop { background-color: var(--mc-accent); }
+
+.mc-frame .mc-cell-c {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 24px;
+  padding: 22px 26px 22px 22px;
+}
+.mc-frame .mc-drop-text { display: flex; flex-direction: column; gap: 6px; }
+.mc-frame .mc-drop-title { font-size: 32px; line-height: 1.1; font-weight: 700; letter-spacing: -0.035em; }
+.mc-frame .mc-drop-time {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-family: var(--mc-mono);
+  line-height: 1;
+}
+.mc-frame .mc-drop-today {
+  margin-bottom: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--mc-accent);
+  font-family: var(--mc-sans);
+  font-size: 13px;
+  font-weight: 700;
+}
+.mc-frame .mc-drop-clock { font-size: 92px; font-weight: 500; letter-spacing: -0.06em; }
+
+/* ---------- 시안 메모 ---------- */
+.mc-frame .mc-memo {
+  display: grid;
+  grid-template-columns: 104px 1fr;
+  gap: 8px 18px;
+  margin-top: 16px;
+  padding: 14px 18px;
+  border: 1.5px dashed var(--mc-faint);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.45);
+  color: var(--mc-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.mc-frame .mc-memo-label {
+  font-family: var(--mc-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mc-ink);
+  letter-spacing: 0.04em;
+}
+.mc-frame .mc-memo-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 28px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  word-break: keep-all;
+}
+.mc-frame .mc-memo-key { color: var(--mc-ink); font-weight: 600; }
+
+/* ---------- 바로 가기 ---------- */
+.mc-frame .mc-jump {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 28px;
+}
+.mc-frame .mc-jump-cue { margin-right: 6px; font-family: var(--mc-mono); font-size: 12px; color: var(--mc-muted); }
+.mc-frame .mc-jump-link {
+  display: inline-flex;
+  align-items: center;
+  height: 34px;
+  padding: 0 14px;
+  border: 1px solid var(--mc-ink);
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.mc-frame .mc-jump-link:hover { background: var(--mc-ink); color: var(--mc-bg); }
+
+/* ---------- 섹션과 캐러셀 ---------- */
+.mc-frame .mc-sec { margin-top: 44px; padding-top: 36px; border-top: 1px solid var(--mc-border); }
+.mc-frame .mc-sec-head { display: flex; align-items: flex-end; gap: 18px; margin-bottom: 18px; }
+.mc-frame .mc-sec-no {
+  font-family: var(--mc-mono);
+  font-size: 48px;
+  line-height: 0.85;
+  font-weight: 500;
+  letter-spacing: -0.05em;
+  color: var(--mc-accent);
+}
+.mc-frame .mc-sec-title { margin: 0; font-size: 27px; line-height: 1.2; font-weight: 700; letter-spacing: -0.03em; }
+.mc-frame .mc-sec-sub { margin: 4px 0 0; font-size: 14px; color: var(--mc-muted); }
+.mc-frame .mc-sec-tools { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.mc-frame .mc-count { margin-right: 6px; font-family: var(--mc-mono); font-size: 12px; color: var(--mc-muted); }
+.mc-frame .mc-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--mc-ink);
+  border-radius: 50%;
+  color: var(--mc-ink);
+}
+.mc-frame .mc-arrow-off { border-color: var(--mc-border); color: var(--mc-faint); }
+.mc-frame .mc-more { margin-left: 12px; font-size: 14px; font-weight: 600; color: var(--mc-accent); }
+.mc-frame .mc-ico { display: block; }
+
+.mc-frame .mc-rail { position: relative; margin-right: -24px; }
+.mc-frame .mc-track {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  padding: 2px 24px 4px 0;
+}
+.mc-frame .mc-track::-webkit-scrollbar { display: none; }
+.mc-frame .mc-rail::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 110px;
+  background: linear-gradient(90deg, rgba(243, 244, 241, 0), var(--mc-bg) 88%);
+  pointer-events: none;
+}
+.mc-frame .mc-rail-next {
+  position: absolute;
+  right: 26px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #ffffff;
+  color: var(--mc-ink);
+  box-shadow: 0 8px 22px rgba(22, 24, 26, 0.18);
+  pointer-events: none;
+}
+.mc-frame .mc-rail-ic .mc-rail-next { top: 124px; }
+.mc-frame .mc-rail-gb .mc-rail-next { top: 83px; }
+.mc-frame .mc-progress { position: relative; height: 2px; margin-top: 16px; background: var(--mc-divider); }
+/* 막대 길이는 폭마다 한 화면에 보이는 카드 수에 맞춘다(--mc-p 데스크톱, --mc-p-t 태블릿, --mc-p-m 모바일) */
+.mc-frame .mc-progress-bar { position: absolute; top: 0; left: 0; bottom: 0; width: var(--mc-p); background: var(--mc-ink); }
+
+.mc-frame .mc-card { flex: none; display: flex; flex-direction: column; gap: 8px; scroll-snap-align: start; }
+.mc-frame .mc-card-ic { width: 236px; }
+.mc-frame .mc-card-gb { width: 320px; }
+.mc-frame .mc-media {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: 12px;
+  background-color: var(--mc-divider);
+  background-image: conic-gradient(from 90deg at 3px 3px, rgba(22, 24, 26, 0.05) 90deg, transparent 0);
+  background-size: 22px 22px;
+}
+.mc-frame .mc-card-ic .mc-media { aspect-ratio: 4 / 5; }
+.mc-frame .mc-card-gb .mc-media { aspect-ratio: 3 / 2; }
+.mc-frame .mc-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+.mc-frame .mc-card:hover .mc-img { transform: scale(1.05); }
+.mc-frame .mc-chip {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--mc-ink);
+  font-size: 11px;
+  font-weight: 600;
+}
+.mc-frame .mc-chip-date {
+  top: auto;
+  bottom: 10px;
+  background: rgba(22, 24, 26, 0.84);
+  color: #ffffff;
+  font-family: var(--mc-mono);
+  font-weight: 500;
+}
+.mc-frame .mc-chip-end { background: rgba(255, 255, 255, 0.9); color: var(--mc-muted); }
+.mc-frame .mc-chip-dday {
+  top: auto;
+  left: auto;
+  right: 10px;
+  bottom: 10px;
+  background: var(--mc-accent);
+  color: #ffffff;
+  font-family: var(--mc-mono);
+}
+.mc-frame .mc-card-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 15px;
+  line-height: 1.38;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+.mc-frame .mc-card:hover .mc-card-title { text-decoration: underline; text-underline-offset: 3px; }
+/* 카드 요약: 한국어 요약 첫 줄을 두 줄까지 */
+.mc-frame .mc-card-sum {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-top: -2px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--mc-body);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+.mc-frame .mc-card-meta { font-family: var(--mc-mono); font-size: 12px; color: var(--mc-muted); }
+
+/* ---------- 푸터 ---------- */
+.mc-frame .mc-footer {
+  margin-top: 56px;
+  padding-top: 22px;
+  border-top: 2px solid var(--mc-ink);
+}
+.mc-frame .mc-footer-top { display: flex; align-items: center; gap: 28px; }
+.mc-frame .mc-footer-logo { font-size: 20px; font-weight: 700; letter-spacing: -0.045em; }
+.mc-frame .mc-footer-nav { display: flex; gap: 18px; font-size: 14px; color: var(--mc-muted); }
+.mc-frame .mc-footer-text {
+  max-width: 70ch;
+  margin: 12px 0 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--mc-muted);
+  word-break: keep-all;
+}
+
+/* ---------- 폭별 메모 ---------- */
+.mc-frame .mc-width-note {
+  margin: 28px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--mc-divider);
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--mc-faint);
+  word-break: keep-all;
+}
+.mc-frame .mc-width-note-label {
+  margin-right: 8px;
+  font-family: var(--mc-mono);
+  font-weight: 600;
+  color: var(--mc-muted);
+}
+.mc-frame .mc-wn-t,
+.mc-frame .mc-wn-m { display: none; }
+
+/* =====================================================================
+   태블릿: 틀 폭 600–1023px
+   ===================================================================== */
+@container kc (max-width: 1023px) {
+  /* 헤더: 한 줄 그대로, 로그인 자리는 손가락 크기로 */
+  .mc-frame .mc-header { gap: 16px; }
+  .mc-frame .mc-logo { display: inline-flex; align-items: center; min-height: 44px; }
+  .mc-frame .mc-nav { gap: 0; }
+  .mc-frame .mc-nav-link { justify-content: center; min-width: 44px; padding: 0 12px; }
+  .mc-frame .mc-login { height: 44px; padding: 0 16px 0 8px; }
+
+  /* 하이라이트 머리: 자리가 모자라면 소개글이 제목 아래로 */
+  .mc-frame .mc-hl { padding-top: 30px; }
+  .mc-frame .mc-hl-head { flex-wrap: wrap; gap: 14px 28px; margin-bottom: 20px; }
+  .mc-frame .mc-hl-title { font-size: 42px; }
+
+  /* 벤토 3열: 큰 칸+세로 칸 → 마감 띠 → 작은 칸 셋 */
+  .mc-frame .mc-bento {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: 216px 216px 184px minmax(216px, auto);
+    grid-template-areas:
+      "a a b"
+      "a a b"
+      "c c c"
+      "d e f";
+  }
+  /* 칸과 카드는 제 폭을 기준으로 삼는다(아래 cqi는 칸 폭 기준) */
+  .mc-frame .mc-cell,
+  .mc-frame .mc-card { container-type: inline-size; }
+  /* 사진 칸: 사진 자리(위)와 글(아래)을 한 격자에 둔다. 큰 칸은 사진이 칸 전체를 덮고 글이 그 위에 얹힌다.
+     세로 칸·작은 칸은 글이 칸에서 차지하는 몫이 커서, 사진을 글 위 남은 자리에 맞춰 넣고 글 쪽으로 흐린다.
+     글이 사진의 중심을 가리지 않으니 사진마다 초점을 따로 정하지 않아도 된다.
+     사진 자리가 96px보다 작아지면(제목이 두 줄이 되는 좁은 칸) 칸이 그만큼 길어진다 */
+  .mc-frame .mc-cell-a,
+  .mc-frame .mc-cell-b,
+  .mc-frame .mc-cell-d,
+  .mc-frame .mc-cell-e,
+  .mc-frame .mc-cell-f { display: grid; grid-template: minmax(0, 1fr) auto / minmax(0, 1fr); }
+  .mc-frame .mc-cell-body { position: relative; grid-row: 2; }
+  .mc-frame .mc-cell-b,
+  .mc-frame .mc-cell-d,
+  .mc-frame .mc-cell-e,
+  .mc-frame .mc-cell-f { grid-template-rows: minmax(96px, 1fr) auto; }
+  .mc-frame .mc-cell-b .mc-cell-img,
+  .mc-frame .mc-cell-d .mc-cell-img,
+  .mc-frame .mc-cell-e .mc-cell-img,
+  .mc-frame .mc-cell-f .mc-cell-img {
+    grid-row: 1 / 2;
+    height: calc(100% + 36px);
+    -webkit-mask-image: linear-gradient(180deg, #000000 55%, transparent);
+    mask-image: linear-gradient(180deg, #000000 55%, transparent);
+  }
+  .mc-frame .mc-cell-a .mc-cell-title { font-size: clamp(32px, 8.6cqi, 44px); }
+  .mc-frame .mc-cell-b .mc-cell-title { font-size: 21px; -webkit-line-clamp: 4; }
+  .mc-frame .mc-drop-title { font-size: clamp(24px, 4.2cqi, 32px); }
+  .mc-frame .mc-drop-clock { font-size: clamp(60px, 11.9cqi, 92px); }
+  .mc-frame .mc-cell-kicker,
+  .mc-frame .mc-cell-meta,
+  .mc-frame .mc-card-meta,
+  .mc-frame .mc-ledger-v { word-break: keep-all; }
+  /* 메타 토막: 줄이 모자라면 토막 사이에서만 바꾸고, 줄 머리에 온 가운뎃점(3ch)은 왼쪽 밖으로 밀어 잘라 낸다.
+     글꼴을 키우거나 폭이 좁아져도 '댓글 / 1'이나 줄 끝 가운뎃점이 생기지 않는다 */
+  .mc-frame .mc-segs { display: flex; flex-wrap: wrap; margin-left: -3ch; clip-path: inset(0 0 0 3ch); }
+  .mc-frame .mc-segs > :first-child { margin-left: 3ch; }
+  .mc-frame .mc-segs > * + *::before { display: inline-block; width: 3ch; text-align: center; }
+
+  /* 손에 든 화면에서 읽히는 크기: 보조 글자 12px, 요약 14px 이상 */
+  .mc-frame .mc-cell-kicker { font-size: 12px; }
+  .mc-frame .mc-chip { font-size: 12px; }
+  .mc-frame .mc-card-sum { font-size: 14px; }
+
+  /* 바로 가기: 손가락 크기 */
+  .mc-frame .mc-jump-link { height: 44px; padding: 0 18px; }
+
+  /* 섹션 머리: 좌우 화살표와 쪽수는 숨기고 진행 막대로 위치를 알린다 */
+  .mc-frame .mc-sec { margin-top: 40px; padding-top: 32px; }
+  .mc-frame .mc-arrow,
+  .mc-frame .mc-count { display: none; }
+  .mc-frame .mc-more { display: inline-flex; align-items: center; min-height: 44px; }
+
+  /* 가로 넘김 줄: 화살표·흐림 대신 다음 카드 엿보기 */
+  .mc-frame .mc-rail-next,
+  .mc-frame .mc-rail::after { display: none; }
+  .mc-frame .mc-card-ic { width: calc((100cqi - 116px) / 3); }
+  .mc-frame .mc-card-gb { width: calc((100cqi - 146px) / 2); }
+  .mc-frame .mc-progress-bar { width: var(--mc-p-t); }
+
+  /* 푸터 메뉴: 손가락 크기 */
+  .mc-frame .mc-footer-top { flex-wrap: wrap; gap: 0 18px; }
+  .mc-frame .mc-footer-nav { gap: 0; }
+  .mc-frame .mc-footer-nav a { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; padding: 0 9px; }
+
+  .mc-frame .mc-wn-d { display: none; }
+  .mc-frame .mc-wn-t { display: inline; }
+}
+
+/* 좁은 칸: 머리글 자간을 줄인다.
+   데스크톱에서는 칸이 컨테이너가 아니라 가장 가까운 틀(kc) 폭으로 판단되어 적용되지 않는다 */
+@container (max-width: 228px) {
+  .mc-frame .mc-cell-kicker { letter-spacing: 0.02em; }
+}
+
+/* =====================================================================
+   모바일: 틀 폭 599px 이하
+   ===================================================================== */
+@container kc (max-width: 599px) {
+  .mc-frame .mc-root { padding: 0 16px 24px; }
+
+  /* 헤더: 로고·로그인 한 줄, 메뉴는 그 아래 두 칸 탭 줄 */
+  .mc-frame .mc-header { flex-wrap: wrap; gap: 0; margin: 0 -16px; padding: 6px 16px 0; }
+  .mc-frame .mc-logo { font-size: 24px; }
+  .mc-frame .mc-nav {
+    order: 1;
+    box-sizing: border-box;
+    flex: 0 0 calc(100% + 32px);
+    gap: 0;
+    margin: 6px -16px 0;
+    padding: 0 8px;
+    border-top: 1px solid var(--mc-divider);
+  }
+  .mc-frame .mc-nav-link { flex: 1 1 0; justify-content: center; min-height: 46px; font-size: 15px; }
+
+  /* 날짜 띠: 두 줄로 */
+  .mc-frame .mc-dateline { flex-wrap: wrap; gap: 2px 12px; padding: 9px 0; letter-spacing: 0; }
+
+  /* 하이라이트 머리: 제목 → 소개글 */
+  .mc-frame .mc-hl { padding-top: 24px; }
+  .mc-frame .mc-hl-head { flex-direction: column; align-items: flex-start; gap: 12px; margin-bottom: 18px; }
+  .mc-frame .mc-kicker { margin-bottom: 8px; }
+  .mc-frame .mc-hl-title { font-size: 31px; line-height: 1.16; }
+  .mc-frame .mc-hl-lead { max-width: none; font-size: 14px; line-height: 1.65; }
+
+  /* 벤토: 큰 칸 전체 폭 → 세로 칸+작은 칸 둘 2열 모자이크 → 마감 띠 → 공동구매 작은 칸 */
+  .mc-frame .mc-bento {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: minmax(420px, auto) minmax(184px, 1fr) minmax(184px, 1fr) auto 176px;
+    grid-template-areas:
+      "a a"
+      "b d"
+      "b e"
+      "c c"
+      "f f";
+    gap: 10px;
+  }
+  .mc-frame .mc-cell { border-radius: 14px; }
+  .mc-frame .mc-badges { top: 12px; left: 12px; gap: 5px; }
+  .mc-frame .mc-badge { height: 22px; padding: 0 9px; }
+  .mc-frame .mc-cell-body { gap: 5px; padding: 12px 13px 13px; }
+  .mc-frame .mc-cell-a .mc-cell-body { gap: 8px; padding: 18px; }
+  .mc-frame .mc-cell-kicker { letter-spacing: 0.02em; }
+  .mc-frame .mc-cell-title { font-size: 15px; }
+  .mc-frame .mc-cell-a .mc-cell-title { font-size: 34px; }
+  .mc-frame .mc-cell-b .mc-cell-title { font-size: 19px; -webkit-line-clamp: 4; }
+  .mc-frame .mc-cell-sum {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.55;
+  }
+  .mc-frame .mc-ledger-item { padding: 10px 8px 0 0; }
+  .mc-frame .mc-ledger-item + .mc-ledger-item { padding-left: 12px; }
+  .mc-frame .mc-ledger-k { gap: 6px; font-size: 12.5px; }
+
+  /* 마감 띠: 큰 남은 날을 위 오른쪽, 제목을 아래로 */
+  .mc-frame .mc-cell-c { grid-template-columns: minmax(0, 1fr); align-items: start; gap: 10px; padding: 12px 16px 16px; }
+  .mc-frame .mc-drop-time { grid-row: 1; justify-self: end; }
+  .mc-frame .mc-drop-text { grid-row: 2; gap: 4px; }
+  .mc-frame .mc-drop-title { font-size: 25px; }
+  .mc-frame .mc-drop-clock { font-size: min(60px, 18cqi); }
+  .mc-frame .mc-drop-today { margin-bottom: 4px; padding: 3px 9px; font-size: 12px; }
+
+  /* 공동구매 작은 칸: 한 줄을 다 쓰니 큰 칸처럼 사진이 칸 전체를 덮고, 글자를 조금 키운다 */
+  .mc-frame .mc-cell-f { grid-template-rows: minmax(0, 1fr) auto; }
+  .mc-frame .mc-cell-f .mc-cell-img { grid-row: auto; height: 100%; -webkit-mask-image: none; mask-image: none; }
+  .mc-frame .mc-cell-f .mc-cell-body { padding: 14px 16px 16px; }
+  .mc-frame .mc-cell-f .mc-cell-title { font-size: 17px; }
+
+  /* 시안 메모: 한 줄씩 */
+  .mc-frame .mc-memo { grid-template-columns: minmax(0, 1fr); gap: 6px; margin-top: 14px; padding: 12px 14px; font-size: 12.5px; }
+  .mc-frame .mc-memo-list { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+
+  /* 바로 가기: 안내 한 줄 + 버튼 둘 같은 폭 */
+  .mc-frame .mc-jump { flex-wrap: wrap; margin-top: 22px; }
+  .mc-frame .mc-jump-cue { flex: 0 0 100%; margin: 0; }
+  .mc-frame .mc-jump-link { flex: 1 1 0; justify-content: center; padding: 0 10px; }
+
+  /* 섹션 머리: 번호 | 제목 · 전체 보기 / 부제(출처 → 정렬 두 줄)는 그 아래 넓게 */
+  .mc-frame .mc-sec { margin-top: 32px; padding-top: 26px; }
+  .mc-frame .mc-sec-head {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "no title tools"
+      "no sub sub";
+    align-items: center;
+    gap: 2px 12px;
+    margin-bottom: 14px;
+  }
+  .mc-frame .mc-sec-text { display: contents; }
+  .mc-frame .mc-sec-no { grid-area: no; align-self: start; padding-top: 6px; font-size: 34px; }
+  .mc-frame .mc-sec-title { grid-area: title; font-size: 22px; }
+  .mc-frame .mc-sec-sub { grid-area: sub; margin: 0; font-size: 13px; line-height: 1.5; }
+  .mc-frame .mc-sec-sub .mc-meta-sep { display: none; }
+  .mc-frame .mc-sec-sub .mc-meta-tail { display: block; }
+  .mc-frame .mc-sec-tools { grid-area: tools; margin: -9px 0; }
+  .mc-frame .mc-more { margin-left: 0; font-size: 13.5px; }
+
+  /* 가로 넘김 줄: 양옆 끝까지, IC는 두 장 + 다음 카드 끝, 공동구매는 한 장 + 다음 카드 끝 */
+  .mc-frame .mc-rail { margin: 0 -16px; }
+  .mc-frame .mc-track { gap: 12px; padding: 2px 16px 4px; scroll-padding: 0 16px; }
+  .mc-frame .mc-card-ic { width: calc((100cqi - 68px) / 2); }
+  .mc-frame .mc-card-gb { width: calc(100cqi - 88px); }
+  .mc-frame .mc-card { gap: 6px; }
+  .mc-frame .mc-card-sum { line-height: 1.5; }
+  .mc-frame .mc-progress { margin-top: 14px; }
+  .mc-frame .mc-progress-bar { width: var(--mc-p-m); }
+
+  /* 푸터 */
+  .mc-frame .mc-footer { margin-top: 40px; padding-top: 14px; }
+  .mc-frame .mc-footer-top { gap: 0 12px; }
+  .mc-frame .mc-footer-logo { font-size: 18px; }
+  .mc-frame .mc-footer-text { margin-top: 6px; font-size: 12.5px; }
+
+  .mc-frame .mc-wn-t { display: none; }
+  .mc-frame .mc-wn-m { display: inline; }
+}
+</style>
+<div class="mc-frame">
+<div class="mc-root">
+
+  <header class="mc-header">
+    <a class="mc-logo" href="#">keycheck</a>
+    <nav class="mc-nav" aria-label="게시판">
+      <a class="mc-nav-link" href="#mc-ic">IC</a>
+      <a class="mc-nav-link" href="#mc-gb">공동구매</a>
+    </nav>
+    <span class="mc-login" title="나중에 로그인이 들어갈 자리"><span class="mc-login-dot"></span>로그인</span>
+  </header>
+
+  <div class="mc-dateline">
+    <span><span class="mc-dateline-strong">2026.11.05 목</span> · 저녁판</span>
+    <span class="mc-segs"><span>최근&nbsp;7일 새 IC <span class="mc-dateline-strong">3</span></span><span>새 공동구매 <span class="mc-dateline-strong">1</span></span><span>2주 안에 마감 <span class="mc-dateline-strong">2</span></span></span>
+  </div>
+
+  <!-- ================= 하이라이트 ================= -->
+  <section class="mc-hl" aria-labelledby="mc-hl-title">
+    <div class="mc-hl-head">
+      <div>
+        <p class="mc-kicker">HIGHLIGHT</p>
+        <h1 class="mc-hl-title" id="mc-hl-title">요즘 키보드·키캡,<br>사진으로 먼저 봐요</h1>
+      </div>
+      <p class="mc-hl-lead">geekhack IC·공동구매 글에서 지금 볼 만한 여섯&nbsp;개를 골랐어요. 아래로 내리면 게시판별 목록이 이어져요.</p>
+    </div>
+
+    <div class="mc-bento">
+      <!-- 큰 칸: 최근 7일 새 공동구매 조회 1위 -->
+      <a class="mc-cell mc-cell-a" href="#">
+        <img class="mc-cell-img" src="https://bord.design/nightshift/8.jpg" alt="SWG Nightshift 대표 이미지" referrerpolicy="no-referrer" style="object-position: 50% 20%;">
+        <span class="mc-cell-shade"></span>
+        <span class="mc-badges">
+          <span class="mc-badge mc-badge-gb">공동구매</span>
+          <span class="mc-badge mc-badge-tag">키캡</span>
+        </span>
+        <span class="mc-cell-body">
+          <span class="mc-cell-kicker mc-segs"><span>최근&nbsp;7일 새 공동구매</span><span>조회&nbsp;1위</span></span>
+          <span class="mc-cell-title">SWG Nightshift</span>
+          <span class="mc-cell-sum">Swagkeys(SWG)가 제작하는 체리 프로파일 더블샷 ABS 키캡 세트 SWG Nightshift의 공동구매 글이에요.</span>
+          <span class="mc-ledger">
+            <span class="mc-ledger-item">
+              <span class="mc-ledger-k"><span class="mc-ledger-dot"></span>공동구매 기간</span>
+              <span class="mc-ledger-v">10/30(금) →&nbsp;11/13(금)</span>
+              <span class="mc-ledger-v">마감까지<span class="mc-ledger-dday">D-8</span></span>
+            </span>
+            <span class="mc-ledger-item">
+              <span class="mc-ledger-k"><span class="mc-ledger-dot mc-ledger-dot-quiet"></span>geekhack 반응</span>
+              <span class="mc-ledger-v mc-segs"><span>조회&nbsp;6,800+</span><span>댓글&nbsp;2</span></span>
+              <span class="mc-ledger-v">10/31 올라옴</span>
+            </span>
+          </span>
+        </span>
+      </a>
+
+      <!-- 세로 칸: 최근 2주 새 IC 조회 1위 -->
+      <a class="mc-cell mc-cell-b" href="#">
+        <img class="mc-cell-img" src="https://cdn.shopify.com/s/files/1/0607/5351/0626/files/DSC02284.jpg?v=1792743092" alt="Class 60 V2 대표 이미지" referrerpolicy="no-referrer" style="object-position: 54% 50%;">
+        <span class="mc-cell-shade"></span>
+        <span class="mc-badges">
+          <span class="mc-badge mc-badge-ic">IC</span>
+          <span class="mc-badge mc-badge-tag">60%</span>
+        </span>
+        <span class="mc-cell-body">
+          <span class="mc-cell-kicker mc-segs"><span>최근&nbsp;2주 새 IC</span><span>조회&nbsp;1위</span></span>
+          <span class="mc-cell-title">Class 60 V2 — 60% Retro Design Board</span>
+          <span class="mc-cell-meta mc-segs"><span>조회&nbsp;2만+</span><span>댓글&nbsp;5</span><span>10/23</span></span>
+        </span>
+      </a>
+
+      <!-- 작은 칸: 최근 2주 새 IC 댓글 1위(앞 칸 제외) -->
+      <a class="mc-cell mc-cell-d" href="#">
+        <img class="mc-cell-img mc-cell-img-up" src="https://i.imgur.com/PY72A0b.png" alt="GMK CYL nuSignal 대표 이미지" referrerpolicy="no-referrer">
+        <span class="mc-cell-shade"></span>
+        <span class="mc-badges">
+          <span class="mc-badge mc-badge-ic">IC</span>
+        </span>
+        <span class="mc-cell-body">
+          <span class="mc-cell-kicker mc-segs"><span>2주 새 IC</span><span>댓글&nbsp;1위</span></span>
+          <span class="mc-cell-title">GMK CYL nuSignal</span>
+          <span class="mc-cell-meta mc-segs"><span>댓글&nbsp;15</span><span>조회&nbsp;8,500+</span><span>10/31</span></span>
+        </span>
+      </a>
+
+      <!-- 작은 칸: 최근 2주 새 IC 조회 2위 -->
+      <a class="mc-cell mc-cell-e" href="#">
+        <img class="mc-cell-img" src="https://i.imgur.com/KSEcDYd.jpeg" alt="GSD Crib Artisan Tray 대표 이미지" referrerpolicy="no-referrer">
+        <span class="mc-cell-shade"></span>
+        <span class="mc-badges">
+          <span class="mc-badge mc-badge-ic">IC</span>
+        </span>
+        <span class="mc-cell-body">
+          <span class="mc-cell-kicker mc-segs"><span>2주 새 IC</span><span>조회&nbsp;2위</span></span>
+          <span class="mc-cell-title">GSD Crib Artisan Tray</span>
+          <span class="mc-cell-meta mc-segs"><span>조회&nbsp;1.3만+</span><span>댓글&nbsp;1</span><span>10/26</span></span>
+        </span>
+      </a>
+
+      <!-- 마감 띠: 제목에 적힌 마감일이 가장 가까운 공동구매(앞 칸 제외) -->
+      <a class="mc-cell mc-cell-c mc-panel-drop mc-keys" href="#">
+        <span class="mc-badges">
+          <span class="mc-badge mc-badge-gb-on">공동구매</span>
+          <span class="mc-badge mc-badge-tag">MW</span>
+        </span>
+        <span class="mc-drop-text">
+          <span class="mc-cell-kicker">곧 끝나는 공동구매</span>
+          <span class="mc-drop-title">MW Datenshi</span>
+          <span class="mc-cell-meta mc-segs"><span>10/26 → 11/16</span><span>조회&nbsp;1.6만+</span><span>댓글&nbsp;2</span></span>
+        </span>
+        <span class="mc-drop-time">
+          <span class="mc-drop-today">11/16(월) 마감</span>
+          <span class="mc-drop-clock">D-11</span>
+        </span>
+      </a>
+
+      <!-- 작은 칸: 최근 30일 새 공동구매 조회 1위(앞 칸 제외) -->
+      <a class="mc-cell mc-cell-f" href="#">
+        <img class="mc-cell-img" src="https://i.imgur.com/pc8l2Nb.jpeg" alt="Space66% Spaceforge 대표 이미지" referrerpolicy="no-referrer" style="object-position: 50% 100%;">
+        <span class="mc-cell-shade"></span>
+        <span class="mc-badges">
+          <span class="mc-badge mc-badge-gb">공동구매</span>
+        </span>
+        <span class="mc-cell-body">
+          <span class="mc-cell-kicker mc-segs"><span>30일 새 공동구매</span><span>조회&nbsp;1위</span></span>
+          <span class="mc-cell-title">Space66% Spaceforge</span>
+          <span class="mc-cell-meta mc-segs"><span>조회&nbsp;3.4만+</span><span>댓글&nbsp;2</span><span>10/9</span></span>
+        </span>
+      </a>
+    </div>
+
+    <aside class="mc-memo" aria-label="시안 메모">
+      <span class="mc-memo-label">시안 메모<br>고르는 규칙</span>
+      <ul class="mc-memo-list">
+        <li><span class="mc-memo-key">큰 칸</span> 최근&nbsp;7일 새로 올라온 공동구매 중 조회수&nbsp;1위. 제목에 기간이 적혀 있으면 기간과 마감까지 남은 날을 함께 보여줘요.</li>
+        <li><span class="mc-memo-key">세로 칸</span> 최근&nbsp;14일 새 IC 중 조회수&nbsp;1위</li>
+        <li><span class="mc-memo-key">마감 띠</span> 제목에 적힌 마감일이 가장 가까운 공동구매. 사진 대신 남은 날을 주황 띠에 크게 보여줘요. 마감일을 알 수 있는 글이 없으면 최근&nbsp;14일 공동구매 조회&nbsp;2위를 사진&nbsp;칸으로 보여줘요.</li>
+        <li><span class="mc-memo-key">작은 칸 셋</span> 최근&nbsp;14일 IC 댓글&nbsp;1위, 최근&nbsp;14일 IC 조회&nbsp;2위, 최근&nbsp;30일 공동구매 조회&nbsp;1위(공동구매는 새 글이 적어 기간을 넓혀요). 앞 칸에서 이미 고른 글은 건너뛰어요.</li>
+        <li><span class="mc-memo-key">출처 배지</span> 흰 배지는 IC, 주황 배지는 공동구매예요. 여섯&nbsp;칸을 IC&nbsp;셋, 공동구매&nbsp;셋으로 나눠요.</li>
+        <li><span class="mc-memo-key">갱신</span> geekhack 글을 확인하는 30분마다 다시 골라요.</li>
+      </ul>
+    </aside>
+
+    <nav class="mc-jump" aria-label="목록 바로 가기">
+      <span class="mc-jump-cue">↓ 아래로 이어져요</span>
+      <a class="mc-jump-link" href="#mc-ic">IC</a>
+      <a class="mc-jump-link" href="#mc-gb">공동구매</a>
+    </nav>
+  </section>
+
+  <!-- ================= 01 IC ================= -->
+  <section class="mc-sec" id="mc-ic" aria-labelledby="mc-ic-title">
+    <div class="mc-sec-head">
+      <span class="mc-sec-no">01</span>
+      <div class="mc-sec-text">
+        <h2 class="mc-sec-title" id="mc-ic-title">IC · 관심 조사</h2>
+        <p class="mc-sec-sub">geekhack Interest Checks<span class="mc-meta-sep"> · </span><span class="mc-meta-tail">새로 올라온 순</span></p>
+      </div>
+      <div class="mc-sec-tools">
+        <span class="mc-count">1–4 / 10</span>
+        <span class="mc-arrow mc-arrow-off" aria-hidden="true"><svg class="mc-ico" viewBox="0 0 24 24" width="18" height="18"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <span class="mc-arrow" aria-hidden="true"><svg class="mc-ico" viewBox="0 0 24 24" width="18" height="18"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <a class="mc-more" href="#">전체 보기 →</a>
+      </div>
+    </div>
+    <div class="mc-rail mc-rail-ic">
+      <div class="mc-track">
+        <a class="mc-card mc-card-ic" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://geekhack.org/index.php?action=dlattach;topic=127286.0;attach=318663;image" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">SP</span></span>
+          <span class="mc-card-title">SA Paperwork - 40% Monokit</span>
+          <span class="mc-card-sum">Trashman의 클래식 컬러웨이 Paperwork를 SA 프로파일로 내놓는 키캡 세트의 관심 체크예요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;5,300+</span><span>댓글&nbsp;5</span><span>11/1</span></span>
+        </a>
+        <a class="mc-card mc-card-ic" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://i.imgur.com/PY72A0b.png" alt="" referrerpolicy="no-referrer" loading="lazy" style="object-position: 10% 50%;"><span class="mc-chip">GMK</span></span>
+          <span class="mc-card-title">GMK CYL nuSignal</span>
+          <span class="mc-card-sum">GMK CYL 프로파일로 나오는 nuSignal 키캡 세트의 관심도 조사(IC)예요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;8,500+</span><span>댓글&nbsp;15</span><span>10/31</span></span>
+        </a>
+        <a class="mc-card mc-card-ic" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://geekhack.org/index.php?action=dlattach;topic=127254.0;attach=318621;image" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">키캡</span></span>
+          <span class="mc-card-title">KEYMOJI Sanctuary - LOTR inspired metal keycap set with embossed legends</span>
+          <span class="mc-card-sum">KEYMOJI에서 반지의 제왕을 모티브로 만든 77키 알루미늄 메탈 키캡 세트예요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;8,700+</span><span>댓글&nbsp;0</span><span>10/29</span></span>
+        </a>
+        <a class="mc-card mc-card-ic" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://i.imgur.com/KSEcDYd.jpeg" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">기타</span></span>
+          <span class="mc-card-title">GSD Crib Artisan Tray</span>
+          <span class="mc-card-sum">GSD 스타일의 아티산 키캡 보관용 트레이인 GSD Crib의 관심 체크 글이에요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;1.3만+</span><span>댓글&nbsp;1</span><span>10/26</span></span>
+        </a>
+        <a class="mc-card mc-card-ic" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://i.postimg.cc/Y0ntLgVm/01-keycaps-c64-angle.jpg" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">SP</span></span>
+          <span class="mc-card-title">SA 64 / SA 64C / SA 16 — SA keycaps for the Commodore 64, 64C and 16</span>
+          <span class="mc-card-sum">코모도어 64, 64C, 16 컴퓨터의 원래 색상을 재현한 SA 프로파일 키캡 3종(SA 64, SA 64C, SA 16)의 관심 조사예요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;1.2만+</span><span>댓글&nbsp;0</span><span>10/23</span></span>
+        </a>
+        <a class="mc-card mc-card-ic" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://cdn.shopify.com/s/files/1/0607/5351/0626/files/DSC02284.jpg?v=1792743092" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">60%</span></span>
+          <span class="mc-card-title">Class 60 V2 — 60% Retro Design Board</span>
+          <span class="mc-card-sum">MM Studio가 DEC VT220의 LK201 키보드에서 영감을 받아 만든 60% 커스텀 키보드 키트 Class 60 V2의 관심 조사(IC)예요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;2만+</span><span>댓글&nbsp;5</span><span>10/23</span></span>
+        </a>
+        <a class="mc-card mc-card-ic" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://media.biipmk.com/gmk-video2048/GMK_Power-2048-Renders-1.jpg" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">GMK</span></span>
+          <span class="mc-card-title">GMK CYL Video 2048</span>
+          <span class="mc-card-sum">GMK CYL 프로파일로 만드는 키캡 세트 GMK CYL Video 2048의 관심 체크(IC)예요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;2.5만+</span><span>댓글&nbsp;3</span><span>10/19</span></span>
+        </a>
+        <a class="mc-card mc-card-ic" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://mugen.cat/projects/zoltraak/assets/forum/samples-6200k-1.jpg" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">MW</span></span>
+          <span class="mc-card-title">MW Zoltraak</span>
+          <span class="mc-card-sum">MW Keys에서 제작하는 체리 프로파일 더블샷 ABS 키캡 세트 'Zoltraak'의 관심 조사(IC)예요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;2.4만+</span><span>댓글&nbsp;5</span><span>10/15</span></span>
+        </a>
+        <a class="mc-card mc-card-ic" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://i.imgur.com/MGX3IrH.jpeg" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">KKB</span></span>
+          <span class="mc-card-title">KKB 1001 Nights</span>
+          <span class="mc-card-sum">Key Kobo에서 제작하는 체리 프로파일 ABS 키캡 세트 KKB 1001 Nights의 인터레스트 체크예요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;2.8만+</span><span>댓글&nbsp;5</span><span>10/15</span></span>
+        </a>
+        <a class="mc-card mc-card-ic" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://i.imgur.com/jxzP4ZE.jpeg" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">SP</span></span>
+          <span class="mc-card-title">DCS Doubleshot Hangul (Beige/WoB Alphas)</span>
+          <span class="mc-card-sum">DCS 프로파일 한글 더블샷 알파 키트의 관심 조사(IC) 글이에요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;2.4만+</span><span>댓글&nbsp;3</span><span>10/14</span></span>
+        </a>
+      </div>
+      <span class="mc-rail-next" aria-hidden="true"><svg class="mc-ico" viewBox="0 0 24 24" width="20" height="20"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </div>
+    <div class="mc-progress"><span class="mc-progress-bar" style="--mc-p: 40%; --mc-p-t: 30%; --mc-p-m: 20%;"></span></div>
+  </section>
+
+  <!-- ================= 02 공동구매 ================= -->
+  <section class="mc-sec" id="mc-gb" aria-labelledby="mc-gb-title">
+    <div class="mc-sec-head">
+      <span class="mc-sec-no">02</span>
+      <div class="mc-sec-text">
+        <h2 class="mc-sec-title" id="mc-gb-title">공동구매</h2>
+        <p class="mc-sec-sub">geekhack Group Buys and Preorders<span class="mc-meta-sep"> · </span><span class="mc-meta-tail">새로 올라온 순</span></p>
+      </div>
+      <div class="mc-sec-tools">
+        <span class="mc-count">1–3 / 10</span>
+        <span class="mc-arrow mc-arrow-off" aria-hidden="true"><svg class="mc-ico" viewBox="0 0 24 24" width="18" height="18"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <span class="mc-arrow" aria-hidden="true"><svg class="mc-ico" viewBox="0 0 24 24" width="18" height="18"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <a class="mc-more" href="#">전체 보기 →</a>
+      </div>
+    </div>
+    <div class="mc-rail mc-rail-gb">
+      <div class="mc-track">
+        <a class="mc-card mc-card-gb" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://bord.design/nightshift/8.jpg" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">키캡</span><span class="mc-chip mc-chip-date">10/30 → 11/13</span><span class="mc-chip mc-chip-dday">D-8</span></span>
+          <span class="mc-card-title">SWG Nightshift</span>
+          <span class="mc-card-sum">Swagkeys(SWG)가 제작하는 체리 프로파일 더블샷 ABS 키캡 세트 SWG Nightshift의 공동구매 글이에요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;6,800+</span><span>댓글&nbsp;2</span><span>10/31</span></span>
+        </a>
+        <a class="mc-card mc-card-gb" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://geekhack.org/index.php?action=dlattach;topic=127251.0;attach=318601;image" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">65%</span></span>
+          <span class="mc-card-title">Seed Plan Linedge 65 Keyboard</span>
+          <span class="mc-card-sum">Seed Plan의 Linedge 65는 Tonish TKL 디자이너 CC가 만든 첫 65% 키보드의 공동구매 글이에요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;1.7만+</span><span>댓글&nbsp;3</span><span>10/26</span></span>
+        </a>
+        <a class="mc-card mc-card-gb" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://i.imgur.com/ppgcj2r.png" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">MW</span><span class="mc-chip mc-chip-date">10/26 → 11/16</span><span class="mc-chip mc-chip-dday">D-11</span></span>
+          <span class="mc-card-title">MW Datenshi</span>
+          <span class="mc-card-sum">디자이너 Minisofu가 만든 MW 키캡 세트 Datenshi의 공동구매 글이에요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;1.6만+</span><span>댓글&nbsp;2</span><span>10/26</span></span>
+        </a>
+        <a class="mc-card mc-card-gb" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://imagedelivery.net/5Lj-4KVs36OWCtiVSZ4L1Q/c993d042-652b-456f-f48c-83165ef24100/public" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">GMK</span></span>
+          <span class="mc-card-title">GMK Salamander</span>
+          <span class="mc-card-sum">NyxKeys가 친구 Glen과 함께 디자인한 GMK 체리 프로파일 키캡 세트예요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;2.3만+</span><span>댓글&nbsp;5</span><span>10/20</span></span>
+        </a>
+        <a class="mc-card mc-card-gb" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://geekhack.org/index.php?action=dlattach;topic=127224.0;attach=318491;image" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">80%</span></span>
+          <span class="mc-card-title">Code:002 TKL</span>
+          <span class="mc-card-sum">Cafege의 Code:002 TKL 키보드 공동구매 글이에요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;2.9만+</span><span>댓글&nbsp;0</span><span>10/17</span></span>
+        </a>
+        <a class="mc-card mc-card-gb" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://i.postimg.cc/fDn8NbZW/Black-Base.png" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">GMK</span></span>
+          <span class="mc-card-title">GMK CYL Blanks</span>
+          <span class="mc-card-sum">GMK CYL 프로파일의 블랭크 키캡 세트로, 각인 없이 색상만 있는 키캡이에요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;2.7만+</span><span>댓글&nbsp;9</span><span>10/16</span></span>
+        </a>
+        <a class="mc-card mc-card-gb" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://i.imgur.com/pc8l2Nb.jpeg" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">65%</span></span>
+          <span class="mc-card-title">Space66% Spaceforge</span>
+          <span class="mc-card-sum">Graystudio에서 진행하는 66% 배열 알루미늄 키보드 Space66% Spaceforge의 공동구매 글이에요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;3.4만+</span><span>댓글&nbsp;2</span><span>10/9</span></span>
+        </a>
+        <a class="mc-card mc-card-gb" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://i.postimg.cc/8zwCCyD3/DCS-SMRT-165.jpg" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">SP</span><span class="mc-chip mc-chip-date mc-chip-end">공동구매 끝남</span></span>
+          <span class="mc-card-title">DCS SMRT R2</span>
+          <span class="mc-card-sum">Piperaceae가 디자인한 DCS SMRT의 두 번째 런(R2) 키캡 세트예요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;6.6만+</span><span>댓글&nbsp;23</span><span>9/20</span></span>
+        </a>
+        <a class="mc-card mc-card-gb" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://i.postimg.cc/rFQr0090/Katana80_1b.webp" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">MW</span></span>
+          <span class="mc-card-title">MW Meteor Dreams</span>
+          <span class="mc-card-sum">MW에서 제작하는 Meteor Dreams 키캡 세트의 공동구매 글이에요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;3.1만+</span><span>댓글&nbsp;1</span><span>7/10</span></span>
+        </a>
+        <a class="mc-card mc-card-gb" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://i.imgur.com/yYvb5pL.jpeg" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">키캡</span><span class="mc-chip mc-chip-date mc-chip-end">7/6 → 7/27 끝남</span></span>
+          <span class="mc-card-title">SWG Neowell</span>
+          <span class="mc-card-sum">SWG Neowell은 옛 Honeywell 터미널 배색을 재해석한 Cylindrical Cherry 프로파일 키캡 세트예요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;17.4만+</span><span>댓글&nbsp;3</span><span>7/10</span></span>
+        </a>
+      </div>
+      <span class="mc-rail-next" aria-hidden="true"><svg class="mc-ico" viewBox="0 0 24 24" width="20" height="20"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </div>
+    <div class="mc-progress"><span class="mc-progress-bar" style="--mc-p: 30%; --mc-p-t: 20%; --mc-p-m: 10%;"></span></div>
+  </section>
+
+  <footer class="mc-footer">
+    <div class="mc-footer-top">
+      <span class="mc-footer-logo">keycheck</span>
+      <nav class="mc-footer-nav" aria-label="푸터 메뉴">
+        <a href="#mc-ic">IC</a>
+        <a href="#mc-gb">공동구매</a>
+      </nav>
+    </div>
+    <p class="mc-footer-text">geekhack의 Interest Checks·Group Buys and Preorders 글을 모아 한국어로 짧게 정리해요. 새 글은 30분마다 확인해요. 사진과 원문의 권리는 각 작성자에게 있어요.</p>
+  </footer>
+
+  <p class="mc-width-note">
+    <span class="mc-width-note-label">폭별 메모</span>
+    <span class="mc-wn-d">데스크톱(1024px 이상): 벤토는 4열이고, 목록 줄은 좌우 화살표와 오른쪽 흐림으로 넘길 수 있다는 걸 보여 줘요.</span>
+    <span class="mc-wn-t">태블릿(600–1023px): 메뉴는 한 줄 그대로 두고, 벤토는 3열(큰 칸+세로 칸 → 마감 띠 → 작은 칸 셋)로 바꿔요. 세로 칸과 작은 칸은 사진을 글 위쪽에 두고 글 쪽으로 흐려서, 글이 사진을 가리지 않아요. 손가락으로 넘기는 기기라 좌우 화살표와 쪽수는 숨기고, 다음 카드 끝과 진행 막대로 넘길 수 있다는 걸 알려요.</span>
+    <span class="mc-wn-m">모바일(599px 이하): 메뉴는 로고 아래 두 칸 탭으로 내려요. 벤토는 큰 칸이 폭을 꽉 채우고, 세로 칸과 작은 칸 둘은 2열로 맞물리며, 마감 띠와 공동구매 작은 칸은 한 줄씩 차지해요. IC 줄은 카드 두 장, 공동구매 줄은 한 장에 다음 카드 끝이 보여요.</span>
+  </p>
+</div>
+</div>
+</div></div></div>
+<div class="doc-row"><div class="doc-col" style="width:820px"><p class="doc-label">태블릿 · 820px</p><div class="doc-box" style="width:820px"><style>
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap");
+
+/* 폭은 바깥 창이 아니라 이 틀을 기준으로 정한다 */
+.mc-frame { container-type: inline-size; container-name: kc; }
+
+.mc-frame .mc-root {
+  --mc-bg: #f3f4f1;
+  --mc-surface: #ffffff;
+  --mc-ink: #16181a;
+  --mc-body: #2e3236;
+  --mc-muted: #4f555a;
+  --mc-faint: #9ba09c;
+  --mc-accent: #b93a0b;
+  --mc-accent-dark: #8f2c07;
+  --mc-border: #d5d7d2;
+  --mc-divider: #e4e5e1;
+  --mc-sans: "IBM Plex Sans KR", system-ui, sans-serif;
+  --mc-mono: "IBM Plex Mono", ui-monospace, monospace;
+  box-sizing: border-box;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 24px 28px;
+  background: var(--mc-bg);
+  color: var(--mc-ink);
+  font-family: var(--mc-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+.mc-frame a { color: inherit; text-decoration: none; }
+
+/* ---------- 헤더 ---------- */
+.mc-frame .mc-header {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  margin: 0 -24px;
+  padding: 14px 24px;
+  border-bottom: 2px solid var(--mc-ink);
+}
+.mc-frame .mc-logo {
+  font-size: 28px;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.045em;
+}
+.mc-frame .mc-nav { display: flex; gap: 28px; }
+.mc-frame .mc-nav-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  border-bottom: 3px solid transparent;
+  color: var(--mc-muted);
+  font-size: 16px;
+  font-weight: 500;
+}
+.mc-frame .mc-nav-link:hover { color: var(--mc-ink); }
+.mc-frame .mc-login {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 14px 0 6px;
+  border: 1px dashed var(--mc-faint);
+  border-radius: 999px;
+  color: var(--mc-muted);
+  font-size: 13px;
+}
+.mc-frame .mc-login-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--mc-divider);
+}
+
+/* ---------- 날짜 띠 ---------- */
+.mc-frame .mc-dateline {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--mc-border);
+  font-family: var(--mc-mono);
+  font-size: 12px;
+  color: var(--mc-muted);
+  letter-spacing: 0.02em;
+}
+.mc-frame .mc-dateline-strong { color: var(--mc-ink); font-weight: 600; }
+
+/* ---------- 하이라이트 머리 ---------- */
+.mc-frame .mc-hl { padding-top: 34px; }
+.mc-frame .mc-hl-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 40px;
+  margin-bottom: 22px;
+}
+.mc-frame .mc-kicker {
+  margin: 0 0 10px;
+  font-family: var(--mc-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: var(--mc-accent);
+}
+.mc-frame .mc-hl-title {
+  margin: 0;
+  font-size: 46px;
+  line-height: 1.12;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  word-break: keep-all;
+}
+.mc-frame .mc-hl-lead {
+  margin: 0;
+  max-width: 33ch;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--mc-body);
+  word-break: keep-all;
+}
+
+/* ---------- 벤토 ---------- */
+.mc-frame .mc-bento {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: 244px 244px 196px;
+  grid-template-areas:
+    "a a b d"
+    "a a b e"
+    "c c c f";
+  gap: 12px;
+}
+.mc-frame .mc-cell {
+  position: relative;
+  isolation: isolate;
+  display: block;
+  overflow: hidden;
+  border-radius: 16px;
+  background-color: #2a2d30;
+  color: #ffffff;
+}
+.mc-frame .mc-cell-a { grid-area: a; }
+.mc-frame .mc-cell-b { grid-area: b; }
+.mc-frame .mc-cell-c { grid-area: c; }
+.mc-frame .mc-cell-d { grid-area: d; }
+.mc-frame .mc-cell-e { grid-area: e; }
+.mc-frame .mc-cell-f { grid-area: f; }
+.mc-frame .mc-cell-img {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  color: transparent; /* 이미지를 못 받으면 대체 글자 대신 칸 바탕색만 보이게 */
+  transition: transform 0.6s ease;
+}
+.mc-frame .mc-cell:hover .mc-cell-img { transform: scale(1.04); }
+.mc-frame .mc-cell-shade {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, rgba(12, 13, 14, 0) 28%, rgba(12, 13, 14, 0.9) 100%);
+}
+.mc-frame .mc-cell-a .mc-cell-shade {
+  background: linear-gradient(180deg, rgba(12, 13, 14, 0.05) 25%, rgba(12, 13, 14, 0.62) 55%, rgba(12, 13, 14, 0.92) 100%);
+}
+/* 원 두 개가 나란한 사진: 왼쪽 원을 보여준다 */
+.mc-frame .mc-cell-img-up { object-position: 0% 50%; }
+/* 밝은 사진 위 글자: 아래쪽을 더 일찍 어둡게 */
+.mc-frame .mc-cell-d .mc-cell-shade,
+.mc-frame .mc-cell-f .mc-cell-shade {
+  background: linear-gradient(180deg, rgba(12, 13, 14, 0) 22%, rgba(12, 13, 14, 0.9) 62%);
+}
+.mc-frame .mc-badges {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  display: flex;
+  gap: 6px;
+}
+.mc-frame .mc-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+.mc-frame .mc-badge-ic { background: #ffffff; color: var(--mc-ink); }
+.mc-frame .mc-badge-gb { background: var(--mc-accent); color: #ffffff; }
+/* 주황 띠 위의 공동구매 배지: 바탕과 겹치지 않게 흰 바탕에 주황 글자 */
+.mc-frame .mc-badge-gb-on { background: #ffffff; color: var(--mc-accent); }
+.mc-frame .mc-badge-tag {
+  background: rgba(22, 24, 26, 0.55);
+  color: #ffffff;
+  font-family: var(--mc-mono);
+  font-weight: 500;
+  backdrop-filter: blur(6px);
+}
+.mc-frame .mc-cell-body {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px;
+}
+.mc-frame .mc-cell-a .mc-cell-body { gap: 10px; padding: 24px; }
+.mc-frame .mc-cell-kicker {
+  font-family: var(--mc-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.8);
+}
+.mc-frame .mc-cell-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 17px;
+  line-height: 1.3;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.mc-frame .mc-cell-a .mc-cell-title { font-size: 44px; line-height: 1.05; letter-spacing: -0.04em; }
+.mc-frame .mc-cell-b .mc-cell-title { font-size: 23px; line-height: 1.22; letter-spacing: -0.025em; -webkit-line-clamp: 3; }
+.mc-frame .mc-cell-sum {
+  max-width: 46ch;
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.88);
+  word-break: keep-all;
+}
+.mc-frame .mc-cell-meta {
+  font-family: var(--mc-mono);
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.78);
+}
+/* 메타 토막(조회 · 댓글 · 날짜 등): 가운뎃점은 CSS가 토막 사이에 넣는다 */
+.mc-frame .mc-segs > * + *::before { content: " · "; }
+
+/* 큰 칸: 공동구매 기간과 geekhack 반응을 두 칸으로 */
+.mc-frame .mc-ledger {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.3);
+}
+.mc-frame .mc-ledger-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 12px 0 0;
+}
+.mc-frame .mc-ledger-item + .mc-ledger-item {
+  padding-left: 16px;
+  border-left: 1px solid rgba(255, 255, 255, 0.3);
+}
+.mc-frame .mc-ledger-k {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.mc-frame .mc-ledger-dot { width: 8px; height: 8px; border-radius: 2px; background: var(--mc-accent); }
+.mc-frame .mc-ledger-dot-quiet { background: #ffffff; }
+.mc-frame .mc-ledger-v {
+  font-family: var(--mc-mono);
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+}
+.mc-frame .mc-ledger-dday {
+  margin-left: 4px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--mc-accent);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* 마감 띠: 사진 대신 남은 날을 크게, 주황 바탕 + 키 배열 무늬 */
+.mc-frame .mc-keys::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: conic-gradient(from 90deg at 4px 4px, rgba(255, 255, 255, 0.1) 90deg, transparent 0) 0 0 / 30px 30px;
+  -webkit-mask-image: linear-gradient(115deg, transparent 30%, #000000 100%);
+  mask-image: linear-gradient(115deg, transparent 30%, #000000 100%);
+}
+.mc-frame .mc-panel-drop { background-color: var(--mc-accent); }
+
+.mc-frame .mc-cell-c {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 24px;
+  padding: 22px 26px 22px 22px;
+}
+.mc-frame .mc-drop-text { display: flex; flex-direction: column; gap: 6px; }
+.mc-frame .mc-drop-title { font-size: 32px; line-height: 1.1; font-weight: 700; letter-spacing: -0.035em; }
+.mc-frame .mc-drop-time {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-family: var(--mc-mono);
+  line-height: 1;
+}
+.mc-frame .mc-drop-today {
+  margin-bottom: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--mc-accent);
+  font-family: var(--mc-sans);
+  font-size: 13px;
+  font-weight: 700;
+}
+.mc-frame .mc-drop-clock { font-size: 92px; font-weight: 500; letter-spacing: -0.06em; }
+
+/* ---------- 시안 메모 ---------- */
+.mc-frame .mc-memo {
+  display: grid;
+  grid-template-columns: 104px 1fr;
+  gap: 8px 18px;
+  margin-top: 16px;
+  padding: 14px 18px;
+  border: 1.5px dashed var(--mc-faint);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.45);
+  color: var(--mc-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.mc-frame .mc-memo-label {
+  font-family: var(--mc-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mc-ink);
+  letter-spacing: 0.04em;
+}
+.mc-frame .mc-memo-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 28px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  word-break: keep-all;
+}
+.mc-frame .mc-memo-key { color: var(--mc-ink); font-weight: 600; }
+
+/* ---------- 바로 가기 ---------- */
+.mc-frame .mc-jump {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 28px;
+}
+.mc-frame .mc-jump-cue { margin-right: 6px; font-family: var(--mc-mono); font-size: 12px; color: var(--mc-muted); }
+.mc-frame .mc-jump-link {
+  display: inline-flex;
+  align-items: center;
+  height: 34px;
+  padding: 0 14px;
+  border: 1px solid var(--mc-ink);
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.mc-frame .mc-jump-link:hover { background: var(--mc-ink); color: var(--mc-bg); }
+
+/* ---------- 섹션과 캐러셀 ---------- */
+.mc-frame .mc-sec { margin-top: 44px; padding-top: 36px; border-top: 1px solid var(--mc-border); }
+.mc-frame .mc-sec-head { display: flex; align-items: flex-end; gap: 18px; margin-bottom: 18px; }
+.mc-frame .mc-sec-no {
+  font-family: var(--mc-mono);
+  font-size: 48px;
+  line-height: 0.85;
+  font-weight: 500;
+  letter-spacing: -0.05em;
+  color: var(--mc-accent);
+}
+.mc-frame .mc-sec-title { margin: 0; font-size: 27px; line-height: 1.2; font-weight: 700; letter-spacing: -0.03em; }
+.mc-frame .mc-sec-sub { margin: 4px 0 0; font-size: 14px; color: var(--mc-muted); }
+.mc-frame .mc-sec-tools { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.mc-frame .mc-count { margin-right: 6px; font-family: var(--mc-mono); font-size: 12px; color: var(--mc-muted); }
+.mc-frame .mc-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--mc-ink);
+  border-radius: 50%;
+  color: var(--mc-ink);
+}
+.mc-frame .mc-arrow-off { border-color: var(--mc-border); color: var(--mc-faint); }
+.mc-frame .mc-more { margin-left: 12px; font-size: 14px; font-weight: 600; color: var(--mc-accent); }
+.mc-frame .mc-ico { display: block; }
+
+.mc-frame .mc-rail { position: relative; margin-right: -24px; }
+.mc-frame .mc-track {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  padding: 2px 24px 4px 0;
+}
+.mc-frame .mc-track::-webkit-scrollbar { display: none; }
+.mc-frame .mc-rail::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 110px;
+  background: linear-gradient(90deg, rgba(243, 244, 241, 0), var(--mc-bg) 88%);
+  pointer-events: none;
+}
+.mc-frame .mc-rail-next {
+  position: absolute;
+  right: 26px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #ffffff;
+  color: var(--mc-ink);
+  box-shadow: 0 8px 22px rgba(22, 24, 26, 0.18);
+  pointer-events: none;
+}
+.mc-frame .mc-rail-ic .mc-rail-next { top: 124px; }
+.mc-frame .mc-rail-gb .mc-rail-next { top: 83px; }
+.mc-frame .mc-progress { position: relative; height: 2px; margin-top: 16px; background: var(--mc-divider); }
+/* 막대 길이는 폭마다 한 화면에 보이는 카드 수에 맞춘다(--mc-p 데스크톱, --mc-p-t 태블릿, --mc-p-m 모바일) */
+.mc-frame .mc-progress-bar { position: absolute; top: 0; left: 0; bottom: 0; width: var(--mc-p); background: var(--mc-ink); }
+
+.mc-frame .mc-card { flex: none; display: flex; flex-direction: column; gap: 8px; scroll-snap-align: start; }
+.mc-frame .mc-card-ic { width: 236px; }
+.mc-frame .mc-card-gb { width: 320px; }
+.mc-frame .mc-media {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: 12px;
+  background-color: var(--mc-divider);
+  background-image: conic-gradient(from 90deg at 3px 3px, rgba(22, 24, 26, 0.05) 90deg, transparent 0);
+  background-size: 22px 22px;
+}
+.mc-frame .mc-card-ic .mc-media { aspect-ratio: 4 / 5; }
+.mc-frame .mc-card-gb .mc-media { aspect-ratio: 3 / 2; }
+.mc-frame .mc-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+.mc-frame .mc-card:hover .mc-img { transform: scale(1.05); }
+.mc-frame .mc-chip {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--mc-ink);
+  font-size: 11px;
+  font-weight: 600;
+}
+.mc-frame .mc-chip-date {
+  top: auto;
+  bottom: 10px;
+  background: rgba(22, 24, 26, 0.84);
+  color: #ffffff;
+  font-family: var(--mc-mono);
+  font-weight: 500;
+}
+.mc-frame .mc-chip-end { background: rgba(255, 255, 255, 0.9); color: var(--mc-muted); }
+.mc-frame .mc-chip-dday {
+  top: auto;
+  left: auto;
+  right: 10px;
+  bottom: 10px;
+  background: var(--mc-accent);
+  color: #ffffff;
+  font-family: var(--mc-mono);
+}
+.mc-frame .mc-card-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 15px;
+  line-height: 1.38;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+.mc-frame .mc-card:hover .mc-card-title { text-decoration: underline; text-underline-offset: 3px; }
+/* 카드 요약: 한국어 요약 첫 줄을 두 줄까지 */
+.mc-frame .mc-card-sum {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-top: -2px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--mc-body);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+.mc-frame .mc-card-meta { font-family: var(--mc-mono); font-size: 12px; color: var(--mc-muted); }
+
+/* ---------- 푸터 ---------- */
+.mc-frame .mc-footer {
+  margin-top: 56px;
+  padding-top: 22px;
+  border-top: 2px solid var(--mc-ink);
+}
+.mc-frame .mc-footer-top { display: flex; align-items: center; gap: 28px; }
+.mc-frame .mc-footer-logo { font-size: 20px; font-weight: 700; letter-spacing: -0.045em; }
+.mc-frame .mc-footer-nav { display: flex; gap: 18px; font-size: 14px; color: var(--mc-muted); }
+.mc-frame .mc-footer-text {
+  max-width: 70ch;
+  margin: 12px 0 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--mc-muted);
+  word-break: keep-all;
+}
+
+/* ---------- 폭별 메모 ---------- */
+.mc-frame .mc-width-note {
+  margin: 28px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--mc-divider);
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--mc-faint);
+  word-break: keep-all;
+}
+.mc-frame .mc-width-note-label {
+  margin-right: 8px;
+  font-family: var(--mc-mono);
+  font-weight: 600;
+  color: var(--mc-muted);
+}
+.mc-frame .mc-wn-t,
+.mc-frame .mc-wn-m { display: none; }
+
+/* =====================================================================
+   태블릿: 틀 폭 600–1023px
+   ===================================================================== */
+@container kc (max-width: 1023px) {
+  /* 헤더: 한 줄 그대로, 로그인 자리는 손가락 크기로 */
+  .mc-frame .mc-header { gap: 16px; }
+  .mc-frame .mc-logo { display: inline-flex; align-items: center; min-height: 44px; }
+  .mc-frame .mc-nav { gap: 0; }
+  .mc-frame .mc-nav-link { justify-content: center; min-width: 44px; padding: 0 12px; }
+  .mc-frame .mc-login { height: 44px; padding: 0 16px 0 8px; }
+
+  /* 하이라이트 머리: 자리가 모자라면 소개글이 제목 아래로 */
+  .mc-frame .mc-hl { padding-top: 30px; }
+  .mc-frame .mc-hl-head { flex-wrap: wrap; gap: 14px 28px; margin-bottom: 20px; }
+  .mc-frame .mc-hl-title { font-size: 42px; }
+
+  /* 벤토 3열: 큰 칸+세로 칸 → 마감 띠 → 작은 칸 셋 */
+  .mc-frame .mc-bento {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: 216px 216px 184px minmax(216px, auto);
+    grid-template-areas:
+      "a a b"
+      "a a b"
+      "c c c"
+      "d e f";
+  }
+  /* 칸과 카드는 제 폭을 기준으로 삼는다(아래 cqi는 칸 폭 기준) */
+  .mc-frame .mc-cell,
+  .mc-frame .mc-card { container-type: inline-size; }
+  /* 사진 칸: 사진 자리(위)와 글(아래)을 한 격자에 둔다. 큰 칸은 사진이 칸 전체를 덮고 글이 그 위에 얹힌다.
+     세로 칸·작은 칸은 글이 칸에서 차지하는 몫이 커서, 사진을 글 위 남은 자리에 맞춰 넣고 글 쪽으로 흐린다.
+     글이 사진의 중심을 가리지 않으니 사진마다 초점을 따로 정하지 않아도 된다.
+     사진 자리가 96px보다 작아지면(제목이 두 줄이 되는 좁은 칸) 칸이 그만큼 길어진다 */
+  .mc-frame .mc-cell-a,
+  .mc-frame .mc-cell-b,
+  .mc-frame .mc-cell-d,
+  .mc-frame .mc-cell-e,
+  .mc-frame .mc-cell-f { display: grid; grid-template: minmax(0, 1fr) auto / minmax(0, 1fr); }
+  .mc-frame .mc-cell-body { position: relative; grid-row: 2; }
+  .mc-frame .mc-cell-b,
+  .mc-frame .mc-cell-d,
+  .mc-frame .mc-cell-e,
+  .mc-frame .mc-cell-f { grid-template-rows: minmax(96px, 1fr) auto; }
+  .mc-frame .mc-cell-b .mc-cell-img,
+  .mc-frame .mc-cell-d .mc-cell-img,
+  .mc-frame .mc-cell-e .mc-cell-img,
+  .mc-frame .mc-cell-f .mc-cell-img {
+    grid-row: 1 / 2;
+    height: calc(100% + 36px);
+    -webkit-mask-image: linear-gradient(180deg, #000000 55%, transparent);
+    mask-image: linear-gradient(180deg, #000000 55%, transparent);
+  }
+  .mc-frame .mc-cell-a .mc-cell-title { font-size: clamp(32px, 8.6cqi, 44px); }
+  .mc-frame .mc-cell-b .mc-cell-title { font-size: 21px; -webkit-line-clamp: 4; }
+  .mc-frame .mc-drop-title { font-size: clamp(24px, 4.2cqi, 32px); }
+  .mc-frame .mc-drop-clock { font-size: clamp(60px, 11.9cqi, 92px); }
+  .mc-frame .mc-cell-kicker,
+  .mc-frame .mc-cell-meta,
+  .mc-frame .mc-card-meta,
+  .mc-frame .mc-ledger-v { word-break: keep-all; }
+  /* 메타 토막: 줄이 모자라면 토막 사이에서만 바꾸고, 줄 머리에 온 가운뎃점(3ch)은 왼쪽 밖으로 밀어 잘라 낸다.
+     글꼴을 키우거나 폭이 좁아져도 '댓글 / 1'이나 줄 끝 가운뎃점이 생기지 않는다 */
+  .mc-frame .mc-segs { display: flex; flex-wrap: wrap; margin-left: -3ch; clip-path: inset(0 0 0 3ch); }
+  .mc-frame .mc-segs > :first-child { margin-left: 3ch; }
+  .mc-frame .mc-segs > * + *::before { display: inline-block; width: 3ch; text-align: center; }
+
+  /* 손에 든 화면에서 읽히는 크기: 보조 글자 12px, 요약 14px 이상 */
+  .mc-frame .mc-cell-kicker { font-size: 12px; }
+  .mc-frame .mc-chip { font-size: 12px; }
+  .mc-frame .mc-card-sum { font-size: 14px; }
+
+  /* 바로 가기: 손가락 크기 */
+  .mc-frame .mc-jump-link { height: 44px; padding: 0 18px; }
+
+  /* 섹션 머리: 좌우 화살표와 쪽수는 숨기고 진행 막대로 위치를 알린다 */
+  .mc-frame .mc-sec { margin-top: 40px; padding-top: 32px; }
+  .mc-frame .mc-arrow,
+  .mc-frame .mc-count { display: none; }
+  .mc-frame .mc-more { display: inline-flex; align-items: center; min-height: 44px; }
+
+  /* 가로 넘김 줄: 화살표·흐림 대신 다음 카드 엿보기 */
+  .mc-frame .mc-rail-next,
+  .mc-frame .mc-rail::after { display: none; }
+  .mc-frame .mc-card-ic { width: calc((100cqi - 116px) / 3); }
+  .mc-frame .mc-card-gb { width: calc((100cqi - 146px) / 2); }
+  .mc-frame .mc-progress-bar { width: var(--mc-p-t); }
+
+  /* 푸터 메뉴: 손가락 크기 */
+  .mc-frame .mc-footer-top { flex-wrap: wrap; gap: 0 18px; }
+  .mc-frame .mc-footer-nav { gap: 0; }
+  .mc-frame .mc-footer-nav a { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; padding: 0 9px; }
+
+  .mc-frame .mc-wn-d { display: none; }
+  .mc-frame .mc-wn-t { display: inline; }
+}
+
+/* 좁은 칸: 머리글 자간을 줄인다.
+   데스크톱에서는 칸이 컨테이너가 아니라 가장 가까운 틀(kc) 폭으로 판단되어 적용되지 않는다 */
+@container (max-width: 228px) {
+  .mc-frame .mc-cell-kicker { letter-spacing: 0.02em; }
+}
+
+/* =====================================================================
+   모바일: 틀 폭 599px 이하
+   ===================================================================== */
+@container kc (max-width: 599px) {
+  .mc-frame .mc-root { padding: 0 16px 24px; }
+
+  /* 헤더: 로고·로그인 한 줄, 메뉴는 그 아래 두 칸 탭 줄 */
+  .mc-frame .mc-header { flex-wrap: wrap; gap: 0; margin: 0 -16px; padding: 6px 16px 0; }
+  .mc-frame .mc-logo { font-size: 24px; }
+  .mc-frame .mc-nav {
+    order: 1;
+    box-sizing: border-box;
+    flex: 0 0 calc(100% + 32px);
+    gap: 0;
+    margin: 6px -16px 0;
+    padding: 0 8px;
+    border-top: 1px solid var(--mc-divider);
+  }
+  .mc-frame .mc-nav-link { flex: 1 1 0; justify-content: center; min-height: 46px; font-size: 15px; }
+
+  /* 날짜 띠: 두 줄로 */
+  .mc-frame .mc-dateline { flex-wrap: wrap; gap: 2px 12px; padding: 9px 0; letter-spacing: 0; }
+
+  /* 하이라이트 머리: 제목 → 소개글 */
+  .mc-frame .mc-hl { padding-top: 24px; }
+  .mc-frame .mc-hl-head { flex-direction: column; align-items: flex-start; gap: 12px; margin-bottom: 18px; }
+  .mc-frame .mc-kicker { margin-bottom: 8px; }
+  .mc-frame .mc-hl-title { font-size: 31px; line-height: 1.16; }
+  .mc-frame .mc-hl-lead { max-width: none; font-size: 14px; line-height: 1.65; }
+
+  /* 벤토: 큰 칸 전체 폭 → 세로 칸+작은 칸 둘 2열 모자이크 → 마감 띠 → 공동구매 작은 칸 */
+  .mc-frame .mc-bento {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: minmax(420px, auto) minmax(184px, 1fr) minmax(184px, 1fr) auto 176px;
+    grid-template-areas:
+      "a a"
+      "b d"
+      "b e"
+      "c c"
+      "f f";
+    gap: 10px;
+  }
+  .mc-frame .mc-cell { border-radius: 14px; }
+  .mc-frame .mc-badges { top: 12px; left: 12px; gap: 5px; }
+  .mc-frame .mc-badge { height: 22px; padding: 0 9px; }
+  .mc-frame .mc-cell-body { gap: 5px; padding: 12px 13px 13px; }
+  .mc-frame .mc-cell-a .mc-cell-body { gap: 8px; padding: 18px; }
+  .mc-frame .mc-cell-kicker { letter-spacing: 0.02em; }
+  .mc-frame .mc-cell-title { font-size: 15px; }
+  .mc-frame .mc-cell-a .mc-cell-title { font-size: 34px; }
+  .mc-frame .mc-cell-b .mc-cell-title { font-size: 19px; -webkit-line-clamp: 4; }
+  .mc-frame .mc-cell-sum {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.55;
+  }
+  .mc-frame .mc-ledger-item { padding: 10px 8px 0 0; }
+  .mc-frame .mc-ledger-item + .mc-ledger-item { padding-left: 12px; }
+  .mc-frame .mc-ledger-k { gap: 6px; font-size: 12.5px; }
+
+  /* 마감 띠: 큰 남은 날을 위 오른쪽, 제목을 아래로 */
+  .mc-frame .mc-cell-c { grid-template-columns: minmax(0, 1fr); align-items: start; gap: 10px; padding: 12px 16px 16px; }
+  .mc-frame .mc-drop-time { grid-row: 1; justify-self: end; }
+  .mc-frame .mc-drop-text { grid-row: 2; gap: 4px; }
+  .mc-frame .mc-drop-title { font-size: 25px; }
+  .mc-frame .mc-drop-clock { font-size: min(60px, 18cqi); }
+  .mc-frame .mc-drop-today { margin-bottom: 4px; padding: 3px 9px; font-size: 12px; }
+
+  /* 공동구매 작은 칸: 한 줄을 다 쓰니 큰 칸처럼 사진이 칸 전체를 덮고, 글자를 조금 키운다 */
+  .mc-frame .mc-cell-f { grid-template-rows: minmax(0, 1fr) auto; }
+  .mc-frame .mc-cell-f .mc-cell-img { grid-row: auto; height: 100%; -webkit-mask-image: none; mask-image: none; }
+  .mc-frame .mc-cell-f .mc-cell-body { padding: 14px 16px 16px; }
+  .mc-frame .mc-cell-f .mc-cell-title { font-size: 17px; }
+
+  /* 시안 메모: 한 줄씩 */
+  .mc-frame .mc-memo { grid-template-columns: minmax(0, 1fr); gap: 6px; margin-top: 14px; padding: 12px 14px; font-size: 12.5px; }
+  .mc-frame .mc-memo-list { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+
+  /* 바로 가기: 안내 한 줄 + 버튼 둘 같은 폭 */
+  .mc-frame .mc-jump { flex-wrap: wrap; margin-top: 22px; }
+  .mc-frame .mc-jump-cue { flex: 0 0 100%; margin: 0; }
+  .mc-frame .mc-jump-link { flex: 1 1 0; justify-content: center; padding: 0 10px; }
+
+  /* 섹션 머리: 번호 | 제목 · 전체 보기 / 부제(출처 → 정렬 두 줄)는 그 아래 넓게 */
+  .mc-frame .mc-sec { margin-top: 32px; padding-top: 26px; }
+  .mc-frame .mc-sec-head {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "no title tools"
+      "no sub sub";
+    align-items: center;
+    gap: 2px 12px;
+    margin-bottom: 14px;
+  }
+  .mc-frame .mc-sec-text { display: contents; }
+  .mc-frame .mc-sec-no { grid-area: no; align-self: start; padding-top: 6px; font-size: 34px; }
+  .mc-frame .mc-sec-title { grid-area: title; font-size: 22px; }
+  .mc-frame .mc-sec-sub { grid-area: sub; margin: 0; font-size: 13px; line-height: 1.5; }
+  .mc-frame .mc-sec-sub .mc-meta-sep { display: none; }
+  .mc-frame .mc-sec-sub .mc-meta-tail { display: block; }
+  .mc-frame .mc-sec-tools { grid-area: tools; margin: -9px 0; }
+  .mc-frame .mc-more { margin-left: 0; font-size: 13.5px; }
+
+  /* 가로 넘김 줄: 양옆 끝까지, IC는 두 장 + 다음 카드 끝, 공동구매는 한 장 + 다음 카드 끝 */
+  .mc-frame .mc-rail { margin: 0 -16px; }
+  .mc-frame .mc-track { gap: 12px; padding: 2px 16px 4px; scroll-padding: 0 16px; }
+  .mc-frame .mc-card-ic { width: calc((100cqi - 68px) / 2); }
+  .mc-frame .mc-card-gb { width: calc(100cqi - 88px); }
+  .mc-frame .mc-card { gap: 6px; }
+  .mc-frame .mc-card-sum { line-height: 1.5; }
+  .mc-frame .mc-progress { margin-top: 14px; }
+  .mc-frame .mc-progress-bar { width: var(--mc-p-m); }
+
+  /* 푸터 */
+  .mc-frame .mc-footer { margin-top: 40px; padding-top: 14px; }
+  .mc-frame .mc-footer-top { gap: 0 12px; }
+  .mc-frame .mc-footer-logo { font-size: 18px; }
+  .mc-frame .mc-footer-text { margin-top: 6px; font-size: 12.5px; }
+
+  .mc-frame .mc-wn-t { display: none; }
+  .mc-frame .mc-wn-m { display: inline; }
+}
+</style>
+<div class="mc-frame">
+<div class="mc-root">
+
+  <header class="mc-header">
+    <a class="mc-logo" href="#">keycheck</a>
+    <nav class="mc-nav" aria-label="게시판">
+      <a class="mc-nav-link" href="#mc-ic">IC</a>
+      <a class="mc-nav-link" href="#mc-gb">공동구매</a>
+    </nav>
+    <span class="mc-login" title="나중에 로그인이 들어갈 자리"><span class="mc-login-dot"></span>로그인</span>
+  </header>
+
+  <div class="mc-dateline">
+    <span><span class="mc-dateline-strong">2026.11.05 목</span> · 저녁판</span>
+    <span class="mc-segs"><span>최근&nbsp;7일 새 IC <span class="mc-dateline-strong">3</span></span><span>새 공동구매 <span class="mc-dateline-strong">1</span></span><span>2주 안에 마감 <span class="mc-dateline-strong">2</span></span></span>
+  </div>
+
+  <!-- ================= 하이라이트 ================= -->
+  <section class="mc-hl" aria-labelledby="mc-hl-title">
+    <div class="mc-hl-head">
+      <div>
+        <p class="mc-kicker">HIGHLIGHT</p>
+        <h1 class="mc-hl-title" id="mc-hl-title">요즘 키보드·키캡,<br>사진으로 먼저 봐요</h1>
+      </div>
+      <p class="mc-hl-lead">geekhack IC·공동구매 글에서 지금 볼 만한 여섯&nbsp;개를 골랐어요. 아래로 내리면 게시판별 목록이 이어져요.</p>
+    </div>
+
+    <div class="mc-bento">
+      <!-- 큰 칸: 최근 7일 새 공동구매 조회 1위 -->
+      <a class="mc-cell mc-cell-a" href="#">
+        <img class="mc-cell-img" src="https://bord.design/nightshift/8.jpg" alt="SWG Nightshift 대표 이미지" referrerpolicy="no-referrer" style="object-position: 50% 20%;">
+        <span class="mc-cell-shade"></span>
+        <span class="mc-badges">
+          <span class="mc-badge mc-badge-gb">공동구매</span>
+          <span class="mc-badge mc-badge-tag">키캡</span>
+        </span>
+        <span class="mc-cell-body">
+          <span class="mc-cell-kicker mc-segs"><span>최근&nbsp;7일 새 공동구매</span><span>조회&nbsp;1위</span></span>
+          <span class="mc-cell-title">SWG Nightshift</span>
+          <span class="mc-cell-sum">Swagkeys(SWG)가 제작하는 체리 프로파일 더블샷 ABS 키캡 세트 SWG Nightshift의 공동구매 글이에요.</span>
+          <span class="mc-ledger">
+            <span class="mc-ledger-item">
+              <span class="mc-ledger-k"><span class="mc-ledger-dot"></span>공동구매 기간</span>
+              <span class="mc-ledger-v">10/30(금) →&nbsp;11/13(금)</span>
+              <span class="mc-ledger-v">마감까지<span class="mc-ledger-dday">D-8</span></span>
+            </span>
+            <span class="mc-ledger-item">
+              <span class="mc-ledger-k"><span class="mc-ledger-dot mc-ledger-dot-quiet"></span>geekhack 반응</span>
+              <span class="mc-ledger-v mc-segs"><span>조회&nbsp;6,800+</span><span>댓글&nbsp;2</span></span>
+              <span class="mc-ledger-v">10/31 올라옴</span>
+            </span>
+          </span>
+        </span>
+      </a>
+
+      <!-- 세로 칸: 최근 2주 새 IC 조회 1위 -->
+      <a class="mc-cell mc-cell-b" href="#">
+        <img class="mc-cell-img" src="https://cdn.shopify.com/s/files/1/0607/5351/0626/files/DSC02284.jpg?v=1792743092" alt="Class 60 V2 대표 이미지" referrerpolicy="no-referrer" style="object-position: 54% 50%;">
+        <span class="mc-cell-shade"></span>
+        <span class="mc-badges">
+          <span class="mc-badge mc-badge-ic">IC</span>
+          <span class="mc-badge mc-badge-tag">60%</span>
+        </span>
+        <span class="mc-cell-body">
+          <span class="mc-cell-kicker mc-segs"><span>최근&nbsp;2주 새 IC</span><span>조회&nbsp;1위</span></span>
+          <span class="mc-cell-title">Class 60 V2 — 60% Retro Design Board</span>
+          <span class="mc-cell-meta mc-segs"><span>조회&nbsp;2만+</span><span>댓글&nbsp;5</span><span>10/23</span></span>
+        </span>
+      </a>
+
+      <!-- 작은 칸: 최근 2주 새 IC 댓글 1위(앞 칸 제외) -->
+      <a class="mc-cell mc-cell-d" href="#">
+        <img class="mc-cell-img mc-cell-img-up" src="https://i.imgur.com/PY72A0b.png" alt="GMK CYL nuSignal 대표 이미지" referrerpolicy="no-referrer">
+        <span class="mc-cell-shade"></span>
+        <span class="mc-badges">
+          <span class="mc-badge mc-badge-ic">IC</span>
+        </span>
+        <span class="mc-cell-body">
+          <span class="mc-cell-kicker mc-segs"><span>2주 새 IC</span><span>댓글&nbsp;1위</span></span>
+          <span class="mc-cell-title">GMK CYL nuSignal</span>
+          <span class="mc-cell-meta mc-segs"><span>댓글&nbsp;15</span><span>조회&nbsp;8,500+</span><span>10/31</span></span>
+        </span>
+      </a>
+
+      <!-- 작은 칸: 최근 2주 새 IC 조회 2위 -->
+      <a class="mc-cell mc-cell-e" href="#">
+        <img class="mc-cell-img" src="https://i.imgur.com/KSEcDYd.jpeg" alt="GSD Crib Artisan Tray 대표 이미지" referrerpolicy="no-referrer">
+        <span class="mc-cell-shade"></span>
+        <span class="mc-badges">
+          <span class="mc-badge mc-badge-ic">IC</span>
+        </span>
+        <span class="mc-cell-body">
+          <span class="mc-cell-kicker mc-segs"><span>2주 새 IC</span><span>조회&nbsp;2위</span></span>
+          <span class="mc-cell-title">GSD Crib Artisan Tray</span>
+          <span class="mc-cell-meta mc-segs"><span>조회&nbsp;1.3만+</span><span>댓글&nbsp;1</span><span>10/26</span></span>
+        </span>
+      </a>
+
+      <!-- 마감 띠: 제목에 적힌 마감일이 가장 가까운 공동구매(앞 칸 제외) -->
+      <a class="mc-cell mc-cell-c mc-panel-drop mc-keys" href="#">
+        <span class="mc-badges">
+          <span class="mc-badge mc-badge-gb-on">공동구매</span>
+          <span class="mc-badge mc-badge-tag">MW</span>
+        </span>
+        <span class="mc-drop-text">
+          <span class="mc-cell-kicker">곧 끝나는 공동구매</span>
+          <span class="mc-drop-title">MW Datenshi</span>
+          <span class="mc-cell-meta mc-segs"><span>10/26 → 11/16</span><span>조회&nbsp;1.6만+</span><span>댓글&nbsp;2</span></span>
+        </span>
+        <span class="mc-drop-time">
+          <span class="mc-drop-today">11/16(월) 마감</span>
+          <span class="mc-drop-clock">D-11</span>
+        </span>
+      </a>
+
+      <!-- 작은 칸: 최근 30일 새 공동구매 조회 1위(앞 칸 제외) -->
+      <a class="mc-cell mc-cell-f" href="#">
+        <img class="mc-cell-img" src="https://i.imgur.com/pc8l2Nb.jpeg" alt="Space66% Spaceforge 대표 이미지" referrerpolicy="no-referrer" style="object-position: 50% 100%;">
+        <span class="mc-cell-shade"></span>
+        <span class="mc-badges">
+          <span class="mc-badge mc-badge-gb">공동구매</span>
+        </span>
+        <span class="mc-cell-body">
+          <span class="mc-cell-kicker mc-segs"><span>30일 새 공동구매</span><span>조회&nbsp;1위</span></span>
+          <span class="mc-cell-title">Space66% Spaceforge</span>
+          <span class="mc-cell-meta mc-segs"><span>조회&nbsp;3.4만+</span><span>댓글&nbsp;2</span><span>10/9</span></span>
+        </span>
+      </a>
+    </div>
+
+    <aside class="mc-memo" aria-label="시안 메모">
+      <span class="mc-memo-label">시안 메모<br>고르는 규칙</span>
+      <ul class="mc-memo-list">
+        <li><span class="mc-memo-key">큰 칸</span> 최근&nbsp;7일 새로 올라온 공동구매 중 조회수&nbsp;1위. 제목에 기간이 적혀 있으면 기간과 마감까지 남은 날을 함께 보여줘요.</li>
+        <li><span class="mc-memo-key">세로 칸</span> 최근&nbsp;14일 새 IC 중 조회수&nbsp;1위</li>
+        <li><span class="mc-memo-key">마감 띠</span> 제목에 적힌 마감일이 가장 가까운 공동구매. 사진 대신 남은 날을 주황 띠에 크게 보여줘요. 마감일을 알 수 있는 글이 없으면 최근&nbsp;14일 공동구매 조회&nbsp;2위를 사진&nbsp;칸으로 보여줘요.</li>
+        <li><span class="mc-memo-key">작은 칸 셋</span> 최근&nbsp;14일 IC 댓글&nbsp;1위, 최근&nbsp;14일 IC 조회&nbsp;2위, 최근&nbsp;30일 공동구매 조회&nbsp;1위(공동구매는 새 글이 적어 기간을 넓혀요). 앞 칸에서 이미 고른 글은 건너뛰어요.</li>
+        <li><span class="mc-memo-key">출처 배지</span> 흰 배지는 IC, 주황 배지는 공동구매예요. 여섯&nbsp;칸을 IC&nbsp;셋, 공동구매&nbsp;셋으로 나눠요.</li>
+        <li><span class="mc-memo-key">갱신</span> geekhack 글을 확인하는 30분마다 다시 골라요.</li>
+      </ul>
+    </aside>
+
+    <nav class="mc-jump" aria-label="목록 바로 가기">
+      <span class="mc-jump-cue">↓ 아래로 이어져요</span>
+      <a class="mc-jump-link" href="#mc-ic">IC</a>
+      <a class="mc-jump-link" href="#mc-gb">공동구매</a>
+    </nav>
+  </section>
+
+  <!-- ================= 01 IC ================= -->
+  <section class="mc-sec" id="mc-ic" aria-labelledby="mc-ic-title">
+    <div class="mc-sec-head">
+      <span class="mc-sec-no">01</span>
+      <div class="mc-sec-text">
+        <h2 class="mc-sec-title" id="mc-ic-title">IC · 관심 조사</h2>
+        <p class="mc-sec-sub">geekhack Interest Checks<span class="mc-meta-sep"> · </span><span class="mc-meta-tail">새로 올라온 순</span></p>
+      </div>
+      <div class="mc-sec-tools">
+        <span class="mc-count">1–4 / 10</span>
+        <span class="mc-arrow mc-arrow-off" aria-hidden="true"><svg class="mc-ico" viewBox="0 0 24 24" width="18" height="18"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <span class="mc-arrow" aria-hidden="true"><svg class="mc-ico" viewBox="0 0 24 24" width="18" height="18"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <a class="mc-more" href="#">전체 보기 →</a>
+      </div>
+    </div>
+    <div class="mc-rail mc-rail-ic">
+      <div class="mc-track">
+        <a class="mc-card mc-card-ic" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://geekhack.org/index.php?action=dlattach;topic=127286.0;attach=318663;image" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">SP</span></span>
+          <span class="mc-card-title">SA Paperwork - 40% Monokit</span>
+          <span class="mc-card-sum">Trashman의 클래식 컬러웨이 Paperwork를 SA 프로파일로 내놓는 키캡 세트의 관심 체크예요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;5,300+</span><span>댓글&nbsp;5</span><span>11/1</span></span>
+        </a>
+        <a class="mc-card mc-card-ic" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://i.imgur.com/PY72A0b.png" alt="" referrerpolicy="no-referrer" loading="lazy" style="object-position: 10% 50%;"><span class="mc-chip">GMK</span></span>
+          <span class="mc-card-title">GMK CYL nuSignal</span>
+          <span class="mc-card-sum">GMK CYL 프로파일로 나오는 nuSignal 키캡 세트의 관심도 조사(IC)예요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;8,500+</span><span>댓글&nbsp;15</span><span>10/31</span></span>
+        </a>
+        <a class="mc-card mc-card-ic" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://geekhack.org/index.php?action=dlattach;topic=127254.0;attach=318621;image" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">키캡</span></span>
+          <span class="mc-card-title">KEYMOJI Sanctuary - LOTR inspired metal keycap set with embossed legends</span>
+          <span class="mc-card-sum">KEYMOJI에서 반지의 제왕을 모티브로 만든 77키 알루미늄 메탈 키캡 세트예요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;8,700+</span><span>댓글&nbsp;0</span><span>10/29</span></span>
+        </a>
+        <a class="mc-card mc-card-ic" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://i.imgur.com/KSEcDYd.jpeg" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">기타</span></span>
+          <span class="mc-card-title">GSD Crib Artisan Tray</span>
+          <span class="mc-card-sum">GSD 스타일의 아티산 키캡 보관용 트레이인 GSD Crib의 관심 체크 글이에요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;1.3만+</span><span>댓글&nbsp;1</span><span>10/26</span></span>
+        </a>
+        <a class="mc-card mc-card-ic" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://i.postimg.cc/Y0ntLgVm/01-keycaps-c64-angle.jpg" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">SP</span></span>
+          <span class="mc-card-title">SA 64 / SA 64C / SA 16 — SA keycaps for the Commodore 64, 64C and 16</span>
+          <span class="mc-card-sum">코모도어 64, 64C, 16 컴퓨터의 원래 색상을 재현한 SA 프로파일 키캡 3종(SA 64, SA 64C, SA 16)의 관심 조사예요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;1.2만+</span><span>댓글&nbsp;0</span><span>10/23</span></span>
+        </a>
+        <a class="mc-card mc-card-ic" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://cdn.shopify.com/s/files/1/0607/5351/0626/files/DSC02284.jpg?v=1792743092" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">60%</span></span>
+          <span class="mc-card-title">Class 60 V2 — 60% Retro Design Board</span>
+          <span class="mc-card-sum">MM Studio가 DEC VT220의 LK201 키보드에서 영감을 받아 만든 60% 커스텀 키보드 키트 Class 60 V2의 관심 조사(IC)예요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;2만+</span><span>댓글&nbsp;5</span><span>10/23</span></span>
+        </a>
+        <a class="mc-card mc-card-ic" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://media.biipmk.com/gmk-video2048/GMK_Power-2048-Renders-1.jpg" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">GMK</span></span>
+          <span class="mc-card-title">GMK CYL Video 2048</span>
+          <span class="mc-card-sum">GMK CYL 프로파일로 만드는 키캡 세트 GMK CYL Video 2048의 관심 체크(IC)예요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;2.5만+</span><span>댓글&nbsp;3</span><span>10/19</span></span>
+        </a>
+        <a class="mc-card mc-card-ic" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://mugen.cat/projects/zoltraak/assets/forum/samples-6200k-1.jpg" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">MW</span></span>
+          <span class="mc-card-title">MW Zoltraak</span>
+          <span class="mc-card-sum">MW Keys에서 제작하는 체리 프로파일 더블샷 ABS 키캡 세트 'Zoltraak'의 관심 조사(IC)예요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;2.4만+</span><span>댓글&nbsp;5</span><span>10/15</span></span>
+        </a>
+        <a class="mc-card mc-card-ic" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://i.imgur.com/MGX3IrH.jpeg" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">KKB</span></span>
+          <span class="mc-card-title">KKB 1001 Nights</span>
+          <span class="mc-card-sum">Key Kobo에서 제작하는 체리 프로파일 ABS 키캡 세트 KKB 1001 Nights의 인터레스트 체크예요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;2.8만+</span><span>댓글&nbsp;5</span><span>10/15</span></span>
+        </a>
+        <a class="mc-card mc-card-ic" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://i.imgur.com/jxzP4ZE.jpeg" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">SP</span></span>
+          <span class="mc-card-title">DCS Doubleshot Hangul (Beige/WoB Alphas)</span>
+          <span class="mc-card-sum">DCS 프로파일 한글 더블샷 알파 키트의 관심 조사(IC) 글이에요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;2.4만+</span><span>댓글&nbsp;3</span><span>10/14</span></span>
+        </a>
+      </div>
+      <span class="mc-rail-next" aria-hidden="true"><svg class="mc-ico" viewBox="0 0 24 24" width="20" height="20"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </div>
+    <div class="mc-progress"><span class="mc-progress-bar" style="--mc-p: 40%; --mc-p-t: 30%; --mc-p-m: 20%;"></span></div>
+  </section>
+
+  <!-- ================= 02 공동구매 ================= -->
+  <section class="mc-sec" id="mc-gb" aria-labelledby="mc-gb-title">
+    <div class="mc-sec-head">
+      <span class="mc-sec-no">02</span>
+      <div class="mc-sec-text">
+        <h2 class="mc-sec-title" id="mc-gb-title">공동구매</h2>
+        <p class="mc-sec-sub">geekhack Group Buys and Preorders<span class="mc-meta-sep"> · </span><span class="mc-meta-tail">새로 올라온 순</span></p>
+      </div>
+      <div class="mc-sec-tools">
+        <span class="mc-count">1–3 / 10</span>
+        <span class="mc-arrow mc-arrow-off" aria-hidden="true"><svg class="mc-ico" viewBox="0 0 24 24" width="18" height="18"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <span class="mc-arrow" aria-hidden="true"><svg class="mc-ico" viewBox="0 0 24 24" width="18" height="18"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <a class="mc-more" href="#">전체 보기 →</a>
+      </div>
+    </div>
+    <div class="mc-rail mc-rail-gb">
+      <div class="mc-track">
+        <a class="mc-card mc-card-gb" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://bord.design/nightshift/8.jpg" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">키캡</span><span class="mc-chip mc-chip-date">10/30 → 11/13</span><span class="mc-chip mc-chip-dday">D-8</span></span>
+          <span class="mc-card-title">SWG Nightshift</span>
+          <span class="mc-card-sum">Swagkeys(SWG)가 제작하는 체리 프로파일 더블샷 ABS 키캡 세트 SWG Nightshift의 공동구매 글이에요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;6,800+</span><span>댓글&nbsp;2</span><span>10/31</span></span>
+        </a>
+        <a class="mc-card mc-card-gb" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://geekhack.org/index.php?action=dlattach;topic=127251.0;attach=318601;image" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">65%</span></span>
+          <span class="mc-card-title">Seed Plan Linedge 65 Keyboard</span>
+          <span class="mc-card-sum">Seed Plan의 Linedge 65는 Tonish TKL 디자이너 CC가 만든 첫 65% 키보드의 공동구매 글이에요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;1.7만+</span><span>댓글&nbsp;3</span><span>10/26</span></span>
+        </a>
+        <a class="mc-card mc-card-gb" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://i.imgur.com/ppgcj2r.png" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">MW</span><span class="mc-chip mc-chip-date">10/26 → 11/16</span><span class="mc-chip mc-chip-dday">D-11</span></span>
+          <span class="mc-card-title">MW Datenshi</span>
+          <span class="mc-card-sum">디자이너 Minisofu가 만든 MW 키캡 세트 Datenshi의 공동구매 글이에요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;1.6만+</span><span>댓글&nbsp;2</span><span>10/26</span></span>
+        </a>
+        <a class="mc-card mc-card-gb" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://imagedelivery.net/5Lj-4KVs36OWCtiVSZ4L1Q/c993d042-652b-456f-f48c-83165ef24100/public" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">GMK</span></span>
+          <span class="mc-card-title">GMK Salamander</span>
+          <span class="mc-card-sum">NyxKeys가 친구 Glen과 함께 디자인한 GMK 체리 프로파일 키캡 세트예요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;2.3만+</span><span>댓글&nbsp;5</span><span>10/20</span></span>
+        </a>
+        <a class="mc-card mc-card-gb" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://geekhack.org/index.php?action=dlattach;topic=127224.0;attach=318491;image" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">80%</span></span>
+          <span class="mc-card-title">Code:002 TKL</span>
+          <span class="mc-card-sum">Cafege의 Code:002 TKL 키보드 공동구매 글이에요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;2.9만+</span><span>댓글&nbsp;0</span><span>10/17</span></span>
+        </a>
+        <a class="mc-card mc-card-gb" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://i.postimg.cc/fDn8NbZW/Black-Base.png" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">GMK</span></span>
+          <span class="mc-card-title">GMK CYL Blanks</span>
+          <span class="mc-card-sum">GMK CYL 프로파일의 블랭크 키캡 세트로, 각인 없이 색상만 있는 키캡이에요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;2.7만+</span><span>댓글&nbsp;9</span><span>10/16</span></span>
+        </a>
+        <a class="mc-card mc-card-gb" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://i.imgur.com/pc8l2Nb.jpeg" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">65%</span></span>
+          <span class="mc-card-title">Space66% Spaceforge</span>
+          <span class="mc-card-sum">Graystudio에서 진행하는 66% 배열 알루미늄 키보드 Space66% Spaceforge의 공동구매 글이에요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;3.4만+</span><span>댓글&nbsp;2</span><span>10/9</span></span>
+        </a>
+        <a class="mc-card mc-card-gb" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://i.postimg.cc/8zwCCyD3/DCS-SMRT-165.jpg" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">SP</span><span class="mc-chip mc-chip-date mc-chip-end">공동구매 끝남</span></span>
+          <span class="mc-card-title">DCS SMRT R2</span>
+          <span class="mc-card-sum">Piperaceae가 디자인한 DCS SMRT의 두 번째 런(R2) 키캡 세트예요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;6.6만+</span><span>댓글&nbsp;23</span><span>9/20</span></span>
+        </a>
+        <a class="mc-card mc-card-gb" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://i.postimg.cc/rFQr0090/Katana80_1b.webp" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">MW</span></span>
+          <span class="mc-card-title">MW Meteor Dreams</span>
+          <span class="mc-card-sum">MW에서 제작하는 Meteor Dreams 키캡 세트의 공동구매 글이에요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;3.1만+</span><span>댓글&nbsp;1</span><span>7/10</span></span>
+        </a>
+        <a class="mc-card mc-card-gb" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://i.imgur.com/yYvb5pL.jpeg" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">키캡</span><span class="mc-chip mc-chip-date mc-chip-end">7/6 → 7/27 끝남</span></span>
+          <span class="mc-card-title">SWG Neowell</span>
+          <span class="mc-card-sum">SWG Neowell은 옛 Honeywell 터미널 배색을 재해석한 Cylindrical Cherry 프로파일 키캡 세트예요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;17.4만+</span><span>댓글&nbsp;3</span><span>7/10</span></span>
+        </a>
+      </div>
+      <span class="mc-rail-next" aria-hidden="true"><svg class="mc-ico" viewBox="0 0 24 24" width="20" height="20"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </div>
+    <div class="mc-progress"><span class="mc-progress-bar" style="--mc-p: 30%; --mc-p-t: 20%; --mc-p-m: 10%;"></span></div>
+  </section>
+
+  <footer class="mc-footer">
+    <div class="mc-footer-top">
+      <span class="mc-footer-logo">keycheck</span>
+      <nav class="mc-footer-nav" aria-label="푸터 메뉴">
+        <a href="#mc-ic">IC</a>
+        <a href="#mc-gb">공동구매</a>
+      </nav>
+    </div>
+    <p class="mc-footer-text">geekhack의 Interest Checks·Group Buys and Preorders 글을 모아 한국어로 짧게 정리해요. 새 글은 30분마다 확인해요. 사진과 원문의 권리는 각 작성자에게 있어요.</p>
+  </footer>
+
+  <p class="mc-width-note">
+    <span class="mc-width-note-label">폭별 메모</span>
+    <span class="mc-wn-d">데스크톱(1024px 이상): 벤토는 4열이고, 목록 줄은 좌우 화살표와 오른쪽 흐림으로 넘길 수 있다는 걸 보여 줘요.</span>
+    <span class="mc-wn-t">태블릿(600–1023px): 메뉴는 한 줄 그대로 두고, 벤토는 3열(큰 칸+세로 칸 → 마감 띠 → 작은 칸 셋)로 바꿔요. 세로 칸과 작은 칸은 사진을 글 위쪽에 두고 글 쪽으로 흐려서, 글이 사진을 가리지 않아요. 손가락으로 넘기는 기기라 좌우 화살표와 쪽수는 숨기고, 다음 카드 끝과 진행 막대로 넘길 수 있다는 걸 알려요.</span>
+    <span class="mc-wn-m">모바일(599px 이하): 메뉴는 로고 아래 두 칸 탭으로 내려요. 벤토는 큰 칸이 폭을 꽉 채우고, 세로 칸과 작은 칸 둘은 2열로 맞물리며, 마감 띠와 공동구매 작은 칸은 한 줄씩 차지해요. IC 줄은 카드 두 장, 공동구매 줄은 한 장에 다음 카드 끝이 보여요.</span>
+  </p>
+</div>
+</div>
+</div></div><div class="doc-col" style="width:390px"><p class="doc-label">모바일 · 390px</p><div class="doc-box" style="width:390px"><style>
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap");
+
+/* 폭은 바깥 창이 아니라 이 틀을 기준으로 정한다 */
+.mc-frame { container-type: inline-size; container-name: kc; }
+
+.mc-frame .mc-root {
+  --mc-bg: #f3f4f1;
+  --mc-surface: #ffffff;
+  --mc-ink: #16181a;
+  --mc-body: #2e3236;
+  --mc-muted: #4f555a;
+  --mc-faint: #9ba09c;
+  --mc-accent: #b93a0b;
+  --mc-accent-dark: #8f2c07;
+  --mc-border: #d5d7d2;
+  --mc-divider: #e4e5e1;
+  --mc-sans: "IBM Plex Sans KR", system-ui, sans-serif;
+  --mc-mono: "IBM Plex Mono", ui-monospace, monospace;
+  box-sizing: border-box;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 24px 28px;
+  background: var(--mc-bg);
+  color: var(--mc-ink);
+  font-family: var(--mc-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+.mc-frame a { color: inherit; text-decoration: none; }
+
+/* ---------- 헤더 ---------- */
+.mc-frame .mc-header {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  margin: 0 -24px;
+  padding: 14px 24px;
+  border-bottom: 2px solid var(--mc-ink);
+}
+.mc-frame .mc-logo {
+  font-size: 28px;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.045em;
+}
+.mc-frame .mc-nav { display: flex; gap: 28px; }
+.mc-frame .mc-nav-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  border-bottom: 3px solid transparent;
+  color: var(--mc-muted);
+  font-size: 16px;
+  font-weight: 500;
+}
+.mc-frame .mc-nav-link:hover { color: var(--mc-ink); }
+.mc-frame .mc-login {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 14px 0 6px;
+  border: 1px dashed var(--mc-faint);
+  border-radius: 999px;
+  color: var(--mc-muted);
+  font-size: 13px;
+}
+.mc-frame .mc-login-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--mc-divider);
+}
+
+/* ---------- 날짜 띠 ---------- */
+.mc-frame .mc-dateline {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--mc-border);
+  font-family: var(--mc-mono);
+  font-size: 12px;
+  color: var(--mc-muted);
+  letter-spacing: 0.02em;
+}
+.mc-frame .mc-dateline-strong { color: var(--mc-ink); font-weight: 600; }
+
+/* ---------- 하이라이트 머리 ---------- */
+.mc-frame .mc-hl { padding-top: 34px; }
+.mc-frame .mc-hl-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 40px;
+  margin-bottom: 22px;
+}
+.mc-frame .mc-kicker {
+  margin: 0 0 10px;
+  font-family: var(--mc-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: var(--mc-accent);
+}
+.mc-frame .mc-hl-title {
+  margin: 0;
+  font-size: 46px;
+  line-height: 1.12;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  word-break: keep-all;
+}
+.mc-frame .mc-hl-lead {
+  margin: 0;
+  max-width: 33ch;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--mc-body);
+  word-break: keep-all;
+}
+
+/* ---------- 벤토 ---------- */
+.mc-frame .mc-bento {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: 244px 244px 196px;
+  grid-template-areas:
+    "a a b d"
+    "a a b e"
+    "c c c f";
+  gap: 12px;
+}
+.mc-frame .mc-cell {
+  position: relative;
+  isolation: isolate;
+  display: block;
+  overflow: hidden;
+  border-radius: 16px;
+  background-color: #2a2d30;
+  color: #ffffff;
+}
+.mc-frame .mc-cell-a { grid-area: a; }
+.mc-frame .mc-cell-b { grid-area: b; }
+.mc-frame .mc-cell-c { grid-area: c; }
+.mc-frame .mc-cell-d { grid-area: d; }
+.mc-frame .mc-cell-e { grid-area: e; }
+.mc-frame .mc-cell-f { grid-area: f; }
+.mc-frame .mc-cell-img {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  color: transparent; /* 이미지를 못 받으면 대체 글자 대신 칸 바탕색만 보이게 */
+  transition: transform 0.6s ease;
+}
+.mc-frame .mc-cell:hover .mc-cell-img { transform: scale(1.04); }
+.mc-frame .mc-cell-shade {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, rgba(12, 13, 14, 0) 28%, rgba(12, 13, 14, 0.9) 100%);
+}
+.mc-frame .mc-cell-a .mc-cell-shade {
+  background: linear-gradient(180deg, rgba(12, 13, 14, 0.05) 25%, rgba(12, 13, 14, 0.62) 55%, rgba(12, 13, 14, 0.92) 100%);
+}
+/* 원 두 개가 나란한 사진: 왼쪽 원을 보여준다 */
+.mc-frame .mc-cell-img-up { object-position: 0% 50%; }
+/* 밝은 사진 위 글자: 아래쪽을 더 일찍 어둡게 */
+.mc-frame .mc-cell-d .mc-cell-shade,
+.mc-frame .mc-cell-f .mc-cell-shade {
+  background: linear-gradient(180deg, rgba(12, 13, 14, 0) 22%, rgba(12, 13, 14, 0.9) 62%);
+}
+.mc-frame .mc-badges {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  display: flex;
+  gap: 6px;
+}
+.mc-frame .mc-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+.mc-frame .mc-badge-ic { background: #ffffff; color: var(--mc-ink); }
+.mc-frame .mc-badge-gb { background: var(--mc-accent); color: #ffffff; }
+/* 주황 띠 위의 공동구매 배지: 바탕과 겹치지 않게 흰 바탕에 주황 글자 */
+.mc-frame .mc-badge-gb-on { background: #ffffff; color: var(--mc-accent); }
+.mc-frame .mc-badge-tag {
+  background: rgba(22, 24, 26, 0.55);
+  color: #ffffff;
+  font-family: var(--mc-mono);
+  font-weight: 500;
+  backdrop-filter: blur(6px);
+}
+.mc-frame .mc-cell-body {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px;
+}
+.mc-frame .mc-cell-a .mc-cell-body { gap: 10px; padding: 24px; }
+.mc-frame .mc-cell-kicker {
+  font-family: var(--mc-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.8);
+}
+.mc-frame .mc-cell-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 17px;
+  line-height: 1.3;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.mc-frame .mc-cell-a .mc-cell-title { font-size: 44px; line-height: 1.05; letter-spacing: -0.04em; }
+.mc-frame .mc-cell-b .mc-cell-title { font-size: 23px; line-height: 1.22; letter-spacing: -0.025em; -webkit-line-clamp: 3; }
+.mc-frame .mc-cell-sum {
+  max-width: 46ch;
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.88);
+  word-break: keep-all;
+}
+.mc-frame .mc-cell-meta {
+  font-family: var(--mc-mono);
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.78);
+}
+/* 메타 토막(조회 · 댓글 · 날짜 등): 가운뎃점은 CSS가 토막 사이에 넣는다 */
+.mc-frame .mc-segs > * + *::before { content: " · "; }
+
+/* 큰 칸: 공동구매 기간과 geekhack 반응을 두 칸으로 */
+.mc-frame .mc-ledger {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.3);
+}
+.mc-frame .mc-ledger-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 12px 0 0;
+}
+.mc-frame .mc-ledger-item + .mc-ledger-item {
+  padding-left: 16px;
+  border-left: 1px solid rgba(255, 255, 255, 0.3);
+}
+.mc-frame .mc-ledger-k {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.mc-frame .mc-ledger-dot { width: 8px; height: 8px; border-radius: 2px; background: var(--mc-accent); }
+.mc-frame .mc-ledger-dot-quiet { background: #ffffff; }
+.mc-frame .mc-ledger-v {
+  font-family: var(--mc-mono);
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+}
+.mc-frame .mc-ledger-dday {
+  margin-left: 4px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--mc-accent);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* 마감 띠: 사진 대신 남은 날을 크게, 주황 바탕 + 키 배열 무늬 */
+.mc-frame .mc-keys::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: conic-gradient(from 90deg at 4px 4px, rgba(255, 255, 255, 0.1) 90deg, transparent 0) 0 0 / 30px 30px;
+  -webkit-mask-image: linear-gradient(115deg, transparent 30%, #000000 100%);
+  mask-image: linear-gradient(115deg, transparent 30%, #000000 100%);
+}
+.mc-frame .mc-panel-drop { background-color: var(--mc-accent); }
+
+.mc-frame .mc-cell-c {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 24px;
+  padding: 22px 26px 22px 22px;
+}
+.mc-frame .mc-drop-text { display: flex; flex-direction: column; gap: 6px; }
+.mc-frame .mc-drop-title { font-size: 32px; line-height: 1.1; font-weight: 700; letter-spacing: -0.035em; }
+.mc-frame .mc-drop-time {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-family: var(--mc-mono);
+  line-height: 1;
+}
+.mc-frame .mc-drop-today {
+  margin-bottom: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--mc-accent);
+  font-family: var(--mc-sans);
+  font-size: 13px;
+  font-weight: 700;
+}
+.mc-frame .mc-drop-clock { font-size: 92px; font-weight: 500; letter-spacing: -0.06em; }
+
+/* ---------- 시안 메모 ---------- */
+.mc-frame .mc-memo {
+  display: grid;
+  grid-template-columns: 104px 1fr;
+  gap: 8px 18px;
+  margin-top: 16px;
+  padding: 14px 18px;
+  border: 1.5px dashed var(--mc-faint);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.45);
+  color: var(--mc-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.mc-frame .mc-memo-label {
+  font-family: var(--mc-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mc-ink);
+  letter-spacing: 0.04em;
+}
+.mc-frame .mc-memo-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 28px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  word-break: keep-all;
+}
+.mc-frame .mc-memo-key { color: var(--mc-ink); font-weight: 600; }
+
+/* ---------- 바로 가기 ---------- */
+.mc-frame .mc-jump {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 28px;
+}
+.mc-frame .mc-jump-cue { margin-right: 6px; font-family: var(--mc-mono); font-size: 12px; color: var(--mc-muted); }
+.mc-frame .mc-jump-link {
+  display: inline-flex;
+  align-items: center;
+  height: 34px;
+  padding: 0 14px;
+  border: 1px solid var(--mc-ink);
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.mc-frame .mc-jump-link:hover { background: var(--mc-ink); color: var(--mc-bg); }
+
+/* ---------- 섹션과 캐러셀 ---------- */
+.mc-frame .mc-sec { margin-top: 44px; padding-top: 36px; border-top: 1px solid var(--mc-border); }
+.mc-frame .mc-sec-head { display: flex; align-items: flex-end; gap: 18px; margin-bottom: 18px; }
+.mc-frame .mc-sec-no {
+  font-family: var(--mc-mono);
+  font-size: 48px;
+  line-height: 0.85;
+  font-weight: 500;
+  letter-spacing: -0.05em;
+  color: var(--mc-accent);
+}
+.mc-frame .mc-sec-title { margin: 0; font-size: 27px; line-height: 1.2; font-weight: 700; letter-spacing: -0.03em; }
+.mc-frame .mc-sec-sub { margin: 4px 0 0; font-size: 14px; color: var(--mc-muted); }
+.mc-frame .mc-sec-tools { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.mc-frame .mc-count { margin-right: 6px; font-family: var(--mc-mono); font-size: 12px; color: var(--mc-muted); }
+.mc-frame .mc-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--mc-ink);
+  border-radius: 50%;
+  color: var(--mc-ink);
+}
+.mc-frame .mc-arrow-off { border-color: var(--mc-border); color: var(--mc-faint); }
+.mc-frame .mc-more { margin-left: 12px; font-size: 14px; font-weight: 600; color: var(--mc-accent); }
+.mc-frame .mc-ico { display: block; }
+
+.mc-frame .mc-rail { position: relative; margin-right: -24px; }
+.mc-frame .mc-track {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  padding: 2px 24px 4px 0;
+}
+.mc-frame .mc-track::-webkit-scrollbar { display: none; }
+.mc-frame .mc-rail::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 110px;
+  background: linear-gradient(90deg, rgba(243, 244, 241, 0), var(--mc-bg) 88%);
+  pointer-events: none;
+}
+.mc-frame .mc-rail-next {
+  position: absolute;
+  right: 26px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #ffffff;
+  color: var(--mc-ink);
+  box-shadow: 0 8px 22px rgba(22, 24, 26, 0.18);
+  pointer-events: none;
+}
+.mc-frame .mc-rail-ic .mc-rail-next { top: 124px; }
+.mc-frame .mc-rail-gb .mc-rail-next { top: 83px; }
+.mc-frame .mc-progress { position: relative; height: 2px; margin-top: 16px; background: var(--mc-divider); }
+/* 막대 길이는 폭마다 한 화면에 보이는 카드 수에 맞춘다(--mc-p 데스크톱, --mc-p-t 태블릿, --mc-p-m 모바일) */
+.mc-frame .mc-progress-bar { position: absolute; top: 0; left: 0; bottom: 0; width: var(--mc-p); background: var(--mc-ink); }
+
+.mc-frame .mc-card { flex: none; display: flex; flex-direction: column; gap: 8px; scroll-snap-align: start; }
+.mc-frame .mc-card-ic { width: 236px; }
+.mc-frame .mc-card-gb { width: 320px; }
+.mc-frame .mc-media {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: 12px;
+  background-color: var(--mc-divider);
+  background-image: conic-gradient(from 90deg at 3px 3px, rgba(22, 24, 26, 0.05) 90deg, transparent 0);
+  background-size: 22px 22px;
+}
+.mc-frame .mc-card-ic .mc-media { aspect-ratio: 4 / 5; }
+.mc-frame .mc-card-gb .mc-media { aspect-ratio: 3 / 2; }
+.mc-frame .mc-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+.mc-frame .mc-card:hover .mc-img { transform: scale(1.05); }
+.mc-frame .mc-chip {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--mc-ink);
+  font-size: 11px;
+  font-weight: 600;
+}
+.mc-frame .mc-chip-date {
+  top: auto;
+  bottom: 10px;
+  background: rgba(22, 24, 26, 0.84);
+  color: #ffffff;
+  font-family: var(--mc-mono);
+  font-weight: 500;
+}
+.mc-frame .mc-chip-end { background: rgba(255, 255, 255, 0.9); color: var(--mc-muted); }
+.mc-frame .mc-chip-dday {
+  top: auto;
+  left: auto;
+  right: 10px;
+  bottom: 10px;
+  background: var(--mc-accent);
+  color: #ffffff;
+  font-family: var(--mc-mono);
+}
+.mc-frame .mc-card-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 15px;
+  line-height: 1.38;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+.mc-frame .mc-card:hover .mc-card-title { text-decoration: underline; text-underline-offset: 3px; }
+/* 카드 요약: 한국어 요약 첫 줄을 두 줄까지 */
+.mc-frame .mc-card-sum {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-top: -2px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--mc-body);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+.mc-frame .mc-card-meta { font-family: var(--mc-mono); font-size: 12px; color: var(--mc-muted); }
+
+/* ---------- 푸터 ---------- */
+.mc-frame .mc-footer {
+  margin-top: 56px;
+  padding-top: 22px;
+  border-top: 2px solid var(--mc-ink);
+}
+.mc-frame .mc-footer-top { display: flex; align-items: center; gap: 28px; }
+.mc-frame .mc-footer-logo { font-size: 20px; font-weight: 700; letter-spacing: -0.045em; }
+.mc-frame .mc-footer-nav { display: flex; gap: 18px; font-size: 14px; color: var(--mc-muted); }
+.mc-frame .mc-footer-text {
+  max-width: 70ch;
+  margin: 12px 0 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--mc-muted);
+  word-break: keep-all;
+}
+
+/* ---------- 폭별 메모 ---------- */
+.mc-frame .mc-width-note {
+  margin: 28px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--mc-divider);
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--mc-faint);
+  word-break: keep-all;
+}
+.mc-frame .mc-width-note-label {
+  margin-right: 8px;
+  font-family: var(--mc-mono);
+  font-weight: 600;
+  color: var(--mc-muted);
+}
+.mc-frame .mc-wn-t,
+.mc-frame .mc-wn-m { display: none; }
+
+/* =====================================================================
+   태블릿: 틀 폭 600–1023px
+   ===================================================================== */
+@container kc (max-width: 1023px) {
+  /* 헤더: 한 줄 그대로, 로그인 자리는 손가락 크기로 */
+  .mc-frame .mc-header { gap: 16px; }
+  .mc-frame .mc-logo { display: inline-flex; align-items: center; min-height: 44px; }
+  .mc-frame .mc-nav { gap: 0; }
+  .mc-frame .mc-nav-link { justify-content: center; min-width: 44px; padding: 0 12px; }
+  .mc-frame .mc-login { height: 44px; padding: 0 16px 0 8px; }
+
+  /* 하이라이트 머리: 자리가 모자라면 소개글이 제목 아래로 */
+  .mc-frame .mc-hl { padding-top: 30px; }
+  .mc-frame .mc-hl-head { flex-wrap: wrap; gap: 14px 28px; margin-bottom: 20px; }
+  .mc-frame .mc-hl-title { font-size: 42px; }
+
+  /* 벤토 3열: 큰 칸+세로 칸 → 마감 띠 → 작은 칸 셋 */
+  .mc-frame .mc-bento {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: 216px 216px 184px minmax(216px, auto);
+    grid-template-areas:
+      "a a b"
+      "a a b"
+      "c c c"
+      "d e f";
+  }
+  /* 칸과 카드는 제 폭을 기준으로 삼는다(아래 cqi는 칸 폭 기준) */
+  .mc-frame .mc-cell,
+  .mc-frame .mc-card { container-type: inline-size; }
+  /* 사진 칸: 사진 자리(위)와 글(아래)을 한 격자에 둔다. 큰 칸은 사진이 칸 전체를 덮고 글이 그 위에 얹힌다.
+     세로 칸·작은 칸은 글이 칸에서 차지하는 몫이 커서, 사진을 글 위 남은 자리에 맞춰 넣고 글 쪽으로 흐린다.
+     글이 사진의 중심을 가리지 않으니 사진마다 초점을 따로 정하지 않아도 된다.
+     사진 자리가 96px보다 작아지면(제목이 두 줄이 되는 좁은 칸) 칸이 그만큼 길어진다 */
+  .mc-frame .mc-cell-a,
+  .mc-frame .mc-cell-b,
+  .mc-frame .mc-cell-d,
+  .mc-frame .mc-cell-e,
+  .mc-frame .mc-cell-f { display: grid; grid-template: minmax(0, 1fr) auto / minmax(0, 1fr); }
+  .mc-frame .mc-cell-body { position: relative; grid-row: 2; }
+  .mc-frame .mc-cell-b,
+  .mc-frame .mc-cell-d,
+  .mc-frame .mc-cell-e,
+  .mc-frame .mc-cell-f { grid-template-rows: minmax(96px, 1fr) auto; }
+  .mc-frame .mc-cell-b .mc-cell-img,
+  .mc-frame .mc-cell-d .mc-cell-img,
+  .mc-frame .mc-cell-e .mc-cell-img,
+  .mc-frame .mc-cell-f .mc-cell-img {
+    grid-row: 1 / 2;
+    height: calc(100% + 36px);
+    -webkit-mask-image: linear-gradient(180deg, #000000 55%, transparent);
+    mask-image: linear-gradient(180deg, #000000 55%, transparent);
+  }
+  .mc-frame .mc-cell-a .mc-cell-title { font-size: clamp(32px, 8.6cqi, 44px); }
+  .mc-frame .mc-cell-b .mc-cell-title { font-size: 21px; -webkit-line-clamp: 4; }
+  .mc-frame .mc-drop-title { font-size: clamp(24px, 4.2cqi, 32px); }
+  .mc-frame .mc-drop-clock { font-size: clamp(60px, 11.9cqi, 92px); }
+  .mc-frame .mc-cell-kicker,
+  .mc-frame .mc-cell-meta,
+  .mc-frame .mc-card-meta,
+  .mc-frame .mc-ledger-v { word-break: keep-all; }
+  /* 메타 토막: 줄이 모자라면 토막 사이에서만 바꾸고, 줄 머리에 온 가운뎃점(3ch)은 왼쪽 밖으로 밀어 잘라 낸다.
+     글꼴을 키우거나 폭이 좁아져도 '댓글 / 1'이나 줄 끝 가운뎃점이 생기지 않는다 */
+  .mc-frame .mc-segs { display: flex; flex-wrap: wrap; margin-left: -3ch; clip-path: inset(0 0 0 3ch); }
+  .mc-frame .mc-segs > :first-child { margin-left: 3ch; }
+  .mc-frame .mc-segs > * + *::before { display: inline-block; width: 3ch; text-align: center; }
+
+  /* 손에 든 화면에서 읽히는 크기: 보조 글자 12px, 요약 14px 이상 */
+  .mc-frame .mc-cell-kicker { font-size: 12px; }
+  .mc-frame .mc-chip { font-size: 12px; }
+  .mc-frame .mc-card-sum { font-size: 14px; }
+
+  /* 바로 가기: 손가락 크기 */
+  .mc-frame .mc-jump-link { height: 44px; padding: 0 18px; }
+
+  /* 섹션 머리: 좌우 화살표와 쪽수는 숨기고 진행 막대로 위치를 알린다 */
+  .mc-frame .mc-sec { margin-top: 40px; padding-top: 32px; }
+  .mc-frame .mc-arrow,
+  .mc-frame .mc-count { display: none; }
+  .mc-frame .mc-more { display: inline-flex; align-items: center; min-height: 44px; }
+
+  /* 가로 넘김 줄: 화살표·흐림 대신 다음 카드 엿보기 */
+  .mc-frame .mc-rail-next,
+  .mc-frame .mc-rail::after { display: none; }
+  .mc-frame .mc-card-ic { width: calc((100cqi - 116px) / 3); }
+  .mc-frame .mc-card-gb { width: calc((100cqi - 146px) / 2); }
+  .mc-frame .mc-progress-bar { width: var(--mc-p-t); }
+
+  /* 푸터 메뉴: 손가락 크기 */
+  .mc-frame .mc-footer-top { flex-wrap: wrap; gap: 0 18px; }
+  .mc-frame .mc-footer-nav { gap: 0; }
+  .mc-frame .mc-footer-nav a { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; padding: 0 9px; }
+
+  .mc-frame .mc-wn-d { display: none; }
+  .mc-frame .mc-wn-t { display: inline; }
+}
+
+/* 좁은 칸: 머리글 자간을 줄인다.
+   데스크톱에서는 칸이 컨테이너가 아니라 가장 가까운 틀(kc) 폭으로 판단되어 적용되지 않는다 */
+@container (max-width: 228px) {
+  .mc-frame .mc-cell-kicker { letter-spacing: 0.02em; }
+}
+
+/* =====================================================================
+   모바일: 틀 폭 599px 이하
+   ===================================================================== */
+@container kc (max-width: 599px) {
+  .mc-frame .mc-root { padding: 0 16px 24px; }
+
+  /* 헤더: 로고·로그인 한 줄, 메뉴는 그 아래 두 칸 탭 줄 */
+  .mc-frame .mc-header { flex-wrap: wrap; gap: 0; margin: 0 -16px; padding: 6px 16px 0; }
+  .mc-frame .mc-logo { font-size: 24px; }
+  .mc-frame .mc-nav {
+    order: 1;
+    box-sizing: border-box;
+    flex: 0 0 calc(100% + 32px);
+    gap: 0;
+    margin: 6px -16px 0;
+    padding: 0 8px;
+    border-top: 1px solid var(--mc-divider);
+  }
+  .mc-frame .mc-nav-link { flex: 1 1 0; justify-content: center; min-height: 46px; font-size: 15px; }
+
+  /* 날짜 띠: 두 줄로 */
+  .mc-frame .mc-dateline { flex-wrap: wrap; gap: 2px 12px; padding: 9px 0; letter-spacing: 0; }
+
+  /* 하이라이트 머리: 제목 → 소개글 */
+  .mc-frame .mc-hl { padding-top: 24px; }
+  .mc-frame .mc-hl-head { flex-direction: column; align-items: flex-start; gap: 12px; margin-bottom: 18px; }
+  .mc-frame .mc-kicker { margin-bottom: 8px; }
+  .mc-frame .mc-hl-title { font-size: 31px; line-height: 1.16; }
+  .mc-frame .mc-hl-lead { max-width: none; font-size: 14px; line-height: 1.65; }
+
+  /* 벤토: 큰 칸 전체 폭 → 세로 칸+작은 칸 둘 2열 모자이크 → 마감 띠 → 공동구매 작은 칸 */
+  .mc-frame .mc-bento {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: minmax(420px, auto) minmax(184px, 1fr) minmax(184px, 1fr) auto 176px;
+    grid-template-areas:
+      "a a"
+      "b d"
+      "b e"
+      "c c"
+      "f f";
+    gap: 10px;
+  }
+  .mc-frame .mc-cell { border-radius: 14px; }
+  .mc-frame .mc-badges { top: 12px; left: 12px; gap: 5px; }
+  .mc-frame .mc-badge { height: 22px; padding: 0 9px; }
+  .mc-frame .mc-cell-body { gap: 5px; padding: 12px 13px 13px; }
+  .mc-frame .mc-cell-a .mc-cell-body { gap: 8px; padding: 18px; }
+  .mc-frame .mc-cell-kicker { letter-spacing: 0.02em; }
+  .mc-frame .mc-cell-title { font-size: 15px; }
+  .mc-frame .mc-cell-a .mc-cell-title { font-size: 34px; }
+  .mc-frame .mc-cell-b .mc-cell-title { font-size: 19px; -webkit-line-clamp: 4; }
+  .mc-frame .mc-cell-sum {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.55;
+  }
+  .mc-frame .mc-ledger-item { padding: 10px 8px 0 0; }
+  .mc-frame .mc-ledger-item + .mc-ledger-item { padding-left: 12px; }
+  .mc-frame .mc-ledger-k { gap: 6px; font-size: 12.5px; }
+
+  /* 마감 띠: 큰 남은 날을 위 오른쪽, 제목을 아래로 */
+  .mc-frame .mc-cell-c { grid-template-columns: minmax(0, 1fr); align-items: start; gap: 10px; padding: 12px 16px 16px; }
+  .mc-frame .mc-drop-time { grid-row: 1; justify-self: end; }
+  .mc-frame .mc-drop-text { grid-row: 2; gap: 4px; }
+  .mc-frame .mc-drop-title { font-size: 25px; }
+  .mc-frame .mc-drop-clock { font-size: min(60px, 18cqi); }
+  .mc-frame .mc-drop-today { margin-bottom: 4px; padding: 3px 9px; font-size: 12px; }
+
+  /* 공동구매 작은 칸: 한 줄을 다 쓰니 큰 칸처럼 사진이 칸 전체를 덮고, 글자를 조금 키운다 */
+  .mc-frame .mc-cell-f { grid-template-rows: minmax(0, 1fr) auto; }
+  .mc-frame .mc-cell-f .mc-cell-img { grid-row: auto; height: 100%; -webkit-mask-image: none; mask-image: none; }
+  .mc-frame .mc-cell-f .mc-cell-body { padding: 14px 16px 16px; }
+  .mc-frame .mc-cell-f .mc-cell-title { font-size: 17px; }
+
+  /* 시안 메모: 한 줄씩 */
+  .mc-frame .mc-memo { grid-template-columns: minmax(0, 1fr); gap: 6px; margin-top: 14px; padding: 12px 14px; font-size: 12.5px; }
+  .mc-frame .mc-memo-list { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+
+  /* 바로 가기: 안내 한 줄 + 버튼 둘 같은 폭 */
+  .mc-frame .mc-jump { flex-wrap: wrap; margin-top: 22px; }
+  .mc-frame .mc-jump-cue { flex: 0 0 100%; margin: 0; }
+  .mc-frame .mc-jump-link { flex: 1 1 0; justify-content: center; padding: 0 10px; }
+
+  /* 섹션 머리: 번호 | 제목 · 전체 보기 / 부제(출처 → 정렬 두 줄)는 그 아래 넓게 */
+  .mc-frame .mc-sec { margin-top: 32px; padding-top: 26px; }
+  .mc-frame .mc-sec-head {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "no title tools"
+      "no sub sub";
+    align-items: center;
+    gap: 2px 12px;
+    margin-bottom: 14px;
+  }
+  .mc-frame .mc-sec-text { display: contents; }
+  .mc-frame .mc-sec-no { grid-area: no; align-self: start; padding-top: 6px; font-size: 34px; }
+  .mc-frame .mc-sec-title { grid-area: title; font-size: 22px; }
+  .mc-frame .mc-sec-sub { grid-area: sub; margin: 0; font-size: 13px; line-height: 1.5; }
+  .mc-frame .mc-sec-sub .mc-meta-sep { display: none; }
+  .mc-frame .mc-sec-sub .mc-meta-tail { display: block; }
+  .mc-frame .mc-sec-tools { grid-area: tools; margin: -9px 0; }
+  .mc-frame .mc-more { margin-left: 0; font-size: 13.5px; }
+
+  /* 가로 넘김 줄: 양옆 끝까지, IC는 두 장 + 다음 카드 끝, 공동구매는 한 장 + 다음 카드 끝 */
+  .mc-frame .mc-rail { margin: 0 -16px; }
+  .mc-frame .mc-track { gap: 12px; padding: 2px 16px 4px; scroll-padding: 0 16px; }
+  .mc-frame .mc-card-ic { width: calc((100cqi - 68px) / 2); }
+  .mc-frame .mc-card-gb { width: calc(100cqi - 88px); }
+  .mc-frame .mc-card { gap: 6px; }
+  .mc-frame .mc-card-sum { line-height: 1.5; }
+  .mc-frame .mc-progress { margin-top: 14px; }
+  .mc-frame .mc-progress-bar { width: var(--mc-p-m); }
+
+  /* 푸터 */
+  .mc-frame .mc-footer { margin-top: 40px; padding-top: 14px; }
+  .mc-frame .mc-footer-top { gap: 0 12px; }
+  .mc-frame .mc-footer-logo { font-size: 18px; }
+  .mc-frame .mc-footer-text { margin-top: 6px; font-size: 12.5px; }
+
+  .mc-frame .mc-wn-t { display: none; }
+  .mc-frame .mc-wn-m { display: inline; }
+}
+</style>
+<div class="mc-frame">
+<div class="mc-root">
+
+  <header class="mc-header">
+    <a class="mc-logo" href="#">keycheck</a>
+    <nav class="mc-nav" aria-label="게시판">
+      <a class="mc-nav-link" href="#mc-ic">IC</a>
+      <a class="mc-nav-link" href="#mc-gb">공동구매</a>
+    </nav>
+    <span class="mc-login" title="나중에 로그인이 들어갈 자리"><span class="mc-login-dot"></span>로그인</span>
+  </header>
+
+  <div class="mc-dateline">
+    <span><span class="mc-dateline-strong">2026.11.05 목</span> · 저녁판</span>
+    <span class="mc-segs"><span>최근&nbsp;7일 새 IC <span class="mc-dateline-strong">3</span></span><span>새 공동구매 <span class="mc-dateline-strong">1</span></span><span>2주 안에 마감 <span class="mc-dateline-strong">2</span></span></span>
+  </div>
+
+  <!-- ================= 하이라이트 ================= -->
+  <section class="mc-hl" aria-labelledby="mc-hl-title">
+    <div class="mc-hl-head">
+      <div>
+        <p class="mc-kicker">HIGHLIGHT</p>
+        <h1 class="mc-hl-title" id="mc-hl-title">요즘 키보드·키캡,<br>사진으로 먼저 봐요</h1>
+      </div>
+      <p class="mc-hl-lead">geekhack IC·공동구매 글에서 지금 볼 만한 여섯&nbsp;개를 골랐어요. 아래로 내리면 게시판별 목록이 이어져요.</p>
+    </div>
+
+    <div class="mc-bento">
+      <!-- 큰 칸: 최근 7일 새 공동구매 조회 1위 -->
+      <a class="mc-cell mc-cell-a" href="#">
+        <img class="mc-cell-img" src="https://bord.design/nightshift/8.jpg" alt="SWG Nightshift 대표 이미지" referrerpolicy="no-referrer" style="object-position: 50% 20%;">
+        <span class="mc-cell-shade"></span>
+        <span class="mc-badges">
+          <span class="mc-badge mc-badge-gb">공동구매</span>
+          <span class="mc-badge mc-badge-tag">키캡</span>
+        </span>
+        <span class="mc-cell-body">
+          <span class="mc-cell-kicker mc-segs"><span>최근&nbsp;7일 새 공동구매</span><span>조회&nbsp;1위</span></span>
+          <span class="mc-cell-title">SWG Nightshift</span>
+          <span class="mc-cell-sum">Swagkeys(SWG)가 제작하는 체리 프로파일 더블샷 ABS 키캡 세트 SWG Nightshift의 공동구매 글이에요.</span>
+          <span class="mc-ledger">
+            <span class="mc-ledger-item">
+              <span class="mc-ledger-k"><span class="mc-ledger-dot"></span>공동구매 기간</span>
+              <span class="mc-ledger-v">10/30(금) →&nbsp;11/13(금)</span>
+              <span class="mc-ledger-v">마감까지<span class="mc-ledger-dday">D-8</span></span>
+            </span>
+            <span class="mc-ledger-item">
+              <span class="mc-ledger-k"><span class="mc-ledger-dot mc-ledger-dot-quiet"></span>geekhack 반응</span>
+              <span class="mc-ledger-v mc-segs"><span>조회&nbsp;6,800+</span><span>댓글&nbsp;2</span></span>
+              <span class="mc-ledger-v">10/31 올라옴</span>
+            </span>
+          </span>
+        </span>
+      </a>
+
+      <!-- 세로 칸: 최근 2주 새 IC 조회 1위 -->
+      <a class="mc-cell mc-cell-b" href="#">
+        <img class="mc-cell-img" src="https://cdn.shopify.com/s/files/1/0607/5351/0626/files/DSC02284.jpg?v=1792743092" alt="Class 60 V2 대표 이미지" referrerpolicy="no-referrer" style="object-position: 54% 50%;">
+        <span class="mc-cell-shade"></span>
+        <span class="mc-badges">
+          <span class="mc-badge mc-badge-ic">IC</span>
+          <span class="mc-badge mc-badge-tag">60%</span>
+        </span>
+        <span class="mc-cell-body">
+          <span class="mc-cell-kicker mc-segs"><span>최근&nbsp;2주 새 IC</span><span>조회&nbsp;1위</span></span>
+          <span class="mc-cell-title">Class 60 V2 — 60% Retro Design Board</span>
+          <span class="mc-cell-meta mc-segs"><span>조회&nbsp;2만+</span><span>댓글&nbsp;5</span><span>10/23</span></span>
+        </span>
+      </a>
+
+      <!-- 작은 칸: 최근 2주 새 IC 댓글 1위(앞 칸 제외) -->
+      <a class="mc-cell mc-cell-d" href="#">
+        <img class="mc-cell-img mc-cell-img-up" src="https://i.imgur.com/PY72A0b.png" alt="GMK CYL nuSignal 대표 이미지" referrerpolicy="no-referrer">
+        <span class="mc-cell-shade"></span>
+        <span class="mc-badges">
+          <span class="mc-badge mc-badge-ic">IC</span>
+        </span>
+        <span class="mc-cell-body">
+          <span class="mc-cell-kicker mc-segs"><span>2주 새 IC</span><span>댓글&nbsp;1위</span></span>
+          <span class="mc-cell-title">GMK CYL nuSignal</span>
+          <span class="mc-cell-meta mc-segs"><span>댓글&nbsp;15</span><span>조회&nbsp;8,500+</span><span>10/31</span></span>
+        </span>
+      </a>
+
+      <!-- 작은 칸: 최근 2주 새 IC 조회 2위 -->
+      <a class="mc-cell mc-cell-e" href="#">
+        <img class="mc-cell-img" src="https://i.imgur.com/KSEcDYd.jpeg" alt="GSD Crib Artisan Tray 대표 이미지" referrerpolicy="no-referrer">
+        <span class="mc-cell-shade"></span>
+        <span class="mc-badges">
+          <span class="mc-badge mc-badge-ic">IC</span>
+        </span>
+        <span class="mc-cell-body">
+          <span class="mc-cell-kicker mc-segs"><span>2주 새 IC</span><span>조회&nbsp;2위</span></span>
+          <span class="mc-cell-title">GSD Crib Artisan Tray</span>
+          <span class="mc-cell-meta mc-segs"><span>조회&nbsp;1.3만+</span><span>댓글&nbsp;1</span><span>10/26</span></span>
+        </span>
+      </a>
+
+      <!-- 마감 띠: 제목에 적힌 마감일이 가장 가까운 공동구매(앞 칸 제외) -->
+      <a class="mc-cell mc-cell-c mc-panel-drop mc-keys" href="#">
+        <span class="mc-badges">
+          <span class="mc-badge mc-badge-gb-on">공동구매</span>
+          <span class="mc-badge mc-badge-tag">MW</span>
+        </span>
+        <span class="mc-drop-text">
+          <span class="mc-cell-kicker">곧 끝나는 공동구매</span>
+          <span class="mc-drop-title">MW Datenshi</span>
+          <span class="mc-cell-meta mc-segs"><span>10/26 → 11/16</span><span>조회&nbsp;1.6만+</span><span>댓글&nbsp;2</span></span>
+        </span>
+        <span class="mc-drop-time">
+          <span class="mc-drop-today">11/16(월) 마감</span>
+          <span class="mc-drop-clock">D-11</span>
+        </span>
+      </a>
+
+      <!-- 작은 칸: 최근 30일 새 공동구매 조회 1위(앞 칸 제외) -->
+      <a class="mc-cell mc-cell-f" href="#">
+        <img class="mc-cell-img" src="https://i.imgur.com/pc8l2Nb.jpeg" alt="Space66% Spaceforge 대표 이미지" referrerpolicy="no-referrer" style="object-position: 50% 100%;">
+        <span class="mc-cell-shade"></span>
+        <span class="mc-badges">
+          <span class="mc-badge mc-badge-gb">공동구매</span>
+        </span>
+        <span class="mc-cell-body">
+          <span class="mc-cell-kicker mc-segs"><span>30일 새 공동구매</span><span>조회&nbsp;1위</span></span>
+          <span class="mc-cell-title">Space66% Spaceforge</span>
+          <span class="mc-cell-meta mc-segs"><span>조회&nbsp;3.4만+</span><span>댓글&nbsp;2</span><span>10/9</span></span>
+        </span>
+      </a>
+    </div>
+
+    <aside class="mc-memo" aria-label="시안 메모">
+      <span class="mc-memo-label">시안 메모<br>고르는 규칙</span>
+      <ul class="mc-memo-list">
+        <li><span class="mc-memo-key">큰 칸</span> 최근&nbsp;7일 새로 올라온 공동구매 중 조회수&nbsp;1위. 제목에 기간이 적혀 있으면 기간과 마감까지 남은 날을 함께 보여줘요.</li>
+        <li><span class="mc-memo-key">세로 칸</span> 최근&nbsp;14일 새 IC 중 조회수&nbsp;1위</li>
+        <li><span class="mc-memo-key">마감 띠</span> 제목에 적힌 마감일이 가장 가까운 공동구매. 사진 대신 남은 날을 주황 띠에 크게 보여줘요. 마감일을 알 수 있는 글이 없으면 최근&nbsp;14일 공동구매 조회&nbsp;2위를 사진&nbsp;칸으로 보여줘요.</li>
+        <li><span class="mc-memo-key">작은 칸 셋</span> 최근&nbsp;14일 IC 댓글&nbsp;1위, 최근&nbsp;14일 IC 조회&nbsp;2위, 최근&nbsp;30일 공동구매 조회&nbsp;1위(공동구매는 새 글이 적어 기간을 넓혀요). 앞 칸에서 이미 고른 글은 건너뛰어요.</li>
+        <li><span class="mc-memo-key">출처 배지</span> 흰 배지는 IC, 주황 배지는 공동구매예요. 여섯&nbsp;칸을 IC&nbsp;셋, 공동구매&nbsp;셋으로 나눠요.</li>
+        <li><span class="mc-memo-key">갱신</span> geekhack 글을 확인하는 30분마다 다시 골라요.</li>
+      </ul>
+    </aside>
+
+    <nav class="mc-jump" aria-label="목록 바로 가기">
+      <span class="mc-jump-cue">↓ 아래로 이어져요</span>
+      <a class="mc-jump-link" href="#mc-ic">IC</a>
+      <a class="mc-jump-link" href="#mc-gb">공동구매</a>
+    </nav>
+  </section>
+
+  <!-- ================= 01 IC ================= -->
+  <section class="mc-sec" id="mc-ic" aria-labelledby="mc-ic-title">
+    <div class="mc-sec-head">
+      <span class="mc-sec-no">01</span>
+      <div class="mc-sec-text">
+        <h2 class="mc-sec-title" id="mc-ic-title">IC · 관심 조사</h2>
+        <p class="mc-sec-sub">geekhack Interest Checks<span class="mc-meta-sep"> · </span><span class="mc-meta-tail">새로 올라온 순</span></p>
+      </div>
+      <div class="mc-sec-tools">
+        <span class="mc-count">1–4 / 10</span>
+        <span class="mc-arrow mc-arrow-off" aria-hidden="true"><svg class="mc-ico" viewBox="0 0 24 24" width="18" height="18"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <span class="mc-arrow" aria-hidden="true"><svg class="mc-ico" viewBox="0 0 24 24" width="18" height="18"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <a class="mc-more" href="#">전체 보기 →</a>
+      </div>
+    </div>
+    <div class="mc-rail mc-rail-ic">
+      <div class="mc-track">
+        <a class="mc-card mc-card-ic" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://geekhack.org/index.php?action=dlattach;topic=127286.0;attach=318663;image" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">SP</span></span>
+          <span class="mc-card-title">SA Paperwork - 40% Monokit</span>
+          <span class="mc-card-sum">Trashman의 클래식 컬러웨이 Paperwork를 SA 프로파일로 내놓는 키캡 세트의 관심 체크예요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;5,300+</span><span>댓글&nbsp;5</span><span>11/1</span></span>
+        </a>
+        <a class="mc-card mc-card-ic" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://i.imgur.com/PY72A0b.png" alt="" referrerpolicy="no-referrer" loading="lazy" style="object-position: 10% 50%;"><span class="mc-chip">GMK</span></span>
+          <span class="mc-card-title">GMK CYL nuSignal</span>
+          <span class="mc-card-sum">GMK CYL 프로파일로 나오는 nuSignal 키캡 세트의 관심도 조사(IC)예요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;8,500+</span><span>댓글&nbsp;15</span><span>10/31</span></span>
+        </a>
+        <a class="mc-card mc-card-ic" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://geekhack.org/index.php?action=dlattach;topic=127254.0;attach=318621;image" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">키캡</span></span>
+          <span class="mc-card-title">KEYMOJI Sanctuary - LOTR inspired metal keycap set with embossed legends</span>
+          <span class="mc-card-sum">KEYMOJI에서 반지의 제왕을 모티브로 만든 77키 알루미늄 메탈 키캡 세트예요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;8,700+</span><span>댓글&nbsp;0</span><span>10/29</span></span>
+        </a>
+        <a class="mc-card mc-card-ic" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://i.imgur.com/KSEcDYd.jpeg" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">기타</span></span>
+          <span class="mc-card-title">GSD Crib Artisan Tray</span>
+          <span class="mc-card-sum">GSD 스타일의 아티산 키캡 보관용 트레이인 GSD Crib의 관심 체크 글이에요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;1.3만+</span><span>댓글&nbsp;1</span><span>10/26</span></span>
+        </a>
+        <a class="mc-card mc-card-ic" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://i.postimg.cc/Y0ntLgVm/01-keycaps-c64-angle.jpg" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">SP</span></span>
+          <span class="mc-card-title">SA 64 / SA 64C / SA 16 — SA keycaps for the Commodore 64, 64C and 16</span>
+          <span class="mc-card-sum">코모도어 64, 64C, 16 컴퓨터의 원래 색상을 재현한 SA 프로파일 키캡 3종(SA 64, SA 64C, SA 16)의 관심 조사예요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;1.2만+</span><span>댓글&nbsp;0</span><span>10/23</span></span>
+        </a>
+        <a class="mc-card mc-card-ic" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://cdn.shopify.com/s/files/1/0607/5351/0626/files/DSC02284.jpg?v=1792743092" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">60%</span></span>
+          <span class="mc-card-title">Class 60 V2 — 60% Retro Design Board</span>
+          <span class="mc-card-sum">MM Studio가 DEC VT220의 LK201 키보드에서 영감을 받아 만든 60% 커스텀 키보드 키트 Class 60 V2의 관심 조사(IC)예요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;2만+</span><span>댓글&nbsp;5</span><span>10/23</span></span>
+        </a>
+        <a class="mc-card mc-card-ic" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://media.biipmk.com/gmk-video2048/GMK_Power-2048-Renders-1.jpg" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">GMK</span></span>
+          <span class="mc-card-title">GMK CYL Video 2048</span>
+          <span class="mc-card-sum">GMK CYL 프로파일로 만드는 키캡 세트 GMK CYL Video 2048의 관심 체크(IC)예요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;2.5만+</span><span>댓글&nbsp;3</span><span>10/19</span></span>
+        </a>
+        <a class="mc-card mc-card-ic" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://mugen.cat/projects/zoltraak/assets/forum/samples-6200k-1.jpg" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">MW</span></span>
+          <span class="mc-card-title">MW Zoltraak</span>
+          <span class="mc-card-sum">MW Keys에서 제작하는 체리 프로파일 더블샷 ABS 키캡 세트 'Zoltraak'의 관심 조사(IC)예요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;2.4만+</span><span>댓글&nbsp;5</span><span>10/15</span></span>
+        </a>
+        <a class="mc-card mc-card-ic" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://i.imgur.com/MGX3IrH.jpeg" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">KKB</span></span>
+          <span class="mc-card-title">KKB 1001 Nights</span>
+          <span class="mc-card-sum">Key Kobo에서 제작하는 체리 프로파일 ABS 키캡 세트 KKB 1001 Nights의 인터레스트 체크예요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;2.8만+</span><span>댓글&nbsp;5</span><span>10/15</span></span>
+        </a>
+        <a class="mc-card mc-card-ic" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://i.imgur.com/jxzP4ZE.jpeg" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">SP</span></span>
+          <span class="mc-card-title">DCS Doubleshot Hangul (Beige/WoB Alphas)</span>
+          <span class="mc-card-sum">DCS 프로파일 한글 더블샷 알파 키트의 관심 조사(IC) 글이에요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;2.4만+</span><span>댓글&nbsp;3</span><span>10/14</span></span>
+        </a>
+      </div>
+      <span class="mc-rail-next" aria-hidden="true"><svg class="mc-ico" viewBox="0 0 24 24" width="20" height="20"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </div>
+    <div class="mc-progress"><span class="mc-progress-bar" style="--mc-p: 40%; --mc-p-t: 30%; --mc-p-m: 20%;"></span></div>
+  </section>
+
+  <!-- ================= 02 공동구매 ================= -->
+  <section class="mc-sec" id="mc-gb" aria-labelledby="mc-gb-title">
+    <div class="mc-sec-head">
+      <span class="mc-sec-no">02</span>
+      <div class="mc-sec-text">
+        <h2 class="mc-sec-title" id="mc-gb-title">공동구매</h2>
+        <p class="mc-sec-sub">geekhack Group Buys and Preorders<span class="mc-meta-sep"> · </span><span class="mc-meta-tail">새로 올라온 순</span></p>
+      </div>
+      <div class="mc-sec-tools">
+        <span class="mc-count">1–3 / 10</span>
+        <span class="mc-arrow mc-arrow-off" aria-hidden="true"><svg class="mc-ico" viewBox="0 0 24 24" width="18" height="18"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <span class="mc-arrow" aria-hidden="true"><svg class="mc-ico" viewBox="0 0 24 24" width="18" height="18"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <a class="mc-more" href="#">전체 보기 →</a>
+      </div>
+    </div>
+    <div class="mc-rail mc-rail-gb">
+      <div class="mc-track">
+        <a class="mc-card mc-card-gb" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://bord.design/nightshift/8.jpg" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">키캡</span><span class="mc-chip mc-chip-date">10/30 → 11/13</span><span class="mc-chip mc-chip-dday">D-8</span></span>
+          <span class="mc-card-title">SWG Nightshift</span>
+          <span class="mc-card-sum">Swagkeys(SWG)가 제작하는 체리 프로파일 더블샷 ABS 키캡 세트 SWG Nightshift의 공동구매 글이에요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;6,800+</span><span>댓글&nbsp;2</span><span>10/31</span></span>
+        </a>
+        <a class="mc-card mc-card-gb" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://geekhack.org/index.php?action=dlattach;topic=127251.0;attach=318601;image" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">65%</span></span>
+          <span class="mc-card-title">Seed Plan Linedge 65 Keyboard</span>
+          <span class="mc-card-sum">Seed Plan의 Linedge 65는 Tonish TKL 디자이너 CC가 만든 첫 65% 키보드의 공동구매 글이에요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;1.7만+</span><span>댓글&nbsp;3</span><span>10/26</span></span>
+        </a>
+        <a class="mc-card mc-card-gb" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://i.imgur.com/ppgcj2r.png" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">MW</span><span class="mc-chip mc-chip-date">10/26 → 11/16</span><span class="mc-chip mc-chip-dday">D-11</span></span>
+          <span class="mc-card-title">MW Datenshi</span>
+          <span class="mc-card-sum">디자이너 Minisofu가 만든 MW 키캡 세트 Datenshi의 공동구매 글이에요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;1.6만+</span><span>댓글&nbsp;2</span><span>10/26</span></span>
+        </a>
+        <a class="mc-card mc-card-gb" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://imagedelivery.net/5Lj-4KVs36OWCtiVSZ4L1Q/c993d042-652b-456f-f48c-83165ef24100/public" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">GMK</span></span>
+          <span class="mc-card-title">GMK Salamander</span>
+          <span class="mc-card-sum">NyxKeys가 친구 Glen과 함께 디자인한 GMK 체리 프로파일 키캡 세트예요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;2.3만+</span><span>댓글&nbsp;5</span><span>10/20</span></span>
+        </a>
+        <a class="mc-card mc-card-gb" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://geekhack.org/index.php?action=dlattach;topic=127224.0;attach=318491;image" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">80%</span></span>
+          <span class="mc-card-title">Code:002 TKL</span>
+          <span class="mc-card-sum">Cafege의 Code:002 TKL 키보드 공동구매 글이에요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;2.9만+</span><span>댓글&nbsp;0</span><span>10/17</span></span>
+        </a>
+        <a class="mc-card mc-card-gb" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://i.postimg.cc/fDn8NbZW/Black-Base.png" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">GMK</span></span>
+          <span class="mc-card-title">GMK CYL Blanks</span>
+          <span class="mc-card-sum">GMK CYL 프로파일의 블랭크 키캡 세트로, 각인 없이 색상만 있는 키캡이에요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;2.7만+</span><span>댓글&nbsp;9</span><span>10/16</span></span>
+        </a>
+        <a class="mc-card mc-card-gb" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://i.imgur.com/pc8l2Nb.jpeg" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">65%</span></span>
+          <span class="mc-card-title">Space66% Spaceforge</span>
+          <span class="mc-card-sum">Graystudio에서 진행하는 66% 배열 알루미늄 키보드 Space66% Spaceforge의 공동구매 글이에요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;3.4만+</span><span>댓글&nbsp;2</span><span>10/9</span></span>
+        </a>
+        <a class="mc-card mc-card-gb" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://i.postimg.cc/8zwCCyD3/DCS-SMRT-165.jpg" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">SP</span><span class="mc-chip mc-chip-date mc-chip-end">공동구매 끝남</span></span>
+          <span class="mc-card-title">DCS SMRT R2</span>
+          <span class="mc-card-sum">Piperaceae가 디자인한 DCS SMRT의 두 번째 런(R2) 키캡 세트예요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;6.6만+</span><span>댓글&nbsp;23</span><span>9/20</span></span>
+        </a>
+        <a class="mc-card mc-card-gb" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://i.postimg.cc/rFQr0090/Katana80_1b.webp" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">MW</span></span>
+          <span class="mc-card-title">MW Meteor Dreams</span>
+          <span class="mc-card-sum">MW에서 제작하는 Meteor Dreams 키캡 세트의 공동구매 글이에요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;3.1만+</span><span>댓글&nbsp;1</span><span>7/10</span></span>
+        </a>
+        <a class="mc-card mc-card-gb" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://i.imgur.com/yYvb5pL.jpeg" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">키캡</span><span class="mc-chip mc-chip-date mc-chip-end">7/6 → 7/27 끝남</span></span>
+          <span class="mc-card-title">SWG Neowell</span>
+          <span class="mc-card-sum">SWG Neowell은 옛 Honeywell 터미널 배색을 재해석한 Cylindrical Cherry 프로파일 키캡 세트예요.</span>
+          <span class="mc-card-meta mc-segs"><span>조회&nbsp;17.4만+</span><span>댓글&nbsp;3</span><span>7/10</span></span>
+        </a>
+      </div>
+      <span class="mc-rail-next" aria-hidden="true"><svg class="mc-ico" viewBox="0 0 24 24" width="20" height="20"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </div>
+    <div class="mc-progress"><span class="mc-progress-bar" style="--mc-p: 30%; --mc-p-t: 20%; --mc-p-m: 10%;"></span></div>
+  </section>
+
+  <footer class="mc-footer">
+    <div class="mc-footer-top">
+      <span class="mc-footer-logo">keycheck</span>
+      <nav class="mc-footer-nav" aria-label="푸터 메뉴">
+        <a href="#mc-ic">IC</a>
+        <a href="#mc-gb">공동구매</a>
+      </nav>
+    </div>
+    <p class="mc-footer-text">geekhack의 Interest Checks·Group Buys and Preorders 글을 모아 한국어로 짧게 정리해요. 새 글은 30분마다 확인해요. 사진과 원문의 권리는 각 작성자에게 있어요.</p>
+  </footer>
+
+  <p class="mc-width-note">
+    <span class="mc-width-note-label">폭별 메모</span>
+    <span class="mc-wn-d">데스크톱(1024px 이상): 벤토는 4열이고, 목록 줄은 좌우 화살표와 오른쪽 흐림으로 넘길 수 있다는 걸 보여 줘요.</span>
+    <span class="mc-wn-t">태블릿(600–1023px): 메뉴는 한 줄 그대로 두고, 벤토는 3열(큰 칸+세로 칸 → 마감 띠 → 작은 칸 셋)로 바꿔요. 세로 칸과 작은 칸은 사진을 글 위쪽에 두고 글 쪽으로 흐려서, 글이 사진을 가리지 않아요. 손가락으로 넘기는 기기라 좌우 화살표와 쪽수는 숨기고, 다음 카드 끝과 진행 막대로 넘길 수 있다는 걸 알려요.</span>
+    <span class="mc-wn-m">모바일(599px 이하): 메뉴는 로고 아래 두 칸 탭으로 내려요. 벤토는 큰 칸이 폭을 꽉 채우고, 세로 칸과 작은 칸 둘은 2열로 맞물리며, 마감 띠와 공동구매 작은 칸은 한 줄씩 차지해요. IC 줄은 카드 두 장, 공동구매 줄은 한 장에 다음 카드 끝이 보여요.</span>
+  </p>
+</div>
+</div>
+</div></div></div>
+</body>
+</html>

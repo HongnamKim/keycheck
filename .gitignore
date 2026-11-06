@@ -17,3 +17,6 @@ samples/
 .env
 .env.*
 !.env.example
+
+# 브레인스토밍 시안(visual companion)
+.superpowers/
