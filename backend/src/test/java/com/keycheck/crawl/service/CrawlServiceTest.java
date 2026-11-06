@@ -78,7 +78,7 @@ class CrawlServiceTest {
   }
 
   /** FakeGeekhackClient의 목록 키 */
-  private static String key(Board board, int page) {
+  static String key(Board board, int page) {
     return board + " " + page;
   }
 

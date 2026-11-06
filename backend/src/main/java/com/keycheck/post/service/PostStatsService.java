@@ -2,6 +2,7 @@ package com.keycheck.post.service;
 
 import com.keycheck.crawl.client.GeekhackClient;
 import com.keycheck.crawl.client.RequestGate;
+import com.keycheck.crawl.config.CollectProperties;
 import com.keycheck.crawl.dto.TopicStats;
 import com.keycheck.crawl.parser.TopicParser;
 import com.keycheck.post.domain.Post;
@@ -31,13 +32,18 @@ public class PostStatsService {
   private final GeekhackClient client;
   private final RequestGate gate;
   private final TopicParser topicParser;
+  private final CollectProperties collectProperties;
   private final Clock clock;
 
+  /** 상세와 같이 없거나 숨김이거나 수집 기간 경계보다 작은 글이면 404 (geekhack을 부르지 않는다) */
   public PostStatsResponse getStats(Long id) {
     Post post =
         postRepository
             .findById(id)
-            .filter(found -> !found.isHidden())
+            .filter(
+                found ->
+                    !found.isHidden()
+                        && found.getTopicId() >= collectProperties.getSinceTopicId())
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
     Instant now = clock.instant();

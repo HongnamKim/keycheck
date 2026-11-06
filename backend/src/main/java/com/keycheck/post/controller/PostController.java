@@ -38,7 +38,7 @@ public class PostController {
   @Operation(
       summary = "글 목록",
       description =
-          "숨김 글을 뺀 목록을 최대 20건씩 이어서 돌려준다(무한 스크롤). hasMore가 true면 nextCursor를 cursor로 넘겨"
+          "숨김 글과 수집 기간(2020년) 이전 글을 뺀 목록을 최대 20건씩 이어서 돌려준다(무한 스크롤). hasMore가 true면 nextCursor를 cursor로 넘겨"
               + " 다음을 요청한다(nextCursor가 null이면 cursor 없이). items가 비었는데 hasMore가 true면 geekhack에서"
               + " 더 가져오지 못한 순간이므로 잠시 뒤 같은 cursor로 다시 요청한다."
               + " board: geekhack 게시판. ic(Interest Checks), gb(Group Buys and Preorders), all(둘 다, 기본)."
@@ -106,7 +106,7 @@ public class PostController {
               + " 요약은 백그라운드에서 만들므로 막 채운 글은 summaryStatus=PENDING이다."
               + DATES_DESCRIPTION)
   @ApiResponse(responseCode = "200", description = "성공")
-  @ApiResponse(responseCode = "404", description = "없거나 숨김 처리된 글")
+  @ApiResponse(responseCode = "404", description = "없거나 숨김 처리되었거나 수집 기간(2020년) 이전의 글")
   @GetMapping("/{id}")
   public PostDetailResponse getPost(
       @Parameter(description = "글 ID (키체크 내부 ID)") @PathVariable Long id) {
@@ -128,7 +128,7 @@ public class PostController {
       responseCode = "400",
       description =
           "허용되지 않는 board·category·sub·sort 값, category가 all이거나 분류와 맞지 않는 sub, 1~10 밖의 size")
-  @ApiResponse(responseCode = "404", description = "없거나 숨김 처리된 글")
+  @ApiResponse(responseCode = "404", description = "없거나 숨김 처리되었거나 수집 기간(2020년) 이전의 글")
   @GetMapping("/{id}/neighbors")
   public PostNeighborsResponse getNeighbors(
       @Parameter(description = "글 ID (키체크 내부 ID)") @PathVariable Long id,
@@ -164,7 +164,7 @@ public class PostController {
       summary = "글 조회수·댓글 수",
       description = "확인한 지 1시간이 지났으면 geekhack에서 다시 읽는다. 읽지 못하면 저장값을 돌려준다.")
   @ApiResponse(responseCode = "200", description = "성공")
-  @ApiResponse(responseCode = "404", description = "없거나 숨김 처리된 글")
+  @ApiResponse(responseCode = "404", description = "없거나 숨김 처리되었거나 수집 기간(2020년) 이전의 글")
   @GetMapping("/{id}/stats")
   public PostStatsResponse getStats(
       @Parameter(description = "글 ID (키체크 내부 ID)") @PathVariable Long id) {

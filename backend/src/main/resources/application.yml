@@ -48,6 +48,11 @@ keycheck:
     # 켜면 기동 직후와 이후 interval마다 실제 geekhack에 요청한다
     enabled: ${CRAWL_ENABLED:false}
     interval: PT30M
+  collect:
+    # 이 글 번호 이상인 글만 모으고 보여 준다. 2020-01-01 무렵 첫 글 번호.
+    # DB의 작성일 기준점(102599 = 2019-09-24, 112165 = 2021-04-07)으로 보간한 추정값이며 며칠 오차는 괜찮다.
+    # 값을 낮추면 경계에 닿아 끝으로 둔 게시판이 다시 확보되도록 update board_backfill set exhausted = false; 를 실행한다
+    since-topic-id: 104300
   cors:
     allowed-origins: http://localhost:3000
   geekhack:

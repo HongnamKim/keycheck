@@ -1,5 +1,6 @@
 package com.keycheck.post.service;
 
+import com.keycheck.crawl.config.CollectProperties;
 import com.keycheck.crawl.domain.BoardBackfill;
 import com.keycheck.crawl.repository.BoardBackfillRepository;
 import com.keycheck.crawl.service.CrawlService;
@@ -54,6 +55,7 @@ public class PostQueryService {
   private final PostImageRepository postImageRepository;
   private final BoardBackfillRepository backfillRepository;
   private final CrawlService crawlService;
+  private final CollectProperties collectProperties;
   private final Clock clock;
 
   /**
@@ -134,6 +136,7 @@ public class PostQueryService {
   /**
    * 최근순 목록의 커버리지 규칙(getRecent 참고)으로 query를 부른다. query는 (floorTopicId, board) 범위에서 order 순서로 최대
    * limit개를 읽는다. 분류 필터의 all이면 게시판마다 그 게시판의 floor로 부르고 order로 합쳐 limit개를 남긴다. 아니면 한 번 부른다.
+   * floor가 수집 기간 경계보다 작으면 경계로 올린다.
    */
   private List<Post> findInCoverage(
       Board board,
@@ -142,11 +145,15 @@ public class PostQueryService {
       BiFunction<Long, Board, List<Post>> query,
       Comparator<Post> order,
       int limit) {
+    long since = collectProperties.getSinceTopicId();
     if (board == null && filter.getCategory() != null) {
       return backfills.stream()
           .filter(backfill -> backfill.getFloorTopicId() != null)
           .flatMap(
-              backfill -> query.apply(backfill.getFloorTopicId(), backfill.getBoard()).stream())
+              backfill ->
+                  query
+                      .apply(Math.max(backfill.getFloorTopicId(), since), backfill.getBoard())
+                      .stream())
           .sorted(order)
           .limit(limit)
           .toList();
@@ -155,7 +162,7 @@ public class PostQueryService {
     if (floorTopicId == null) {
       return List.of();
     }
-    return query.apply(floorTopicId, board);
+    return query.apply(Math.max(floorTopicId, since), board);
   }
 
   /**
@@ -202,7 +209,7 @@ public class PostQueryService {
 
   /**
    * 저장된 글 전체(board가 있으면 그 게시판 글)를 조회수순으로. 커버리지와 상관없다. cursor는 마지막 글의 "조회수_글 번호". 오프셋 대신 이 값보다 뒤의 글을 주므로, 이어 받는 사이 앞쪽에 글이
-   * 늘어도 같은 글이 다시 오지 않는다.
+   * 늘어도 같은 글이 다시 오지 않는다. 수집 기간 경계보다 작은 글은 주지 않는다.
    */
   private PostListResponse getByViews(
       Board board, CategoryFilter filter, Subcategory subcategory, String cursor) {
@@ -220,6 +227,7 @@ public class PostQueryService {
         postRepository.findByViews(
             views,
             beforeTopicId,
+            collectProperties.getSinceTopicId(),
             board,
             filter.getCategory(),
             subcategory,
@@ -294,12 +302,13 @@ public class PostQueryService {
     List<Post> above;
     List<Post> below;
     if (sort == PostSort.VIEWS) {
+      long since = collectProperties.getSinceTopicId();
       above =
           postRepository.findByViewsAbove(
-              post.getViews(), post.getTopicId(), board, category, subcategory, limit);
+              post.getViews(), post.getTopicId(), since, board, category, subcategory, limit);
       below =
           postRepository.findByViews(
-              post.getViews(), post.getTopicId(), board, category, subcategory, limit);
+              post.getViews(), post.getTopicId(), since, board, category, subcategory, limit);
     } else {
       List<BoardBackfill> backfills = backfills(board);
       above =
@@ -331,8 +340,11 @@ public class PostQueryService {
         cards.subList(0, before.size()), cards.subList(before.size(), cards.size()));
   }
 
+  /** 없거나 숨김이거나 수집 기간 경계보다 작은 글이면 404 */
   private Post visible(Optional<Post> post) {
-    return post.filter(found -> !found.isHidden())
+    return post.filter(
+            found ->
+                !found.isHidden() && found.getTopicId() >= collectProperties.getSinceTopicId())
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
   }
 

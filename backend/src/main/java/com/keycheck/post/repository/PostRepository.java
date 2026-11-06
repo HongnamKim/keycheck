@@ -72,6 +72,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
    *
    * @param views cursor의 조회수
    * @param topicId cursor의 글 번호. (views, topicId)보다 뒤에 오는 글만 준다.
+   * @param sinceTopicId 이 번호 이상만 (수집 기간)
    * @param board null이면 두 게시판 모두
    * @param category null이면 전체
    * @param subcategory null이면 세부 분류로 거르지 않는다
@@ -79,6 +80,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
   @Query(
       "select p from Post p where p.hidden = false"
           + " and (p.views < :views or (p.views = :views and p.topicId < :topicId))"
+          + " and p.topicId >= :sinceTopicId"
           + " and (:board is null or p.board = :board)"
           + " and (:category is null or p.category = :category)"
           + " and (:subcategory is null or p.subcategory = :subcategory)"
@@ -86,6 +88,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
   List<Post> findByViews(
       int views,
       long topicId,
+      long sinceTopicId,
       Board board,
       Category category,
       Subcategory subcategory,
@@ -98,6 +101,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
   @Query(
       "select p from Post p where p.hidden = false"
           + " and (p.views > :views or (p.views = :views and p.topicId > :topicId))"
+          + " and p.topicId >= :sinceTopicId"
           + " and (:board is null or p.board = :board)"
           + " and (:category is null or p.category = :category)"
           + " and (:subcategory is null or p.subcategory = :subcategory)"
@@ -105,6 +109,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
   List<Post> findByViewsAbove(
       int views,
       long topicId,
+      long sinceTopicId,
       Board board,
       Category category,
       Subcategory subcategory,

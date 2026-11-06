@@ -88,10 +88,18 @@ public class CrawlStore {
    * (BoardBackfill.recordPage).
    */
   @Transactional
-  public void recordBoardPage(Board board, int page, int shownPage, List<BoardTopic> topics) {
+  public void recordBoardPage(
+      Board board, int page, int shownPage, List<BoardTopic> topics, long sinceTopicId) {
     backfillRepository
         .lockCurrent(board)
-        .recordPage(page, shownPage, topics.stream().map(BoardTopic::getTopicId).toList());
+        .recordPage(
+            page, shownPage, topics.stream().map(BoardTopic::getTopicId).toList(), sinceTopicId);
+  }
+
+  /** board의 과거 글 확보를 끝까지 받은 것으로 둔다 (BoardBackfill.markExhausted) */
+  @Transactional
+  public void markBackfillExhausted(Board board) {
+    backfillRepository.lockCurrent(board).markExhausted();
   }
 
   /**

@@ -3,6 +3,7 @@ package com.keycheck.crawl.service;
 import com.keycheck.classify.service.Classifier;
 import com.keycheck.crawl.client.GeekhackClient;
 import com.keycheck.crawl.client.RequestGate;
+import com.keycheck.crawl.config.CollectProperties;
 import com.keycheck.crawl.config.GeekhackProperties;
 import com.keycheck.crawl.domain.BoardBackfill;
 import com.keycheck.crawl.dto.BoardTopic;
@@ -52,6 +53,7 @@ public class CrawlService {
   private final CrawlStore store;
   private final BoardBackfillRepository backfillRepository;
   private final GeekhackProperties properties;
+  private final CollectProperties collectProperties;
   private final Clock clock;
 
   /** 과거 글 확보는 게시판과 상관없이 한 번에 한 요청만 한다 */
@@ -76,9 +78,11 @@ public class CrawlService {
   /**
    * board 작성순 목록의 다음 쪽을 받아 새 글을 틀 글로 저장하고 그 게시판의 커버리지를 넓힌다. 다른 요청이 (어느 게시판이든)
    * 확보 중이면 기다리지 않고, 끝까지 받았거나 maxWait 안에
-   * 요청 간격을 얻지 못하거나 목록을 받지 못하면 하지 않는다. 글을 한 건도 읽지 못한 쪽은 받지 못한 것으로 본다.
+   * 요청 간격을 얻지 못하거나 목록을 받지 못하면 하지 않는다. 글을 한 건도 읽지 못한 쪽은 받지 못한 것으로 본다. 이미 수집 기간 경계
+   * 아래까지 받아 둔 게시판이면 요청하지 않고 끝까지 받은 것으로 둔다.
    *
-   * @return 목록 한 쪽을 받아 반영했으면 true
+   * @return 확보 상태를 바꿨으면(목록 한 쪽을 받아 반영했거나 경계에 닿아 끝까지 받은 것으로 뒀으면) true. 호출한 쪽은 확보 상태를 다시
+   *     읽는다.
    */
   public boolean backfillNextPage(Board board, Duration maxWait) {
     if (!backfillLock.tryLock()) {
@@ -86,7 +90,15 @@ public class CrawlService {
     }
     try {
       BoardBackfill backfill = backfillRepository.current(board);
-      if (backfill.isExhausted() || !gate.tryAcquire(maxWait)) {
+      if (backfill.isExhausted()) {
+        return false;
+      }
+      long since = collectProperties.getSinceTopicId();
+      if (backfill.getFloorTopicId() != null && backfill.getFloorTopicId() < since) {
+        store.markBackfillExhausted(board);
+        return true;
+      }
+      if (!gate.tryAcquire(maxWait)) {
         return false;
       }
       int page = backfill.getNextPage();
@@ -105,7 +117,7 @@ public class CrawlService {
         return false;
       }
       applyBoardPage(board, topics, false);
-      store.recordBoardPage(board, page, shownPage, topics);
+      store.recordBoardPage(board, page, shownPage, topics, since);
       return true;
     } finally {
       backfillLock.unlock();
@@ -137,17 +149,22 @@ public class CrawlService {
     }
   }
 
+  /**
+   * 수집 기간 경계보다 작은 글은 새로 저장하지 않는다. 이미 저장된 그런 글은 목록 값만 갱신하고 글 첫 페이지로 채우지 않는다
+   * (오래된 글에 새 댓글이 달려 마지막 댓글순 목록에 올라와도).
+   */
   private void process(Board board, BoardTopic topic, boolean readTopics) {
+    boolean beforeSince = topic.getTopicId() < collectProperties.getSinceTopicId();
     Optional<Post> existing = store.updateIfExists(board, topic, clock.instant());
     if (existing.isPresent()) {
       Post post = existing.get();
-      if (readTopics && !post.isDetailLoaded() && !post.isHidden()) {
+      if (readTopics && !post.isDetailLoaded() && !post.isHidden() && !beforeSince) {
         gate.acquire();
         readAndFill(post);
       }
       return;
     }
-    if (CrawlStore.isDeleted(topic)) {
+    if (CrawlStore.isDeleted(topic) || beforeSince) {
       return;
     }
 

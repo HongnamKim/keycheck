@@ -17,7 +17,7 @@ import lombok.NoArgsConstructor;
  * 게시판 하나의 과거 글 확보 상태 (게시판마다 한 줄, V2·V6 마이그레이션이 만든다).
  *
  * <p>그 게시판 작성순 목록의 0..nextPage-1 쪽을 받아 두었고, 그 게시판 글 중 글 번호가 floorTopicId 이상인 글은 모두 DB에 있다
- * (커버리지). floorTopicId가 null이면 아무것도 커버하지 않는다.
+ * (커버리지, 수집 기간 경계보다 작은 글은 빼고). floorTopicId가 null이면 아무것도 커버하지 않는다.
  */
 @Entity
 @Getter
@@ -47,8 +47,10 @@ public class BoardBackfill {
    *
    * @param shownPage 받은 HTML의 쪽 번호(0부터). 끝을 넘은 쪽을 달라고 하면 SMF가 마지막 쪽을 대신 주므로 page보다 작다.
    * @param topicIds 그 쪽의 글 번호 (고정글 제외, 비어 있지 않다)
+   * @param sinceTopicId 수집 기간 경계. 그 쪽에 이보다 작은 글이 있으면 경계에 닿은 것이므로 끝까지 받은 것으로 본다(경계보다 작은
+   *     글은 저장하지 않는다).
    */
-  public void recordPage(int page, int shownPage, List<Long> topicIds) {
+  public void recordPage(int page, int shownPage, List<Long> topicIds, long sinceTopicId) {
     if (page != nextPage) {
       return;
     }
@@ -59,5 +61,13 @@ public class BoardBackfill {
     long min = Collections.min(topicIds);
     floorTopicId = floorTopicId == null ? min : Math.min(floorTopicId, min);
     nextPage = page + 1;
+    if (min < sinceTopicId) {
+      exhausted = true;
+    }
+  }
+
+  /** 경계가 생기기 전에 이미 경계 아래까지 받아 둔 게시판을 끝까지 받은 것으로 둔다 */
+  public void markExhausted() {
+    exhausted = true;
   }
 }
