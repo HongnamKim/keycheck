@@ -5,7 +5,7 @@ import { kstDateKey } from "@/lib/format";
 import { listHref } from "@/lib/query";
 import FreshListLink from "../FreshListLink";
 import RailCard, { RailCardPlaceholder } from "./RailCard";
-import RailScroller, { RailArrows, RailTrack } from "./RailScroller";
+import { RailTrack } from "./RailScroller";
 import styles from "./BoardRail.module.css";
 
 /** 메인에 보여주는 게시판별 최근 글 수 */
@@ -13,7 +13,7 @@ const RECENT_COUNT = 10;
 /** 글을 받기 전 그리는 카드 자리 수(데스크톱 한 화면을 채운다) */
 const PLACEHOLDER_COUNT = 5;
 
-/** 게시판 줄 머리: 번호, 제목, 출처, 화살표에 붙일 게시판 이름 */
+/** 게시판 줄 머리: 번호, 제목, 출처, 넘김 버튼에 붙일 게시판 이름 */
 const RAILS: Record<BoardFilter, { no: string; title: string; source: string; name: string }> = {
   ic: { no: "01", title: "IC · 관심 조사", source: "geekhack Interest Checks", name: "IC" },
   gb: { no: "02", title: "공동구매", source: "geekhack Group Buys and Preorders", name: "공동구매" },
@@ -29,45 +29,42 @@ export default function BoardRail({ board }: { board: BoardFilter }) {
 
   return (
     <section id={`home-${board}`} className={styles.sec} aria-labelledby={titleId}>
-      <RailScroller>
-        <div className={styles.head}>
-          <span className={styles.no} aria-hidden="true">
-            {rail.no}
-          </span>
-          <div className={styles.text}>
-            <h2 id={titleId} className={styles.title}>
-              {rail.title}
-            </h2>
-            <p className={styles.sub}>
-              {rail.source}
-              <span className={styles.sep}> · </span>
-              <span className={styles.tail}>새로 올라온 순</span>
-            </p>
-          </div>
-          <div className={styles.tools}>
-            <RailArrows name={rail.name} />
-            <FreshListLink href={listHref({ board, category: "all", sort: "recent" })} className={styles.more}>
-              전체 보기 →
-            </FreshListLink>
-          </div>
+      <div className={styles.head}>
+        <span className={styles.no} aria-hidden="true">
+          {rail.no}
+        </span>
+        <div className={styles.text}>
+          <h2 id={titleId} className={styles.title}>
+            {rail.title}
+          </h2>
+          <p className={styles.sub}>
+            {rail.source}
+            <span className={styles.sep}> · </span>
+            <span className={styles.tail}>새로 올라온 순</span>
+          </p>
         </div>
-        <Suspense
-          fallback={
-            <RailTrack board={board} placeholder>
-              {Array.from({ length: PLACEHOLDER_COUNT }, (_, i) => (
-                <RailCardPlaceholder key={i} board={board} />
-              ))}
-            </RailTrack>
-          }
-        >
-          <RecentPosts board={board} />
-        </Suspense>
-      </RailScroller>
+        <div className={styles.tools}>
+          <FreshListLink href={listHref({ board, category: "all", sort: "recent" })} className={styles.more}>
+            전체 보기 →
+          </FreshListLink>
+        </div>
+      </div>
+      <Suspense
+        fallback={
+          <RailTrack board={board} name={rail.name} placeholder>
+            {Array.from({ length: PLACEHOLDER_COUNT }, (_, i) => (
+              <RailCardPlaceholder key={i} board={board} />
+            ))}
+          </RailTrack>
+        }
+      >
+        <RecentPosts board={board} name={rail.name} />
+      </Suspense>
     </section>
   );
 }
 
-async function RecentPosts({ board }: { board: BoardFilter }) {
+async function RecentPosts({ board, name }: { board: BoardFilter; name: string }) {
   let first: PostBatch;
   try {
     first = await getPosts(board, "all", "recent");
@@ -83,7 +80,7 @@ async function RecentPosts({ board }: { board: BoardFilter }) {
   // 공동구매 칩의 오늘. 목록을 받은 뒤 서버에서 구해 문자열로 넘긴다(브라우저에서 날짜를 읽지 않는다)
   const today = kstDateKey(new Date());
   return (
-    <RailTrack board={board}>
+    <RailTrack board={board} name={name}>
       {posts.map((post) => (
         <RailCard key={post.id} post={post} board={board} today={today} />
       ))}

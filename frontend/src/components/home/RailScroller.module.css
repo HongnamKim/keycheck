@@ -1,26 +1,4 @@
-/* 섹션 머리 화살표. 끝에 닿은 쪽은 흐리게. 크기는 테두리를 넣은 시안 값(42px) */
-.arrow {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 42px;
-  height: 42px;
-  padding: 0;
-  border: 1px solid var(--color-text);
-  border-radius: 50%;
-  background: transparent;
-  color: var(--color-text);
-  cursor: pointer;
-}
-
-.arrow[aria-disabled="true"] {
-  border-color: var(--color-border);
-  color: #9ba09c;
-  cursor: default;
-}
-
-.arrow svg,
-.next svg {
+.button svg {
   display: block;
   fill: none;
   stroke: currentColor;
@@ -52,25 +30,30 @@
   display: none;
 }
 
-/* 오른쪽 흐림: 더 넘길 카드가 있다는 표시. 끝에 닿으면 뺀다 */
-.rail::after {
+/* 양쪽 흐림: 그쪽으로 더 넘길 카드가 있다는 표시. 끝에 닿은 쪽은 뺀다 */
+.fadeStart::before,
+.fadeEnd::after {
   content: "";
   position: absolute;
   top: 0;
-  right: 0;
   bottom: 0;
   width: 110px;
-  background: linear-gradient(90deg, rgba(243, 244, 241, 0), var(--color-bg) 88%);
   pointer-events: none;
 }
 
-.atEnd::after {
-  display: none;
+.fadeStart::before {
+  left: 0;
+  background: linear-gradient(270deg, rgba(243, 244, 241, 0), var(--color-bg) 88%);
 }
 
-.next {
+.fadeEnd::after {
+  right: 0;
+  background: linear-gradient(90deg, rgba(243, 244, 241, 0), var(--color-bg) 88%);
+}
+
+/* 줄 위에 뜬 이전·다음 버튼(데스크톱만) */
+.button {
   position: absolute;
-  right: 26px;
   z-index: 1;
   display: flex;
   align-items: center;
@@ -86,12 +69,21 @@
   cursor: pointer;
 }
 
+/* 줄이 오른쪽 여백(24px)까지 나가므로 다음 버튼은 그만큼 안으로, 이전 버튼은 본문 왼쪽 끝에서 같은 간격 */
+.prev {
+  left: 2px;
+}
+
+.next {
+  right: 26px;
+}
+
 /* 카드 사진 세로 가운데(IC 236×295, 공동구매 320×213) */
-.nextIc {
+.buttonIc {
   top: 124px;
 }
 
-.nextGb {
+.buttonGb {
   top: 83px;
 }
 
@@ -110,11 +102,11 @@
   background: var(--color-text);
 }
 
-/* 태블릿·모바일: 손가락으로 넘기므로 화살표·흐림 대신 다음 카드 엿보기와 진행 막대로 알린다 */
+/* 태블릿·모바일: 손가락으로 넘기므로 버튼·흐림 대신 다음 카드 엿보기와 진행 막대로 알린다 */
 @media (max-width: 1023px) {
-  .arrow,
-  .next,
-  .rail::after {
+  .button,
+  .fadeStart::before,
+  .fadeEnd::after {
     display: none;
   }
 }
