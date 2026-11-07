@@ -61,7 +61,8 @@ public class PostController {
               + " 기타·미분류 글이나 아직 정하지 않았으면 null."
               + " 공동구매 글은 요약기가 뽑은 기간(gbStartDate·gbEndDate, YYYY-MM-DD, 모르면 null)을 준다."
               + " productName: 요약기가 뽑은 상품·프로젝트 이름(예: SWG Nightshift). 모르거나 아직 뽑지 않았으면 null."
-              + " hasKoreanVendor: 요약기가 뽑은 벤더 중 지역이 KR인 벤더가 있으면 true, 없거나 아직 뽑지 않았으면 false."
+              + " hasKoreanVendor: 요약기가 뽑은 벤더 중 한국 벤더(지역 KR, 또는 이름·판매 사이트로 알아본 알려진 한국 벤더)가 있으면"
+              + " true, 없거나 아직 뽑지 않았으면 false."
               + DATES_DESCRIPTION)
   @ApiResponse(responseCode = "200", description = "성공")
   @ApiResponse(
@@ -153,6 +154,8 @@ public class PostController {
               + " 요약은 백그라운드에서 만들므로 막 채운 글은 summaryStatus=PENDING이다."
               + " vendors: 요약기가 뽑은 벤더(name, region: 대문자 지역 코드 또는 null, url: 첫 글 본문에 있던 판매 페이지 주소 또는"
               + " null). 한국 벤더(KR)를 앞에 두고 각 무리 안은 본문 순서, 없거나 아직 뽑지 않았으면 빈 배열."
+              + " 알려진 한국 벤더(GeonWorks·Swagkeys·KLC Playground)는 원문 지역 표기와 상관없이 region KR이고, 판매 링크가 없으면"
+              + " 본문 링크 중 그 벤더 사이트 주소를 쓴다."
               + DATES_DESCRIPTION)
   @ApiResponse(responseCode = "200", description = "성공")
   @ApiResponse(responseCode = "404", description = "없거나 숨김 처리되었거나 수집 기간(2020년) 이전의 글")

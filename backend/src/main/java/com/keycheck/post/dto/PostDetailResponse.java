@@ -2,6 +2,7 @@ package com.keycheck.post.dto;
 
 import com.keycheck.image.service.ThumbUrls;
 import com.keycheck.post.domain.Board;
+import com.keycheck.post.domain.BodyLink;
 import com.keycheck.post.domain.Category;
 import com.keycheck.post.domain.Post;
 import com.keycheck.post.domain.PostImage;
@@ -20,6 +21,9 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public class PostDetailResponse {
+  /** 한국 벤더의 지역 코드 */
+  private static final String KOREA = "KR";
+
   private final Long id;
   private final String title;
 
@@ -96,7 +100,7 @@ public class PostDetailResponse {
         post.getSummaryStatus(),
         done && post.getSummaryLines() != null ? post.getSummaryLines() : List.of(),
         post.getSpecs() != null ? post.getSpecs() : List.of(),
-        koreanFirst(post.getVendors()),
+        koreanFirst(post.getVendors(), post.getBodyLinks()),
         post.getOriginalUrl(),
         post.getViews(),
         post.getReplies(),
@@ -107,14 +111,35 @@ public class PostDetailResponse {
         post.isDetailLoaded());
   }
 
-  /** 한국 벤더를 앞으로. 정렬이 안정적이라 각 무리 안은 저장 순서 그대로다. null이면 빈 목록. */
-  private static List<VendorResponse> koreanFirst(List<VendorItem> vendors) {
+  /**
+   * 한국 벤더를 앞으로. 정렬이 안정적이라 각 무리 안은 저장 순서 그대로다. 한국 벤더는 원문 지역 표기와 상관없이 지역을 KR로 내보내고,
+   * 판매 링크가 없는 알려진 한국 벤더는 본문 링크 중 그 벤더 사이트의 첫 주소를 쓴다. null이면 빈 목록.
+   */
+  private static List<VendorResponse> koreanFirst(List<VendorItem> vendors, List<BodyLink> links) {
     if (vendors == null) {
       return List.of();
     }
     return vendors.stream()
         .sorted(Comparator.comparing(VendorItem::isKorean).reversed())
-        .map(vendor -> new VendorResponse(vendor.getName(), vendor.getRegion(), vendor.getUrl()))
+        .map(
+            vendor ->
+                vendor.isKorean()
+                    ? new VendorResponse(
+                        vendor.getName(),
+                        KOREA,
+                        vendor.getUrl() != null ? vendor.getUrl() : siteLink(vendor, links))
+                    : new VendorResponse(vendor.getName(), vendor.getRegion(), vendor.getUrl()))
         .toList();
+  }
+
+  /** 알려진 한국 벤더면 본문 링크 중 그 벤더 사이트의 첫 주소. 아니거나 없으면 null */
+  private static String siteLink(VendorItem vendor, List<BodyLink> links) {
+    if (links == null) {
+      return null;
+    }
+    return vendor
+        .knownKorean()
+        .flatMap(known -> links.stream().map(BodyLink::getUrl).filter(known::owns).findFirst())
+        .orElse(null);
   }
 }
