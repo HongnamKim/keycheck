@@ -49,7 +49,7 @@ export interface PostCard {
   /** 대표 이미지 큰 축소본(가로 최대 1280px) 주소. 메인 하이라이트 큰 칸에 쓴다. 대표 이미지나 큰 축소본이 없으면 null */
   representativeLargeUrl: string | null;
   summaryStatus: SummaryStatus;
-  /** 요약기가 뽑은 벤더 중 지역이 한국(KR)인 벤더가 있으면 true. 요약 전이거나 벤더를 모르면 false */
+  /** 요약기가 뽑은 벤더 중 한국 벤더(지역 KR, 또는 백엔드가 이름·판매 사이트로 알아본 한국 벤더)가 있으면 true. 요약 전이거나 벤더를 모르면 false */
   hasKoreanVendor: boolean;
   summaryFirstLine: string | null;
   views: number;
