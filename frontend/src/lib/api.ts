@@ -242,12 +242,35 @@ export const getHighlights = cache(async (): Promise<Highlights> => {
   return res.json();
 });
 
-/** 없거나 숨김인 글이면 null. 서버에서 부르고, 상세 화면의 요약 대기 중에는 브라우저에서도 부른다. */
-export async function getPost(id: number, signal?: AbortSignal): Promise<PostDetail | null> {
-  const res = await apiFetch(`/api/posts/${id}`, signal, POST_TIMEOUT_MS);
+/**
+ * 없거나 숨김인 글이면 null. 서버에서 부르고, 상세 화면의 요약 대기 중에는 브라우저에서도 부른다.
+ * fill=false면 백엔드가 틀 글의 원문을 읽지 않고 그대로 돌려준다(봇 방문, 브라우저 재조회, 미리보기 카드). 그때는 기본 시간 제한을 쓴다.
+ */
+export async function getPost(
+  id: number,
+  signal?: AbortSignal,
+  options?: { fill?: boolean },
+): Promise<PostDetail | null> {
+  const noFill = options?.fill === false;
+  const path = noFill ? `/api/posts/${id}?fill=false` : `/api/posts/${id}`;
+  const res = await apiFetch(path, signal, noFill ? undefined : POST_TIMEOUT_MS);
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`상세 조회 실패: ${res.status}`);
   return res.json();
+}
+
+/**
+ * 상세 페이지와 generateMetadata가 함께 쓰는 서버 호출. 한 요청에서 한 번만 부른다.
+ * signal을 넘긴 fetch는 Next가 같은 요청을 합치지 않으므로 cache로 묶는다. fill은 요청 UA로 정한다.
+ */
+export const getPostForPage = cache((id: number, fill: boolean) => getPost(id, undefined, { fill }));
+
+/** 사이트맵에 넣을 글 ID(요약이 끝난 글만, 글 번호 내림차순). 서버에서 부른다 */
+export async function getSitemapPostIds(): Promise<number[]> {
+  const res = await apiFetch("/api/posts/sitemap");
+  if (!res.ok) throw new Error(`사이트맵 조회 실패: ${res.status}`);
+  const items: { id: number }[] = await res.json();
+  return items.map((item) => item.id);
 }
 
 /** 조회수·댓글 수. 확인한 지 오래됐으면 백엔드가 geekhack에서 다시 읽는다(설계 4.3). 브라우저에서 호출한다. */

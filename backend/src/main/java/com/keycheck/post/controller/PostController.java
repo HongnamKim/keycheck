@@ -6,6 +6,7 @@ import com.keycheck.post.dto.HighlightResponse;
 import com.keycheck.post.dto.PostDetailResponse;
 import com.keycheck.post.dto.PostListResponse;
 import com.keycheck.post.dto.PostNeighborsResponse;
+import com.keycheck.post.dto.PostSitemapItemResponse;
 import com.keycheck.post.dto.PostSort;
 import com.keycheck.post.dto.PostStatsResponse;
 import com.keycheck.post.service.PostHighlightService;
@@ -16,6 +17,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -131,10 +133,23 @@ public class PostController {
   }
 
   @Operation(
+      summary = "사이트맵 글 목록",
+      description =
+          "검색 엔진 사이트맵에 넣을 글 ID를 글 번호 내림차순으로 모두 돌려준다. geekhack을 호출하지 않는다."
+              + " 숨기지 않았고 수집 기간(2020년) 이후이며 본문을 읽었고 요약이 끝났고(summaryStatus=DONE)"
+              + " 요약 줄이 하나 이상인 글만 넣는다.")
+  @ApiResponse(responseCode = "200", description = "성공")
+  @GetMapping("/sitemap")
+  public List<PostSitemapItemResponse> getSitemap() {
+    return postQueryService.getSitemap();
+  }
+
+  @Operation(
       summary = "글 상세",
       description =
           "요약, 스펙표, 대표 이미지, 원문 링크를 돌려준다. 틀 글이면 geekhack 글 첫 페이지를 읽어 본문·이미지를 채운 뒤"
               + " 돌려준다. 읽지 못하면(요청 간격 대기 초과, 요청·해석 실패) 틀 그대로 detailLoaded=false로 돌려준다."
+              + " fill=false면 채우지 않고 틀 그대로 돌려준다."
               + " 요약은 백그라운드에서 만들므로 막 채운 글은 summaryStatus=PENDING이다."
               + " vendors: 요약기가 뽑은 벤더(name, region: 대문자 지역 코드 또는 null, url: 첫 글 본문에 있던 판매 페이지 주소 또는"
               + " null). 한국 벤더(KR)를 앞에 두고 각 무리 안은 본문 순서, 없거나 아직 뽑지 않았으면 빈 배열."
@@ -143,8 +158,14 @@ public class PostController {
   @ApiResponse(responseCode = "404", description = "없거나 숨김 처리되었거나 수집 기간(2020년) 이전의 글")
   @GetMapping("/{id}")
   public PostDetailResponse getPost(
-      @Parameter(description = "글 ID (키체크 내부 ID)") @PathVariable Long id) {
-    return postQueryService.getPost(id);
+      @Parameter(description = "글 ID (키체크 내부 ID)") @PathVariable Long id,
+      @Parameter(
+              description =
+                  "false면 틀 글을 채우지 않고(geekhack 요청 없음) 미리 읽은 글의 요약 순서도 앞당기지 않는다."
+                      + " 검색·미리보기 봇의 방문과 요약을 기다리는 화면의 다시 읽기에 쓴다")
+          @RequestParam(defaultValue = "true")
+          boolean fill) {
+    return postQueryService.getPost(id, fill);
   }
 
   @Operation(

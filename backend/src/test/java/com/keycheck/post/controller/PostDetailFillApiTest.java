@@ -164,6 +164,37 @@ class PostDetailFillApiTest {
   }
 
   @Test
+  @DisplayName("fill=false면 geekhack을 요청하지 않고 틀 그대로 돌려준다")
+  void fillFalseReturnsSkeletonWithoutRequest() throws Exception {
+    Post post = saveSkeleton();
+
+    mockMvc
+        .perform(get("/api/posts/" + post.getId() + "?fill=false"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.detailLoaded").value(false))
+        .andExpect(jsonPath("$.images", hasSize(0)))
+        .andExpect(jsonPath("$.summaryStatus").value("PENDING"));
+
+    verify(gate, never()).tryAcquire(any(Duration.class));
+    verify(client, never()).fetchTopic(anyLong());
+    assertThat(postRepository.findById(post.getId()).orElseThrow().isDetailLoaded()).isFalse();
+  }
+
+  @Test
+  @DisplayName("fill=false면 미리 읽기 표시를 지우지 않는다")
+  void fillFalseKeepsPrefetchedMark() throws Exception {
+    Post post = saveSkeleton();
+    fillAsPrefetch(post);
+
+    mockMvc
+        .perform(get("/api/posts/" + post.getId() + "?fill=false"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.detailLoaded").value(true));
+
+    assertThat(isPrefetched(post)).isTrue();
+  }
+
+  @Test
   @DisplayName("요청 간격을 기다리는 사이 미리 읽기가 먼저 채운 틀 글은 geekhack에 다시 요청하지 않는다")
   void filledWhileWaitingIsNotFetchedAgain() throws Exception {
     Post post = saveSkeleton();

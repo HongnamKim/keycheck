@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound, unstable_rethrow } from "next/navigation";
 import { Fragment, Suspense } from "react";
@@ -9,12 +11,35 @@ import PostDates from "@/components/PostDates";
 import RemoteImage from "@/components/RemoteImage";
 import StatsLive from "@/components/StatsLive";
 import SummaryWatcher from "@/components/SummaryWatcher";
-import { getPost, type PostDetail as PostDetailData } from "@/lib/api";
+import { getPostForPage, type PostDetail as PostDetailData } from "@/lib/api";
+import { isCrawler } from "@/lib/bot";
 import { postCategoryLabel } from "@/lib/format";
 import { imageSources } from "@/lib/image";
 import { backHref, parseDetailQuery, parsePostId, postHref } from "@/lib/query";
+import { postMetadata } from "@/lib/seo";
 import { vendorLine, vendorSpecRows } from "@/lib/vendor";
 import styles from "./page.module.css";
+
+/** 봇이면 false. 봇이 연 틀 글은 백엔드가 원문을 새로 읽지 않는다(원문 읽기·요약 비용이 봇 때문에 늘지 않게) */
+async function shouldFill(): Promise<boolean> {
+  return !isCrawler((await headers()).get("user-agent"));
+}
+
+export async function generateMetadata({ params }: PageProps<"/posts/[id]">): Promise<Metadata> {
+  const postId = parsePostId((await params).id);
+  if (postId === null) notFound();
+
+  let post: PostDetailData | null;
+  try {
+    post = await getPostForPage(postId, await shouldFill());
+  } catch (err) {
+    unstable_rethrow(err);
+    // 잠깐의 장애로 색인이 빠지지 않게 robots는 넣지 않는다. 오류는 본문이 남긴다
+    return { alternates: { canonical: `/posts/${postId}` } };
+  }
+  if (!post) notFound();
+  return postMetadata(post);
+}
 
 export default function PostPage({ params, searchParams }: PageProps<"/posts/[id]">) {
   return (
@@ -33,7 +58,7 @@ async function PostDetail({ params, searchParams }: PageProps<"/posts/[id]">) {
 
   let post: PostDetailData | null;
   try {
-    post = await getPost(postId);
+    post = await getPostForPage(postId, await shouldFill());
   } catch (err) {
     unstable_rethrow(err);
     // 백엔드가 멈췄거나 느리면(시간 제한) 안내를 띄운다. 없는 글(404)은 아래 notFound로 따로 간다
