@@ -1,32 +1,44 @@
 .status {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 10px;
+}
+
+.text {
   font-size: 16px;
   line-height: 1.6;
   color: var(--color-muted);
 }
 
-/* 작은 원형 스피너. 테두리는 구분선 색, 도는 한 조각은 강조색 */
-.spinner {
-  flex: none;
-  width: 16px;
-  height: 16px;
-  border: 2px solid var(--color-divider);
-  border-top-color: var(--color-accent);
-  border-radius: 50%;
-  animation: spin 0.9s linear infinite;
+/* 요약을 기다리는 얇은 막대. 바탕은 구분선 색, 채움은 강조색 */
+.track {
+  display: block;
+  width: 100%;
+  max-width: 360px;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--color-divider);
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+/* 0.2초마다 바뀌는 채움 비율을 그 사이 부드럽게 잇는다 */
+.bar {
+  display: block;
+  height: 100%;
+  background: var(--color-accent);
+  transform-origin: left center;
+  transition: transform 0.2s linear;
 }
 
-/* 움직임을 줄이는 설정이면 돌리지 않고 멈춘 고리만 보인다 */
+/* 요약이 오면 남은 만큼을 빠르게 채운다 */
+.full {
+  transition-duration: 0.3s;
+  transition-timing-function: ease-out;
+}
+
+/* 움직임을 줄이는 설정이면 막대 없이 문구만 보인다 */
 @media (prefers-reduced-motion: reduce) {
-  .spinner {
-    animation: none;
+  .track {
+    display: none;
   }
 }
