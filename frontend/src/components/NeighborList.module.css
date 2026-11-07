@@ -6,6 +6,14 @@
   border-top: 1px solid var(--color-border);
 }
 
+/* 제목 왼쪽, 목록 전체 보기 오른쪽 끝 */
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .title {
   font-size: 15px;
   font-weight: 600;
@@ -167,9 +175,11 @@ a.row:hover .name {
   display: inline-flex;
   align-items: center;
   min-height: 40px;
+  flex-shrink: 0;
   padding: 0 4px;
   font-size: 14px;
   font-weight: 600;
+  white-space: nowrap;
   text-decoration: none;
 }
 

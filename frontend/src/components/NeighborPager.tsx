@@ -80,9 +80,14 @@ export default function NeighborPager({
 
   return (
     <section ref={sectionRef} className={styles.neighbors} aria-labelledby="neighbors-title">
-      <h3 id="neighbors-title" className={styles.title}>
-        {title}
-      </h3>
+      <div className={styles.head}>
+        <h3 id="neighbors-title" className={styles.title}>
+          {title}
+        </h3>
+        <Link href={allHref} className={styles.all}>
+          목록 전체 보기 →
+        </Link>
+      </div>
       <ul className={styles.list} aria-busy={loading !== null}>
         {page.items.map((item) => (
           <li key={item.id}>
@@ -123,11 +128,6 @@ export default function NeighborPager({
           글을 불러오지 못했어요. 잠시 후 다시 눌러 주세요.
         </p>
       )}
-      <div>
-        <Link href={allHref} className={styles.all}>
-          목록 전체 보기 →
-        </Link>
-      </div>
     </section>
   );
 }
