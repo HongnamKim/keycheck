@@ -1,8 +1,24 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import BoardRail from "@/components/home/BoardRail";
 import Dateline, { DatelineFallback } from "@/components/home/Dateline";
 import HighlightBento, { HighlightBentoFallback } from "@/components/home/HighlightBento";
+import { SITE_URL } from "@/lib/seo";
 import styles from "./page.module.css";
+
+export const metadata: Metadata = {
+  title: { absolute: "키체크 · 키보드·키캡 IC·공동구매 한국어 요약" },
+  alternates: { canonical: "/" },
+};
+
+/** 검색 결과의 사이트 이름(WebSite 구조화 데이터) */
+const WEBSITE_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "키체크",
+  alternateName: "keycheck",
+  url: SITE_URL,
+};
 
 /**
  * 메인. 날짜 줄 → 하이라이트(벤토) → IC 가로 줄 → 공동구매 가로 줄.
@@ -11,6 +27,11 @@ import styles from "./page.module.css";
 export default function Home() {
   return (
     <div className={styles.home}>
+      <script
+        type="application/ld+json"
+        // <를 바꿔 글 안의 문자열이 script 태그를 닫지 못하게 한다
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(WEBSITE_JSON_LD).replace(/</g, "\\u003c") }}
+      />
       <Suspense fallback={<DatelineFallback />}>
         <Dateline />
       </Suspense>

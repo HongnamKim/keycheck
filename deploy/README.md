@@ -133,7 +133,7 @@ sudo systemctl start keycheck-update.service && journalctl -u keycheck-update -n
 
 - Supabase(첫 기동 전에): 설정의 "Enable Data API"를 끄고 "Enforce SSL"을 켭니다. Flyway가 만든 테이블은 RLS가 꺼져 있어 Data API가 켜져 있으면 공개 키(anon)로 읽고 쓸 수 있습니다. 앱은 JDBC로만 붙으므로 Data API가 필요 없습니다.
 - R2: 운영 버킷의 Settings에서 r2.dev 공개 주소(Public Development URL)를 끄고 `img.keycheck.kr` 연결 도메인만 둡니다. API 토큰은 운영 버킷만 Object Read & Write로 만듭니다.
-- Anthropic: 운영 전용 워크스페이스에 월 지출 한도(예: $20)를 겁니다. 앱의 하루 요약 상한(300건)은 재시작하면 0부터 다시 세므로 이 한도가 마지막 안전망입니다.
+- Anthropic: 운영 전용 워크스페이스에 월 지출 한도(예: $100)를 겁니다. 앱의 하루 요약 상한(2,000건)은 재시작하면 0부터 다시 세므로 이 한도가 마지막 안전망입니다.
 - Cloudflare: 아래 [공개 전 Cloudflare 설정](#공개-전-cloudflare-설정).
 - Vercel: 루트 [README](../README.md#프론트-첫-세팅-vercel)의 프론트 첫 세팅.
 

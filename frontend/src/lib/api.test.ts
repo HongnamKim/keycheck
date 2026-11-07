@@ -1,5 +1,14 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { API_BASE_URL, apiRequestInit, getHighlights, getNeighbors, getPost, getPosts, getStats } from "./api";
+import {
+  API_BASE_URL,
+  apiRequestInit,
+  getHighlights,
+  getNeighbors,
+  getPost,
+  getPosts,
+  getSitemapPostIds,
+  getStats,
+} from "./api";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -77,8 +86,9 @@ describe("백엔드 호출 함수", () => {
     ["getPost", () => getPost(1)],
     ["getStats", () => getStats(1)],
     ["getNeighbors", () => getNeighbors(1, { board: "ic", category: "all", sort: "recent" }, 5)],
+    ["getSitemapPostIds", () => getSitemapPostIds()],
   ])("%s는 시간 제한과 X-Keycheck-Server 헤더를 붙여 백엔드를 부른다", async (_, call) => {
-    const fetchMock = vi.fn(() => Promise.resolve(new Response("{}")));
+    const fetchMock = vi.fn(() => Promise.resolve(new Response("[]")));
     vi.stubGlobal("fetch", fetchMock);
     vi.stubEnv("KEYCHECK_SERVER_TOKEN", "t");
 
@@ -100,5 +110,47 @@ describe("백엔드 호출 함수", () => {
 
     await getStats(1);
     expect(spy).toHaveBeenLastCalledWith(8000);
+  });
+
+  it("getPost는 fill=false면 쿼리에 실어 보내고 기본 8초 시간 제한을 건다", async () => {
+    const fetchMock = vi.fn(() => Promise.resolve(new Response("{}")));
+    vi.stubGlobal("fetch", fetchMock);
+    const spy = vi.spyOn(AbortSignal, "timeout");
+
+    await getPost(7, undefined, { fill: false });
+
+    expect(fetchMock.mock.calls[0]).toEqual([`${API_BASE_URL}/api/posts/7?fill=false`, expect.anything()]);
+    expect(spy).toHaveBeenLastCalledWith(8000);
+  });
+
+  it("getPost는 fill을 따로 주지 않거나 true면 쿼리 없이 부른다", async () => {
+    const fetchMock = vi.fn(() => Promise.resolve(new Response("{}")));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await getPost(7);
+    await getPost(7, undefined, { fill: true });
+
+    expect(fetchMock.mock.calls.map((call) => (call as unknown as [string])[0])).toEqual([
+      `${API_BASE_URL}/api/posts/7`,
+      `${API_BASE_URL}/api/posts/7`,
+    ]);
+  });
+
+  it("getPost는 404면 null을 돌려준다", async () => {
+    vi.stubGlobal("fetch", vi.fn(() => Promise.resolve(new Response("", { status: 404 }))));
+
+    await expect(getPost(7, undefined, { fill: false })).resolves.toBeNull();
+  });
+
+  it("getSitemapPostIds는 응답의 글 ID만 순서대로 돌려준다", async () => {
+    vi.stubGlobal("fetch", vi.fn(() => Promise.resolve(Response.json([{ id: 30 }, { id: 12 }]))));
+
+    await expect(getSitemapPostIds()).resolves.toEqual([30, 12]);
+  });
+
+  it("getSitemapPostIds는 백엔드가 실패하면 예외를 던진다", async () => {
+    vi.stubGlobal("fetch", vi.fn(() => Promise.resolve(new Response("", { status: 503 }))));
+
+    await expect(getSitemapPostIds()).rejects.toThrow("503");
   });
 });

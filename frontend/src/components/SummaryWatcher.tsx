@@ -49,9 +49,10 @@ export default function SummaryWatcher({ postId }: { postId: number }) {
     async function check() {
       controller = new AbortController();
       // 요청 하나가 실패하면 PENDING으로 보고 다음 주기에 다시 묻는다(시간 제한 안에서)
+      // 원문을 읽은 글에만 그려지므로 채우기를 끈다(JS를 실행하는 봇이 미리 읽은 글의 요약 순서를 앞당기지 않게)
       let status: SummaryStatus = "PENDING";
       try {
-        status = (await getPost(postId, controller.signal))?.summaryStatus ?? "PENDING";
+        status = (await getPost(postId, controller.signal, { fill: false }))?.summaryStatus ?? "PENDING";
       } catch {
         // 다음 주기에 다시
       }

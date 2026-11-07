@@ -1,5 +1,6 @@
-import { unstable_rethrow } from "next/navigation";
-import { getHighlights, type HighlightSlotKind, type Highlights } from "@/lib/api";
+import { connection } from "next/server";
+import type { HighlightSlotKind } from "@/lib/api";
+import { getCachedHighlights } from "@/lib/cachedApi";
 import { bentoLayout } from "@/lib/highlight";
 import BentoCell from "./BentoCell";
 import styles from "./HighlightBento.module.css";
@@ -22,13 +23,11 @@ const READING_ORDER: HighlightSlotKind[] = ["FEATURE", "TALL", "IC_REPLIES", "IC
  * 날짜 줄과 같은 요청을 쓴다(한 렌더에서 한 번만 보낸다).
  */
 export default async function HighlightBento() {
-  let highlights: Highlights;
-  try {
-    highlights = await getHighlights();
-  } catch (err) {
-    unstable_rethrow(err);
+  const highlights = await getCachedHighlights();
+  if (!highlights) {
+    // 오류 안내는 요청 때만 그려 정적 셸·재생성 결과·브라우저 캐시에 남지 않게 한다
+    await connection();
     // 하이라이트가 실패해도 아래 게시판 줄은 그대로 둔다
-    console.error(err);
     return <p className={styles.message}>하이라이트를 불러오지 못했어요</p>;
   }
 

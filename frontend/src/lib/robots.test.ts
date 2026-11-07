@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import robots from "../app/robots";
+import { SITE_URL } from "./seo";
 
 describe("robots", () => {
   const result = robots();
@@ -25,7 +26,7 @@ describe("robots", () => {
     );
   });
 
-  it("사이트맵은 넣지 않는다", () => {
-    expect(result.sitemap).toBeUndefined();
+  it("사이트맵 주소를 절대 주소로 알린다", () => {
+    expect(result.sitemap).toBe(`${SITE_URL}/sitemap.xml`);
   });
 });
