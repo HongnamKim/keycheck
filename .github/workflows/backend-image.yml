@@ -1,0 +1,51 @@
+# main에 백엔드 변경이 합쳐지면 테스트 뒤 운영 이미지를 GHCR에 커밋 해시와 latest 태그로 올린다.
+# 서버에는 접속하지 않는다. 서버 타이머(deploy/keycheck-update.timer)가 latest가 바뀐 것을 보고 다시 띄운다
+name: Backend image
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+
+# 이 토큰으로 올린 latest를 서버가 사람 확인 없이 띄우므로, 액션은 움직이는 태그가 아닌 커밋 SHA로 고정한다(태그는 주석)
+permissions:
+  contents: read
+  packages: write
+
+# 연달아 합쳐도 차례로 올려 latest가 옛 커밋으로 덮이지 않게 한다
+concurrency:
+  group: backend-image
+  cancel-in-progress: false
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+          cache-dependency-path: |
+            backend/*.gradle
+            backend/gradle/wrapper/gradle-wrapper.properties
+      - name: Test
+        working-directory: backend
+        run: ./gradlew test
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: backend
+          # Lightsail 서버(x86_64)
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ghcr.io/hongnamkim/keycheck-backend:${{ github.sha }}
+            ghcr.io/hongnamkim/keycheck-backend:latest

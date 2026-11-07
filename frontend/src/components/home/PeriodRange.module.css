@@ -1,0 +1,4 @@
+/* 시안의 고정폭 글꼴 다음 순서(ui-monospace)와 같은 글꼴로 화살표를 그린다 */
+.arrow {
+  font-family: ui-monospace, monospace;
+}

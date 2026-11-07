@@ -1,0 +1,23 @@
+.badge {
+  flex: none;
+  display: inline-block;
+  padding: 1px 8px;
+  border: 1px solid;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ic {
+  border-color: var(--color-border);
+  background: transparent;
+  color: var(--color-muted);
+}
+
+.gb {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: #ffffff;
+}

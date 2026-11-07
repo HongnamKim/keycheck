@@ -1,0 +1,27 @@
+/* 토막 사이 가운뎃점 */
+.segs > * + *::before {
+  content: " · ";
+}
+
+/*
+ * 태블릿·모바일: 줄이 모자라면 토막 사이에서만 바꾸고, 줄 머리에 온 가운뎃점(3ch)은 왼쪽 밖으로 밀어 잘라 낸다.
+ * 글꼴을 키우거나 폭이 좁아져도 "댓글 / 1"이나 줄 끝 가운뎃점이 생기지 않는다(시안)
+ */
+@media (max-width: 1023px) {
+  .segs {
+    display: flex;
+    flex-wrap: wrap;
+    margin-left: -3ch;
+    clip-path: inset(0 0 0 3ch);
+  }
+
+  .segs > :first-child {
+    margin-left: 3ch;
+  }
+
+  .segs > * + *::before {
+    display: inline-block;
+    width: 3ch;
+    text-align: center;
+  }
+}

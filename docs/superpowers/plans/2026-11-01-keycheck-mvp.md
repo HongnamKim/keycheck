@@ -5,10 +5,9 @@
 
 ## 진행 원칙
 
-- 태스크는 순서대로 진행하고, 태스크마다 테스트 통과를 확인한 뒤 커밋한다.
+- 태스크는 순서대로 진행하고, 태스크마다 테스트 통과를 확인한다. 커밋은 사용자가 요청할 때만 한다(각 태스크의 "커밋:"은 메시지 예시).
 - 테스트를 먼저 쓰고 구현한다(파서·분류·이미지 선택·표기 함수).
 - 설계에 없는 기능은 넣지 않는다. 설계와 다르게 가야 하면 멈추고 묻는다.
-- Kotlin이 Java와 다른 점은 각 태스크의 "Kotlin 포인트"에서 짧게 설명한다.
 - 자동 테스트는 실제 geekhack을 호출하지 않는다. 테스트 HTML은 실제 구조를 흉내 내 직접 작성한다.
 
 ## 확정 버전 (2026-11-01 Maven Central·npm 확인)
@@ -17,7 +16,6 @@
 |---|---|
 | Java | 21 |
 | Spring Boot | 4.1.2 |
-| Kotlin | Spring Boot 4.1.2가 관리하는 버전 (Task 1에서 확인) |
 | Gradle | 8.14.3 (Wrapper) |
 | PostgreSQL | 17 (Docker 이미지) |
 | Next.js | 16.4.3 |
@@ -25,12 +23,12 @@
 
 ## 선행 조건: geekhack 실제 HTML 확인 (Task 0)
 
-현재 클라우드 세션의 네트워크 정책이 geekhack.org를 막고 있다. 파서 선택자(CSS selector)는 실제 HTML로 확인해야 하므로, Task 4·5 전에 둘 중 하나가 필요하다.
+파서 선택자(CSS selector)는 실제 HTML로 확인해야 한다. 매번 geekhack을 호출하지 않도록 실제 HTML을 한 번 저장해 두고 이후 작업은 저장본으로 한다.
 
-- 세션 네트워크 설정에서 `geekhack.org` 허용
-- 또는 사용자가 로컬에서 아래 페이지를 저장해 전달 (저장소에는 커밋하지 않음)
-  - 게시판 목록: `https://geekhack.org/index.php?board=132.0`
-  - 글 페이지: 샘플 8건 중 2~3건 (외부 이미지 글, `dlattach` 첨부 글, 서명 이미지가 있는 글)
+- `scripts/fetch-geekhack-samples.sh`: 게시판 목록 2페이지와 샘플 8건 글 페이지를 `samples/geekhack/`에 저장 (요청 간 3초, 이미 받은 파일은 건너뜀)
+- `samples/`는 원문 저작권 때문에 커밋하지 않는다(.gitignore). 저장본이 없는 환경에서는 스크립트를 한 번 실행한다.
+- 클라우드 세션은 네트워크 설정에서 `geekhack.org`를 허용해야 실행된다.
+- 자동 테스트 픽스처는 저장본을 그대로 쓰지 않고, 확인한 구조를 흉내 내 직접 작성한다(공개 저장소에 원문을 넣지 않기 위해).
 
 Task 0에서 확인할 것:
 1. 목록 행에서 글 ID, 제목, 작성자, 댓글 수, 조회수, 고정글 여부를 읽는 선택자
@@ -49,14 +47,14 @@ Task 1~3, 6~8, 10, 13은 Task 0 없이 먼저 진행할 수 있다.
 ### Task 1. 백엔드 프로젝트 뼈대
 
 파일:
-- `backend/settings.gradle.kts`, `backend/build.gradle.kts`, Gradle Wrapper
-- `backend/src/main/kotlin/com/keycheck/KeycheckApplication.kt`
+- `backend/settings.gradle`, `backend/build.gradle` (Groovy), Gradle Wrapper
+- `backend/src/main/java/com/keycheck/KeycheckApplication.java`
 - `backend/src/main/resources/application.yml`
 - `docker-compose.yml` (postgres:17, DB `keycheck`, 포트 5432)
 
-의존성: `spring-boot-starter-web`, `spring-boot-starter-data-jpa`, `flyway-core`, `flyway-database-postgresql`, `postgresql`, `jackson-module-kotlin`, `kotlin-reflect`, `jsoup`, 테스트용 `spring-boot-starter-test`, `spring-boot-testcontainers`, `testcontainers-postgresql`.
+의존성: `spring-boot-starter-webmvc`, `spring-boot-starter-data-jpa`, `spring-boot-starter-flyway`, `flyway-database-postgresql`, `postgresql`, `jsoup`, `lombok`, 테스트용 `spring-boot-starter-test`, `spring-boot-testcontainers`, `testcontainers-postgresql`.
 
-플러그인: `kotlin("jvm")`, `kotlin("plugin.spring")`, `kotlin("plugin.jpa")`, `org.springframework.boot`, `io.spring.dependency-management`.
+플러그인: `java`, `org.springframework.boot`, `io.spring.dependency-management`.
 
 - `@EnableScheduling` 추가
 - `application.yml`: DB 접속 정보는 환경변수(`DB_URL`, `DB_USERNAME`, `DB_PASSWORD`)에 로컬 기본값, `spring.jpa.hibernate.ddl-auto: validate`
@@ -65,16 +63,14 @@ Task 1~3, 6~8, 10, 13은 Task 0 없이 먼저 진행할 수 있다.
 - `./gradlew test`: 컨텍스트 로딩 테스트 1개 통과 (Testcontainers PostgreSQL)
 - `docker compose up -d` 후 `./gradlew bootRun` 기동 확인
 
-Kotlin 포인트: `plugin.spring`은 Spring이 프록시를 만들 수 있게 클래스를 자동으로 `open`으로 만든다(Kotlin 클래스는 기본이 `final`). `plugin.jpa`는 JPA가 요구하는 인자 없는 생성자를 만들어 준다.
-
 커밋: `chore: 백엔드 프로젝트 뼈대와 로컬 DB 구성`
 
 ### Task 2. 스키마와 엔티티
 
 파일:
 - `backend/src/main/resources/db/migration/V1__init.sql`
-- `post/Post.kt`, `post/PostImage.kt`, `post/Category.kt`, `post/SummaryStatus.kt`, `image/ImageSource.kt`
-- `post/PostRepository.kt`, `post/PostImageRepository.kt`
+- `post/domain/Post.java`, `post/domain/PostImage.java`, `post/domain/Category.java`, `post/domain/SummaryStatus.java`, `image/domain/ImageSource.java`
+- `post/repository/PostRepository.java`, `post/repository/PostImageRepository.java`
 
 스키마는 설계 4.7 그대로.
 - `post.topic_id` 유니크
@@ -86,96 +82,105 @@ Kotlin 포인트: `plugin.spring`은 Spring이 프록시를 만들 수 있게 �
 - 글과 이미지 저장 후 다시 읽기, jsonb 왕복 확인
 - `topic_id`로 조회
 
-Kotlin 포인트: 엔티티는 `data class`가 아닌 일반 `class`. `data class`는 모든 필드로 `equals`/`hashCode`를 만들어 지연 로딩·컬렉션과 충돌한다. 널 가능 컬럼은 `String?`처럼 타입에 `?`를 붙인다.
-
 커밋: `feat: 글·이미지 스키마와 엔티티 추가`
 
 ### Task 3. geekhack 요청 클라이언트와 요청 간격 제한
 
 파일:
-- `crawl/RequestGate.kt`
-- `crawl/GeekhackClient.kt`
-- `crawl/GeekhackProperties.kt` (`baseUrl`, `userAgent`, `minInterval=2s`)
+- `crawl/client/RequestGate.java`
+- `crawl/client/GeekhackClient.java`
+- `crawl/config/GeekhackProperties.java` (`baseUrl`, `userAgent`, `minInterval=2s`)
 
 `RequestGate` (설계 4.3: 모든 geekhack 요청이 하나의 간격 제한을 공유):
-```kotlin
-class RequestGate(private val minInterval: Duration, private val clock: Clock) {
-    fun tryAcquire(): Boolean   // 간격이 찼으면 true 반환하고 시각 기록, 아니면 false (사용자 조회용)
-    fun acquire()               // 간격이 찰 때까지 기다린 뒤 시각 기록 (정기 수집용)
+```java
+public class RequestGate {
+  public synchronized boolean tryAcquire() // 간격이 찼으면 true 반환하고 시각 기록, 아니면 false (사용자 조회용)
+  public void acquire()                    // 간격이 찰 때까지 기다린 뒤 시각 기록 (정기 수집용)
 }
 ```
-- 동시 요청에 안전하도록 `synchronized` 사용 (코루틴 사용 안 함)
+- 동시 요청에 안전하도록 `synchronized` 사용
 
 `GeekhackClient`:
-- `fetchBoardPage(page: Int): String`, `fetchTopic(topicId: Long): String`
+- `String fetchBoardPage(int page)`, `String fetchTopic(long topicId)`
 - `RestClient`로 바이트를 받아 ISO-8859-1로 디코딩 (Task 0 결과에 따라 조정)
 - 클라이언트는 게이트를 직접 쓰지 않는다. 정기 수집은 `acquire()`, 사용자 조회는 `tryAcquire()`로 호출자가 게이트를 통과한 뒤 클라이언트를 부른다
 
 테스트 (`RequestGateTest`): 가짜 `Clock`으로
 - 첫 `tryAcquire` true, 2초 이내 두 번째 false, 2초 후 true
 
-Kotlin 포인트: `Duration`, `Clock`을 생성자 인자로 받으면 테스트에서 시간을 조작할 수 있다. 주 생성자의 `private val`은 필드 선언과 대입을 한 번에 한다.
-
 커밋: `feat: geekhack 요청 클라이언트와 요청 간격 제한`
 
 ### Task 4. 게시판 목록 파서 (Task 0 필요)
 
 파일:
-- `crawl/BoardListParser.kt`, `crawl/BoardTopic.kt`
+- `crawl/parser/BoardListParser.java`, `crawl/dto/BoardTopic.java`
 - `backend/src/test/resources/fixtures/board-list.html` (직접 작성)
 
-```kotlin
-data class BoardTopic(val topicId: Long, val title: String, val author: String,
-                      val replies: Int, val views: Int, val postedAt: Instant?)
+```java
+@Getter
+@RequiredArgsConstructor
+public class BoardTopic {
+  private final long topicId;
+  private final String title;
+  private final String author;
+  private final int replies;
+  private final int views;
+}
 ```
-- 고정글 제외, 제목의 HTML 엔티티 디코딩, 숫자의 쉼표 제거
-- 작성일이 목록에 없으면 null로 두고 Task 5의 글 페이지 값으로 채운다
+- 선택자는 `docs/geekhack-html-notes.md` 2장
+- 고정글 제외(`td.subject` class에 `sticky`), 제목의 HTML 엔티티 디코딩
+- 목록에는 작성일이 없다. 작성일은 Task 5의 글 페이지에서 읽는다
+- 함께: `GeekhackClient` 디코딩을 ISO-8859-1에서 Windows-1252로 변경 (notes 1장)
 
 테스트: 고정글 1개 + 일반글 2개 픽스처로 일반글 2개만, 각 필드 값 확인
-
-Kotlin 포인트: 엔티티가 아닌 단순 값 묶음에는 `data class`를 써도 된다.
 
 커밋: `feat: 게시판 목록 파서`
 
 ### Task 5. 글 페이지 파서 (Task 0 필요)
 
 파일:
-- `crawl/TopicParser.kt`, `crawl/TopicPage.kt`
+- `crawl/parser/TopicParser.java`, `crawl/dto/TopicPage.java`
 - `fixtures/topic-external.html`, `fixtures/topic-attachment.html` (직접 작성)
 
-```kotlin
-data class TopicPage(val bodyText: String, val images: List<RawImage>,
-                     val views: Int, val replies: Int, val postedAt: Instant?)
-data class RawImage(val url: String, val source: ImageSource, val position: Int, val inSignature: Boolean)
+```java
+// 첫 페이지(topic={id}.0): 새 글 수집용. private final 필드 + @Getter
+public class TopicPage { String bodyText; List<RawImage> images; int views; Instant postedAt; }
+// 마지막 페이지(topic={id}.999999): 조회수·댓글 수 갱신용 (Task 11). private final 필드 + @Getter
+public class TopicStats { int views; int replies; }
 ```
-- 첫 글 본문만 사용. 외부 `<img>`와 `dlattach` 첨부 링크 둘 다 수집, 상대 경로는 절대 URL로
-- 서명 영역 이미지는 `inSignature = true`로 표시 (제외 판단은 Task 7)
+- 선택자는 `docs/geekhack-html-notes.md` 3장
+- 첫 글 `div.inner` 안의 이미지만 수집(외부 `img.bbc_img`, 첨부 `dlattach`) + `div.attachments`. 서명·아바타는 `div.inner` 밖이라 수집되지 않는다
+  - 그래서 `RawImage.inSignature`와 Task 7의 서명 규칙을 제거한다
+- 작성일: `« on: Tue, 13 October 2026, 08:29:35 »`, `Today at …` 형식도 처리. 시간대는 설정값 `keycheck.geekhack.time-zone` (기본 `America/Chicago`)
+- 댓글 수: 마지막 페이지의 마지막 `Reply #N`, 없으면 0
+- `GeekhackClient.fetchTopicLastPage(topicId)` 추가
 
-테스트: 픽스처별 본문 텍스트, 이미지 순서·출처·서명 여부, 조회수·댓글 수
+테스트: 픽스처별 본문 텍스트, 이미지 순서·출처, 작성일(일반·Today 형식), 조회수, 마지막 페이지의 댓글 수(댓글 있음·없음)
 
 커밋: `feat: 글 페이지 파서`
 
 ### Task 6. 분류기
 
-파일: `classify/Classifier.kt`
+파일: `classify/service/Classifier.java`
 
-- 설계 4.4 키워드 규칙. 대소문자 무시, `SA `처럼 공백 포함 키워드는 단어 경계로 비교
-- 키캡·키보드 키워드가 둘 다 있으면 키캡 우선 (예: "GMK ... for 65% boards")
+- `classify(title, bodyText): Category`
+- 설계 4.4 순서: 제목 키캡 단어 → 제목 기타 단어 → 본문 사양 단어 종류 수 비교 → 키보드
+- 대소문자 무시, 단어 경계 비교
 
-테스트: 샘플 8건 제목(제목만 테스트에 사용) + 기타 예시(데스크매트, 스위치)로 기대 분류 확인
+테스트: 샘플 8건 이름 + 기타 예시(데스크매트, 스위치), 본문 판정(키캡 우세·키보드 우세·동점), 제목이 본문보다 우선, 단어 경계
 
-커밋: `feat: 제목 키워드 기반 분류기`
+커밋: `feat: 제목·본문 기반 분류기`
 
 ### Task 7. 대표 이미지 선택
 
-파일: `image/RepresentativeImageSelector.kt`(인터페이스), `image/RuleBasedImageSelector.kt`
+파일: `image/service/RepresentativeImageSelector.java`(인터페이스), `image/service/RuleBasedImageSelector.java`
 
-```kotlin
-interface RepresentativeImageSelector {
-    fun select(images: List<RawImage>): Selection   // 대표 인덱스(없으면 null) + 이미지별 제외 사유
+```java
+public interface RepresentativeImageSelector {
+  Selection select(List<RawImage> images); // 대표 인덱스(없으면 null) + 이미지별 제외 사유
 }
 ```
-- 설계 4.5 제외 규칙: 서명 영역, 이모티콘·아바타·테마 경로, 후원·디스코드 버튼 호스트, 파일명 `logo`/`banner`/`divider`
+- 설계 4.5 제외 규칙: 이모티콘·아바타·테마 경로, 후원·디스코드 버튼 호스트, 파일명 `logo`/`banner`/`divider`
 - 제외 규칙 목록은 상수로 한곳에 모은다
 
 테스트: 규칙별 제외 1건씩 + "첫 이미지가 배너인 글은 두 번째 이미지 선택" + "후보 없음"
@@ -184,7 +189,7 @@ interface RepresentativeImageSelector {
 
 ### Task 8. 요약 인터페이스와 가짜 요약기
 
-파일: `summary/Summarizer.kt`, `summary/FakeSummarizer.kt`, `summary/SummaryResult.kt`
+파일: `summary/service/Summarizer.java`, `summary/service/FakeSummarizer.java`, `summary/dto/SummaryResult.java`
 
 - 설계 4.6. `FakeSummarizer`는 `["[가짜 요약] {제목}", 본문 앞 100자]`와 빈 스펙 목록을 반환
 - 구현체 선택은 `keycheck.summarizer=fake` 설정 (`@ConditionalOnProperty`, 기본값 fake)
@@ -195,15 +200,16 @@ interface RepresentativeImageSelector {
 
 ### Task 9. 정기 수집 (Task 4·5 필요)
 
-파일: `crawl/CrawlService.kt`, `crawl/CrawlScheduler.kt`
+파일: `crawl/service/CrawlService.java`, `crawl/service/CrawlStore.java`(글 단위 트랜잭션), `crawl/scheduler/CrawlScheduler.java`
 
 흐름 (설계 4.3):
 1. 목록 1~2페이지를 읽는다 (페이지마다 `gate.acquire()`)
 2. 이미 있는 글: 제목, 조회수, 댓글 수, `stats_checked_at` 갱신
 3. 처음 보는 글: `gate.acquire()` 후 글 페이지를 읽어 본문·이미지 저장 → 분류 → 대표 이미지 선택 → 요약(성공 `DONE`, 예외 `FAILED`)
 4. 글 하나가 실패해도 나머지는 계속 처리하고 로그를 남긴다
+5. 제목이 `deleted`인 새 글은 건너뛰고, 저장된 글이 `deleted`가 되면 숨긴다
 
-- `@Scheduled(fixedDelayString = "\${keycheck.crawl.interval:PT30M}")`, 기동 직후 1회 실행
+- `@Scheduled(fixedDelayString = "${keycheck.crawl.interval}")`, 기동 직후 1회 실행. `keycheck.crawl.enabled`(`CRAWL_ENABLED`, 기본 false)일 때만 동작
 - 글 하나 저장 단위로 트랜잭션
 
 테스트 (`CrawlServiceTest`, Testcontainers): `GeekhackClient`를 픽스처를 돌려주는 가짜로 바꿔
@@ -215,7 +221,7 @@ interface RepresentativeImageSelector {
 
 ### Task 10. 조회 API
 
-파일: `post/PostQueryService.kt`, `post/PostController.kt`, `post/dto/*.kt`
+파일: `post/service/PostQueryService.java`, `post/controller/PostController.java`, `post/dto/*.java`
 
 - `GET /api/posts?category=all|keyboard|keycap&sort=recent|views&page=0` (페이지 크기 20)
   - 숨김 제외, 응답은 설계 4.8 카드 필드 + `totalPages`
@@ -230,12 +236,12 @@ interface RepresentativeImageSelector {
 
 ### Task 11. 조회수 갱신 API (Task 5 필요)
 
-파일: `post/PostStatsService.kt`, `PostController`에 엔드포인트 추가
+파일: `post/service/PostStatsService.java`, `PostController`에 엔드포인트 추가
 
 `GET /api/posts/{id}/stats` (설계 4.3):
 1. `stats_checked_at`이 1시간 이내면 저장값 반환
 2. 아니면 `gate.tryAcquire()`. false면 저장값 반환
-3. true면 글 페이지를 읽어 조회수·댓글 수·`stats_checked_at` 저장 후 반환
+3. true면 마지막 페이지(`fetchTopicLastPage`)를 읽어 조회수·댓글 수·`stats_checked_at` 저장 후 반환
 4. 요청·파싱 실패 시 저장값 반환, `stats_checked_at` 유지
 
 테스트 (가짜 클라이언트 + 가짜 Clock):
@@ -248,7 +254,7 @@ interface RepresentativeImageSelector {
 
 ### Task 12. 샘플 8건 실제 점검 (geekhack 접속 필요)
 
-파일: `backend/src/main/kotlin/com/keycheck/check/SampleCheckRunner.kt` (`check` 프로필에서만 동작), 결과는 `docs/sample-check-result.md`
+파일: `backend/src/main/java/com/keycheck/check/SampleCheckRunner.java` (`check` 프로필에서만 동작), 결과는 `docs/sample-check-result.md`
 
 - 샘플 8건의 글 ID를 받아 실제 페이지를 읽고(게이트 사용) 분류, 대표 이미지 URL, 이미지 후보·제외 사유, 조회수·댓글 수를 출력
 - 대표 이미지가 맞는지는 사람이 원문과 비교해 결과 문서에 기록 (설계 4.5의 미검증 항목)

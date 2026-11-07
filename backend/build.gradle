@@ -1,0 +1,76 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '4.1.2'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.keycheck'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-flyway'
+    // 배포 서버 상태 확인(/actuator/health)
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.flywaydb:flyway-database-postgresql'
+    implementation 'org.jsoup:jsoup:1.23.2'
+    implementation 'com.anthropic:anthropic-java:3.4.0'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.2.0'
+    implementation 'com.github.usefulness:webp-imageio:0.11.0'
+    // 축소본 저장소(Cloudflare R2, S3 호환). Spring Boot BOM에 없어 AWS SDK BOM으로 버전을 맞춘다
+    implementation platform('software.amazon.awssdk:bom:2.57.9')
+    implementation 'software.amazon.awssdk:s3'
+    // 원본 이미지 받기. 연결할 주소를 직접 풀어 검사하려고(DnsResolver) JDK HttpClient 대신 쓴다. 버전은 Spring Boot BOM
+    implementation 'org.apache.httpcomponents.client5:httpclient5'
+    runtimeOnly 'org.postgresql:postgresql'
+
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+    testImplementation 'org.testcontainers:testcontainers-junit-jupiter'
+    testImplementation 'org.testcontainers:testcontainers-postgresql'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+    // 배포 서버(UTC)처럼 돌려, 한국 시간 대신 시스템 시간대를 쓰는 실수를 한국 시간 개발 PC에서도 잡는다
+    jvmArgs '-Duser.timezone=UTC'
+    // backend/.env에 무엇이 있어도 테스트는 실제 Claude API를 부르지 않는다. 요약 작업은 테스트가 직접 실행한다.
+    systemProperty 'keycheck.summarizer', 'fake'
+    systemProperty 'keycheck.summary.enabled', 'false'
+    // 다시 요약 설정은 테스트가 직접 정한다
+    systemProperty 'keycheck.summary.redo-missing-product-name', 'false'
+    // 미리 읽기는 실제 geekhack에 요청한다. 미리 읽기 작업도 테스트가 직접 실행한다.
+    systemProperty 'keycheck.prefetch.enabled', 'false'
+    // 테스트 글 번호(2000, 3000 등)는 실제 수집 기간 경계보다 작다. 경계를 보는 테스트만 따로 정한다.
+    systemProperty 'keycheck.collect.since-topic-id', '0'
+    // backend/.env에 R2 키가 있어도 테스트는 R2를 부르지 않는다(저장소 빈이 없다). 축소본 작업도 테스트가 직접 실행한다.
+    systemProperty 'keycheck.storage.endpoint', ''
+    systemProperty 'keycheck.storage.bucket', ''
+    systemProperty 'keycheck.storage.access-key-id', ''
+    systemProperty 'keycheck.storage.secret-access-key', ''
+    systemProperty 'keycheck.storage.public-url', 'https://img.test'
+    systemProperty 'keycheck.thumbnail.enabled', 'false'
+}

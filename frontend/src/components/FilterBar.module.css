@@ -1,0 +1,103 @@
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.filter {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid var(--color-text);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.filter:hover {
+  color: var(--color-text);
+  background: var(--color-surface);
+}
+
+.filter[aria-current] {
+  background: var(--color-text);
+  color: #ffffff;
+}
+
+/* 조회순 안내 툴팁이 이 줄 폭에 맞춰 아래로 펼쳐진다 */
+.sorts {
+  position: relative;
+}
+
+.sortItem {
+  display: inline-flex;
+  align-items: center;
+}
+
+.sort {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 12px;
+  color: var(--color-muted);
+  font-size: 15px;
+  font-weight: 400;
+  text-decoration: none;
+  text-underline-offset: 6px;
+}
+
+.sort:hover {
+  color: var(--color-text);
+}
+
+.sort[aria-current="page"] {
+  color: var(--color-text);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+/* 세부 분류 칩. 분류·정렬 아래 한 줄을 다 쓰고, 분류 버튼보다 작고 가볍게 */
+.subs {
+  display: flex;
+  flex-wrap: wrap;
+  flex-basis: 100%;
+  gap: 6px;
+}
+
+.sub {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 14px;
+  font-weight: 400;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.sub:hover {
+  color: var(--color-text);
+  background: var(--color-surface);
+}
+
+.sub[aria-current="page"] {
+  border-color: var(--color-text);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-weight: 600;
+}

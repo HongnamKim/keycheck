@@ -1,0 +1,42 @@
+# 운영 서버(/opt/keycheck)의 백엔드 실행 설정. 세팅 절차는 deploy/README.md
+# 이미지 태그는 이 파일 옆 .env의 KEYCHECK_TAG(없으면 latest). 앱 설정·비밀값은 /etc/keycheck/keycheck.env에만 둔다
+name: keycheck
+
+x-logging: &logging
+  # Docker 기본 로그는 크기 제한이 없다
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  app:
+    image: ghcr.io/hongnamkim/keycheck-backend:${KEYCHECK_TAG:-latest}
+    # 실제 환경변수로 넣는다(파일로 읽는 .env와 달리 KEYCHECK_CORS_ALLOWED_ORIGINS 같은 대문자 표기가 모두 적용된다)
+    env_file:
+      - path: /etc/keycheck/keycheck.env
+        # 값을 적은 그대로 넘긴다. 기본 형식은 비밀번호 속 $를 치환하고 " #" 뒤를 잘라 낸다(Compose 2.30 이상)
+        format: raw
+    restart: unless-stopped
+    # Spring graceful shutdown(처리 중인 요청을 최대 30초 기다림)보다 길게. Docker 기본 10초면 그 전에 강제로 끝낸다
+    stop_grace_period: 40s
+    mem_limit: 1400m
+    logging: *logging
+    # 포트는 밖으로 열지 않는다. caddy만 compose 내부 네트워크에서 app:8080으로 부른다
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Let's Encrypt 인증서. 지우면 다시 발급받는다(발급 횟수 제한 주의)
+      - caddy_data:/data
+      - caddy_config:/config
+    logging: *logging
+
+volumes:
+  caddy_data:
+  caddy_config:

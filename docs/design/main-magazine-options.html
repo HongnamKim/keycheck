@@ -1,0 +1,3745 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>메인 매거진 시안 3안</title>
+<style>
+  body { margin: 0; background: #e9eae6; color: #16181a; font-family: system-ui, -apple-system, "Apple SD Gothic Neo", sans-serif; }
+  .doc-head { max-width: 1120px; margin: 0 auto; padding: 32px 16px 8px; }
+  .doc-head h1 { margin: 0 0 8px; font-size: 24px; }
+  .doc-head p { margin: 0 0 4px; color: #4f555a; font-size: 14px; line-height: 1.6; }
+  .doc-label { font-size: 13px; font-weight: 600; color: #4f555a; margin: 0 0 8px; }
+  .doc-box { border: 1px solid #d5d7d2; border-radius: 12px; overflow: hidden; background: #f3f4f1; }
+  .doc-row { display: flex; gap: 32px; align-items: flex-start; overflow-x: auto; padding: 16px; }
+  .doc-col { flex: 0 0 auto; }
+</style>
+</head>
+<body>
+<header class="doc-head">
+<h1>메인 매거진형 시안 세 가지 (데스크톱)</h1>
+<p>2026-11-05. 사용자가 C안(벤토 갤러리)을 골랐다. 이때는 국내 판매처 디스코드 공지까지 넣는 안이었고, 이후 MVP에서는 디스코드 수집을 빼고 IC·공동구매만 쓰기로 했다(main-c-responsive.html). 국내 판매 부분은 나중에 디스코드 수집을 넣을 때 참고한다. geonworks 항목은 예시다.</p>
+</header>
+<div class="doc-row"><div class="doc-col" style="width:1120px"><p class="doc-label">A안 · 커버 스토리</p><div class="doc-box" style="width:1120px"><style>
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Noto+Serif+KR:wght@500;700;900&display=swap");
+
+/* ── 바탕: 브랜드 색(globals.css)과 글꼴(IBM Plex Sans KR·Mono)에 잡지 제목용 세리프(Noto Serif KR)를 더한다 ── */
+.ma-root {
+  --ma-bg: #f3f4f1;
+  --ma-surface: #ffffff;
+  --ma-ink: #16181a;
+  --ma-body: #2e3236;
+  --ma-muted: #4f555a;
+  --ma-accent: #b93a0b;
+  --ma-accent-hover: #8f2c07;
+  --ma-accent-tint: #f5e6de;
+  --ma-border: #d5d7d2;
+  --ma-divider: #e4e5e1;
+  --ma-night: #1b1c1e;
+  --ma-serif: "Noto Serif KR", Georgia, serif;
+  --ma-sans: "IBM Plex Sans KR", system-ui, sans-serif;
+  --ma-mono: "IBM Plex Mono", ui-monospace, monospace;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 40px;
+  box-sizing: border-box;
+  background: var(--ma-bg);
+  color: var(--ma-ink);
+  font-family: var(--ma-sans);
+  font-size: 16px;
+  line-height: 1.6;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  -webkit-font-smoothing: antialiased;
+}
+.ma-root div, .ma-root section, .ma-root article, .ma-root header, .ma-root footer,
+.ma-root aside, .ma-root nav, .ma-root a, .ma-root span, .ma-root figure, .ma-root img,
+.ma-root dl, .ma-root li, .ma-root table, .ma-root td, .ma-root th, .ma-root p {
+  box-sizing: border-box;
+}
+.ma-root h1, .ma-root h2, .ma-root h3, .ma-root h4, .ma-root p, .ma-root ul, .ma-root ol,
+.ma-root dl, .ma-root dd, .ma-root dt, .ma-root figure {
+  margin: 0;
+  padding: 0;
+}
+.ma-root ul, .ma-root ol { list-style: none; }
+.ma-root a { color: inherit; text-decoration: none; }
+.ma-root img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+/* 공용 조각 */
+.ma-root .ma-label {
+  font-family: var(--ma-mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.ma-root .ma-badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border: 1px solid;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: 600;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+.ma-root .ma-badge-ic { border-color: var(--ma-border); color: var(--ma-muted); background: transparent; }
+.ma-root .ma-badge-gb { border-color: var(--ma-accent); color: #fff; background: var(--ma-accent); }
+.ma-root .ma-cat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--ma-muted);
+}
+.ma-root .ma-label-ko {
+  font-family: var(--ma-sans);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+.ma-root .ma-meta {
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ma-muted);
+}
+.ma-root .ma-clamp2, .ma-root .ma-clamp3 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.ma-root .ma-clamp2 { -webkit-line-clamp: 2; }
+.ma-root .ma-clamp3 { -webkit-line-clamp: 3; }
+
+/* ── 헤더: 잡지 제호(마스트헤드) ── */
+.ma-root .ma-masthead {
+  display: flex;
+  align-items: flex-end;
+  gap: 44px;
+  padding: 30px 0 16px;
+}
+.ma-root .ma-logo {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-family: var(--ma-serif);
+  font-size: 64px;
+  font-weight: 900;
+  line-height: 0.9;
+  letter-spacing: -0.05em;
+}
+.ma-root .ma-logo-dot { color: var(--ma-accent); }
+.ma-root .ma-logo-ko {
+  font-family: var(--ma-sans);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--ma-muted);
+}
+.ma-root .ma-nav {
+  display: flex;
+  gap: 26px;
+  padding-bottom: 6px;
+}
+.ma-root .ma-nav a {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 16px;
+  font-weight: 600;
+}
+.ma-root .ma-nav a:hover { color: var(--ma-accent); }
+.ma-root .ma-nav-no {
+  font-family: var(--ma-mono);
+  font-size: 11px;
+  color: var(--ma-accent);
+}
+.ma-root .ma-login {
+  margin-left: auto;
+  margin-bottom: 4px;
+  padding: 7px 16px;
+  border: 1.5px dashed #9a9f9a;
+  border-radius: 999px;
+  font-size: 13px;
+  color: var(--ma-muted);
+}
+.ma-root .ma-double-rule {
+  height: 9px;
+  border-top: 5px solid var(--ma-ink);
+  border-bottom: 1px solid var(--ma-ink);
+}
+.ma-root .ma-dateline {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 9px 0 10px;
+  border-bottom: 1px solid var(--ma-ink);
+  font-size: 12.5px;
+  color: var(--ma-muted);
+}
+.ma-root .ma-dateline strong { color: var(--ma-ink); font-weight: 500; }
+
+/* ── 커버 스토리 ── */
+.ma-root .ma-cover { margin: 28px -40px 0; }
+.ma-root .ma-cover-panel {
+  position: relative;
+  display: grid;
+  grid-template-columns: 480px 1fr;
+  height: 600px;
+  background: var(--ma-night);
+  color: #f3f4f1;
+  overflow: hidden;
+}
+.ma-root .ma-cover-text {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 40px 0 40px 40px;
+}
+.ma-root .ma-cover-kicker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #b9bdb7;
+}
+.ma-root .ma-cover-kicker .ma-rule-short {
+  width: 36px;
+  height: 2px;
+  background: var(--ma-accent);
+}
+.ma-root .ma-cover-title {
+  display: flex;
+  flex-direction: column;
+  font-family: var(--ma-serif);
+  font-size: 104px;
+  font-weight: 900;
+  line-height: 0.9;
+  letter-spacing: -0.055em;
+  white-space: nowrap;
+  color: #ffffff;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.35);
+}
+.ma-root .ma-cover-title span:first-child {
+  font-size: 44px;
+  letter-spacing: -0.02em;
+  color: #e9a385;
+  margin-bottom: 8px;
+}
+.ma-root .ma-cover-deck {
+  max-width: 400px;
+  margin-top: 26px;
+  font-size: 18px;
+  line-height: 1.7;
+  color: #dcdfda;
+}
+.ma-root .ma-cover-orig {
+  margin-top: 14px;
+  font-family: var(--ma-mono);
+  font-size: 12px;
+  color: #8f9590;
+}
+.ma-root .ma-cover-actions { display: flex; gap: 10px; }
+.ma-root .ma-btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 600;
+}
+.ma-root .ma-btn-solid { background: var(--ma-accent); color: #fff; }
+.ma-root .ma-btn-solid:hover { background: var(--ma-accent-hover); }
+.ma-root .ma-btn-ghost { border: 1px solid rgba(243, 244, 241, 0.5); color: #f3f4f1; }
+.ma-root .ma-btn-ghost:hover { background: rgba(255, 255, 255, 0.08); }
+.ma-root .ma-cover-figure { position: relative; height: 600px; }
+.ma-root .ma-cover-figure::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, var(--ma-night) 0%, rgba(27, 28, 30, 0.55) 18%, rgba(27, 28, 30, 0) 42%);
+}
+.ma-root .ma-cover-stamp {
+  position: absolute;
+  z-index: 3;
+  top: 36px;
+  right: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 118px;
+  height: 118px;
+  border-radius: 50%;
+  background: var(--ma-accent);
+  color: #fff;
+  transform: rotate(-8deg);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: center;
+}
+.ma-root .ma-cover-stamp b {
+  font-family: var(--ma-serif);
+  font-size: 40px;
+  font-weight: 900;
+  line-height: 1;
+}
+.ma-root .ma-cover-facts {
+  display: grid;
+  grid-template-columns: 1fr 0.8fr 1.2fr 1.5fr;
+  background: var(--ma-surface);
+  border-bottom: 3px solid var(--ma-ink);
+}
+.ma-root .ma-cover-facts > div {
+  padding: 16px 20px 18px;
+  border-left: 1px solid var(--ma-divider);
+}
+.ma-root .ma-cover-facts > div:first-child { padding-left: 40px; border-left: 0; }
+.ma-root .ma-cover-facts > div:last-child { padding-right: 40px; }
+.ma-root .ma-cover-facts dt {
+  margin-bottom: 4px;
+  font-size: 12.5px;
+  color: var(--ma-muted);
+}
+.ma-root .ma-cover-facts dd { font-size: 15px; font-weight: 600; }
+.ma-root .ma-cover-facts .ma-cover-link { background: var(--ma-accent-tint); }
+.ma-root .ma-cover-link dt { color: var(--ma-accent); }
+.ma-root .ma-cover-link a { color: var(--ma-accent); border-bottom: 1px solid currentColor; }
+.ma-root .ma-cover-link a:hover { color: var(--ma-accent-hover); }
+
+/* ── 보조 기사 3개 ── */
+.ma-root .ma-subs-head {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin-top: 40px;
+  padding-bottom: 14px;
+}
+.ma-root .ma-subs-head .ma-label { color: var(--ma-accent); }
+.ma-root .ma-subs-head span:last-child {
+  font-family: var(--ma-serif);
+  font-size: 20px;
+  font-weight: 700;
+}
+.ma-root .ma-subs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  column-gap: 48px;
+  border-top: 1px solid var(--ma-ink);
+  padding-top: 22px;
+}
+.ma-root .ma-sub { position: relative; }
+.ma-root .ma-sub + .ma-sub::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -24px;
+  border-left: 1px solid var(--ma-border);
+}
+.ma-root .ma-sub a { display: flex; flex-direction: column; gap: 8px; }
+.ma-root .ma-sub-media {
+  aspect-ratio: 2 / 1;
+  margin-bottom: 6px;
+  overflow: hidden;
+  background: var(--ma-divider);
+}
+.ma-root .ma-sub-type {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background-color: var(--ma-accent);
+  background-image: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.09) 0 10px, transparent 10px 20px);
+  color: #fff;
+}
+.ma-root .ma-sub-type-top { font-size: 12.5px; font-weight: 600; letter-spacing: 0.02em; }
+.ma-root .ma-sub-type-time {
+  font-family: var(--ma-serif);
+  font-size: 58px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+.ma-root .ma-sub-type-bottom { font-size: 12.5px; font-weight: 600; opacity: 0.9; }
+.ma-root .ma-sub-kicker { font-size: 13px; font-weight: 600; color: var(--ma-accent); }
+.ma-root .ma-sub-title {
+  font-family: var(--ma-serif);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+}
+.ma-root .ma-sub a:hover .ma-sub-title { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
+.ma-root .ma-sub-deck { font-size: 15px; line-height: 1.6; color: var(--ma-body); }
+
+/* ── 차례 + 시안 메모 ── */
+.ma-root .ma-guide {
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  gap: 32px;
+  margin-top: 44px;
+  align-items: start;
+}
+.ma-root .ma-toc { border-top: 3px solid var(--ma-ink); padding-top: 12px; }
+.ma-root .ma-toc .ma-label { color: var(--ma-muted); }
+.ma-root .ma-toc ol { margin-top: 10px; }
+.ma-root .ma-toc li { border-bottom: 1px solid var(--ma-border); }
+.ma-root .ma-toc a {
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
+  align-items: baseline;
+  padding: 10px 0;
+}
+.ma-root .ma-toc a:hover .ma-toc-name { color: var(--ma-accent); }
+.ma-root .ma-toc-no {
+  font-family: var(--ma-serif);
+  font-size: 26px;
+  font-weight: 900;
+  color: var(--ma-accent);
+}
+.ma-root .ma-toc-name { font-family: var(--ma-serif); font-size: 22px; font-weight: 700; }
+.ma-root .ma-toc-count { font-size: 14px; color: var(--ma-muted); }
+.ma-root .ma-memo {
+  padding: 16px 18px 18px;
+  border: 1.5px dashed #8d928c;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.55);
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: var(--ma-body);
+}
+.ma-root .ma-memo-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ma-ink);
+}
+.ma-root .ma-memo-title span {
+  padding: 0 6px;
+  border-radius: 3px;
+  background: var(--ma-ink);
+  color: #fff;
+  font-family: var(--ma-mono);
+  font-size: 11px;
+  font-weight: 500;
+}
+.ma-root .ma-memo li { position: relative; padding-left: 14px; }
+.ma-root .ma-memo li + li { margin-top: 4px; }
+.ma-root .ma-memo li::before { content: "–"; position: absolute; left: 0; color: var(--ma-muted); }
+.ma-root .ma-memo b { color: var(--ma-ink); }
+
+/* ── 섹션 머리: 굵은 선 + 큰 세리프 제목 ── */
+.ma-root .ma-sec { margin-top: 96px; }
+.ma-root .ma-sec-head {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: end;
+  gap: 0 32px;
+  padding: 14px 0 22px;
+  border-top: 8px solid var(--ma-ink);
+  border-bottom: 1px solid var(--ma-ink);
+  margin-bottom: 34px;
+}
+.ma-root .ma-sec-name { display: flex; flex-direction: column; gap: 6px; }
+.ma-root .ma-sec-no { font-family: var(--ma-mono); font-size: 13px; color: var(--ma-accent); letter-spacing: 0.1em; }
+.ma-root .ma-sec-title {
+  font-family: var(--ma-serif);
+  font-size: 112px;
+  font-weight: 900;
+  line-height: 0.86;
+  letter-spacing: -0.055em;
+}
+.ma-root .ma-sec-intro { max-width: 420px; padding-bottom: 6px; }
+.ma-root .ma-sec-sub { font-family: var(--ma-serif); font-size: 20px; font-weight: 700; }
+.ma-root .ma-sec-desc { margin-top: 4px; font-size: 15px; color: var(--ma-body); }
+.ma-root .ma-more {
+  padding-bottom: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ma-accent);
+  border-bottom: 2px solid transparent;
+}
+.ma-root .ma-more:hover { color: var(--ma-accent-hover); border-bottom-color: currentColor; }
+
+/* ── 01 IC 지면 ── */
+.ma-root .ma-spread {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 40px;
+}
+.ma-root .ma-feature a { display: flex; flex-direction: column; gap: 10px; }
+.ma-root .ma-feature-media { aspect-ratio: 16 / 9; overflow: hidden; background: var(--ma-divider); margin-bottom: 8px; }
+.ma-root .ma-feature-title {
+  font-family: var(--ma-serif);
+  font-size: 36px;
+  font-weight: 900;
+  line-height: 1.2;
+  letter-spacing: -0.035em;
+}
+.ma-root .ma-feature a:hover .ma-feature-title { color: var(--ma-accent); }
+.ma-root .ma-pull {
+  padding-left: 18px;
+  border-left: 3px solid var(--ma-accent);
+  font-family: var(--ma-serif);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.6;
+  color: var(--ma-body);
+}
+.ma-root .ma-rank { padding-left: 28px; border-left: 1px solid var(--ma-ink); }
+.ma-root .ma-rank-title { font-family: var(--ma-serif); font-size: 26px; font-weight: 900; letter-spacing: -0.03em; }
+.ma-root .ma-rank-sub { margin-top: 2px; font-size: 13px; color: var(--ma-muted); }
+.ma-root .ma-rank ol { margin-top: 16px; border-top: 2px solid var(--ma-ink); }
+.ma-root .ma-rank li { border-bottom: 1px solid var(--ma-border); }
+.ma-root .ma-rank a {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 2px 8px;
+  padding: 14px 0;
+}
+.ma-root .ma-rank-no {
+  grid-row: span 3;
+  font-family: var(--ma-serif);
+  font-size: 38px;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--ma-ink);
+}
+.ma-root .ma-rank li:first-child .ma-rank-no { color: var(--ma-accent); }
+.ma-root .ma-rank-name { font-size: 15.5px; font-weight: 600; line-height: 1.4; }
+.ma-root .ma-rank a:hover .ma-rank-name { color: var(--ma-accent); }
+.ma-root .ma-rank-cat { font-size: 12.5px; color: var(--ma-muted); }
+
+.ma-root .ma-grid4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  margin-top: 44px;
+  padding-top: 26px;
+  border-top: 1px solid var(--ma-ink);
+}
+.ma-root .ma-card a { display: flex; flex-direction: column; gap: 8px; }
+.ma-root .ma-card-media { aspect-ratio: 4 / 3; overflow: hidden; background: var(--ma-divider); margin-bottom: 4px; }
+.ma-root .ma-card-title {
+  font-family: var(--ma-serif);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.38;
+  letter-spacing: -0.02em;
+}
+.ma-root .ma-card a:hover .ma-card-title { color: var(--ma-accent); }
+.ma-root .ma-card-deck { font-size: 14px; line-height: 1.6; color: var(--ma-body); }
+
+/* ── 02 공동구매 지면 ── */
+.ma-root .ma-grid2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 36px 28px;
+}
+.ma-root .ma-gb .ma-card-media { aspect-ratio: 3 / 2; border-top: 5px solid var(--ma-accent); }
+.ma-root .ma-gb .ma-card-title { font-size: 22px; line-height: 1.32; }
+.ma-root .ma-gb .ma-card-deck { font-size: 15px; }
+.ma-root .ma-brief {
+  align-self: start;
+  padding: 20px 22px 8px;
+  background: var(--ma-surface);
+  border-top: 5px solid var(--ma-ink);
+}
+.ma-root .ma-brief-title { font-family: var(--ma-serif); font-size: 26px; font-weight: 900; letter-spacing: -0.03em; }
+.ma-root .ma-brief-sub { margin-top: 2px; font-size: 13px; color: var(--ma-muted); }
+.ma-root .ma-brief ol { margin-top: 12px; }
+.ma-root .ma-brief li { border-top: 1px solid var(--ma-divider); }
+.ma-root .ma-brief a { display: flex; flex-direction: column; gap: 4px; padding: 14px 0 16px; }
+.ma-root .ma-brief-date { font-size: 12.5px; font-weight: 600; color: var(--ma-accent); }
+.ma-root .ma-brief-name { font-family: var(--ma-serif); font-size: 17px; font-weight: 700; line-height: 1.38; }
+.ma-root .ma-brief a:hover .ma-brief-name { color: var(--ma-accent); }
+.ma-root .ma-brief-deck { font-size: 13.5px; line-height: 1.55; color: var(--ma-body); }
+
+/* ── 03 국내 판매 지면: 검은 바탕 특집 지면, 이미지 대신 티켓 ── */
+.ma-root .ma-sale {
+  margin: 104px -40px 0;
+  padding: 48px 40px 56px;
+  background: var(--ma-ink);
+  color: #eceee9;
+}
+.ma-root .ma-sale .ma-sec { margin-top: 0; }
+.ma-root .ma-sale .ma-sec-head { border-top-color: #f3f4f1; border-bottom-color: rgba(243, 244, 241, 0.3); }
+.ma-root .ma-sale .ma-sec-no { color: #e9835c; }
+.ma-root .ma-sale .ma-sec-desc { color: #c4c8c2; }
+.ma-root .ma-sale .ma-more { color: #f0a283; }
+.ma-root .ma-chips { display: flex; gap: 8px; margin: -12px 0 28px; }
+.ma-root .ma-chip {
+  padding: 5px 14px;
+  border: 1px solid rgba(243, 244, 241, 0.35);
+  border-radius: 999px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #d9dcd6;
+}
+.ma-root .ma-chip-on { background: #f3f4f1; border-color: #f3f4f1; color: var(--ma-ink); }
+.ma-root .ma-chip-dim { border-style: dashed; color: #a0a59f; font-weight: 500; }
+
+.ma-root .ma-tickets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+.ma-root .ma-ticket {
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--ma-bg);
+  color: var(--ma-ink);
+}
+.ma-root .ma-stub {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 172px;
+  padding: 16px 20px 18px;
+}
+.ma-root .ma-stub-drop {
+  background-color: var(--ma-accent);
+  background-image: radial-gradient(rgba(255, 255, 255, 0.2) 1.4px, transparent 1.6px);
+  background-size: 12px 12px;
+  color: #fff;
+}
+.ma-root .ma-stub-pre {
+  background-color: #e4e5e1;
+  background-image: repeating-linear-gradient(-45deg, rgba(22, 24, 26, 0.07) 0 2px, transparent 2px 9px);
+  color: var(--ma-ink);
+}
+.ma-root .ma-stub-type {
+  align-self: flex-start;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: rgba(22, 24, 26, 0.88);
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.ma-root .ma-stub-drop .ma-stub-type { background: #fff; color: var(--ma-accent); }
+.ma-root .ma-stub-time {
+  font-family: var(--ma-serif);
+  font-size: 60px;
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+}
+.ma-root .ma-stub-time small { font-size: 30px; letter-spacing: -0.02em; }
+.ma-root .ma-stub-when { font-size: 13px; font-weight: 600; }
+.ma-root .ma-ticket-body {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px 22px 22px;
+  border-top: 2px dashed #b4b8b2;
+}
+.ma-root .ma-ticket-body::before, .ma-root .ma-ticket-body::after {
+  content: "";
+  position: absolute;
+  top: -11px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--ma-ink);
+}
+.ma-root .ma-ticket-body::before { left: -10px; }
+.ma-root .ma-ticket-body::after { right: -10px; }
+.ma-root .ma-ticket-shop { font-size: 13px; color: var(--ma-muted); }
+.ma-root .ma-ticket-name {
+  font-family: var(--ma-serif);
+  font-size: 23px;
+  font-weight: 900;
+  line-height: 1.3;
+  letter-spacing: -0.03em;
+}
+.ma-root .ma-ticket-deck { font-size: 15px; line-height: 1.6; color: var(--ma-body); }
+.ma-root .ma-ticket-facts { display: grid; grid-template-columns: 64px 1fr; gap: 6px 10px; font-size: 14px; }
+.ma-root .ma-ticket-facts dt { color: var(--ma-muted); }
+.ma-root .ma-ticket-facts dd { font-weight: 600; }
+.ma-root .ma-ticket-facts s { color: var(--ma-muted); font-weight: 400; }
+.ma-root .ma-ticket-facts .ma-price { color: var(--ma-accent); }
+.ma-root .ma-ticket-tag {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 0 6px;
+  border-radius: 3px;
+  background: var(--ma-accent-tint);
+  color: var(--ma-accent);
+  font-size: 12px;
+}
+.ma-root .ma-ticket-tie {
+  display: block;
+  padding: 9px 12px;
+  border: 1px solid var(--ma-accent);
+  border-radius: 6px;
+  background: var(--ma-accent-tint);
+  color: var(--ma-accent);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.ma-root .ma-ticket-tie:hover { background: #efd5c8; }
+.ma-root .ma-ticket-link {
+  margin-top: auto;
+  padding-top: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ma-accent);
+}
+.ma-root .ma-ticket-link:hover { color: var(--ma-accent-hover); text-decoration: underline; }
+
+.ma-root .ma-ledger-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 24px;
+  margin-top: 56px;
+  padding-bottom: 12px;
+  border-bottom: 3px solid #f3f4f1;
+}
+.ma-root .ma-ledger-title { font-family: var(--ma-serif); font-size: 30px; font-weight: 900; letter-spacing: -0.03em; }
+.ma-root .ma-ledger-note { font-size: 13.5px; color: #b5bab3; }
+.ma-root .ma-ledger { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+.ma-root .ma-ledger th {
+  padding: 12px 12px 10px;
+  border-bottom: 1px solid rgba(243, 244, 241, 0.3);
+  font-size: 12.5px;
+  font-weight: 500;
+  text-align: left;
+  color: #9ea39d;
+}
+.ma-root .ma-ledger th:first-child, .ma-root .ma-ledger td:first-child { padding-left: 0; }
+.ma-root .ma-ledger th:last-child, .ma-root .ma-ledger td:last-child { padding-right: 0; text-align: right; }
+.ma-root .ma-ledger td {
+  padding: 15px 12px;
+  border-bottom: 1px solid rgba(243, 244, 241, 0.13);
+  vertical-align: baseline;
+}
+.ma-root .ma-ledger-date { white-space: nowrap; }
+.ma-root .ma-ledger-date b {
+  display: block;
+  font-family: var(--ma-serif);
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1.1;
+  color: #fff;
+}
+.ma-root .ma-ledger-date span { font-size: 12.5px; color: #9ea39d; }
+.ma-root .ma-ledger-shop { font-family: var(--ma-mono); font-size: 13px; color: #c4c8c2; }
+.ma-root .ma-type {
+  display: inline-block;
+  padding: 1px 9px;
+  border: 1px solid rgba(243, 244, 241, 0.45);
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.ma-root .ma-type-drop { background: var(--ma-accent); border-color: var(--ma-accent); color: #fff; }
+.ma-root .ma-type-plan { border-style: dashed; }
+.ma-root .ma-ledger-name { font-weight: 600; color: #fff; }
+.ma-root .ma-ledger-desc { color: #c4c8c2; }
+.ma-root .ma-ledger-pair td { border-bottom-color: transparent; }
+.ma-root .ma-ledger-link { font-size: 13.5px; font-weight: 600; color: #f0a283; white-space: nowrap; }
+.ma-root .ma-ledger-link:hover { text-decoration: underline; }
+.ma-root .ma-example {
+  display: grid;
+  grid-template-columns: 130px 120px 1fr;
+  gap: 16px;
+  align-items: baseline;
+  margin-top: 18px;
+  padding: 14px 16px;
+  border: 1.5px dashed rgba(243, 244, 241, 0.4);
+  border-radius: 6px;
+  font-size: 14px;
+  color: #b5bab3;
+}
+.ma-root .ma-example-shop { font-family: var(--ma-mono); font-size: 13px; color: #eceee9; }
+.ma-root .ma-example-shop em {
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: 3px;
+  background: #f3f4f1;
+  color: var(--ma-ink);
+  font-family: var(--ma-sans);
+  font-size: 11.5px;
+  font-style: normal;
+  font-weight: 700;
+}
+.ma-root .ma-sale-note { margin-top: 24px; font-size: 13px; color: #9ea39d; }
+
+/* ── 푸터 ── */
+.ma-root .ma-footer { padding: 40px 0 36px; }
+.ma-root .ma-footer-grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr 1.2fr;
+  gap: 40px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--ma-border);
+}
+.ma-root .ma-footer-logo {
+  font-family: var(--ma-serif);
+  font-size: 34px;
+  font-weight: 900;
+  letter-spacing: -0.05em;
+  line-height: 1;
+}
+.ma-root .ma-footer-about { margin-top: 10px; max-width: 360px; font-size: 14px; color: var(--ma-body); }
+.ma-root .ma-footer-h { margin-bottom: 8px; color: var(--ma-muted); }
+.ma-root .ma-footer li { font-size: 14px; line-height: 1.9; }
+.ma-root .ma-footer li a:hover { color: var(--ma-accent); }
+.ma-root .ma-footer-legal { margin-top: 16px; font-size: 13px; color: var(--ma-muted); }
+.ma-root .ma-mobile-note {
+  margin-top: 28px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--ma-border);
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: #868b86;
+}
+</style>
+<div class="ma-root">
+
+  <!-- 헤더 -->
+  <header>
+    <div class="ma-masthead">
+      <a class="ma-logo" href="#" aria-label="키체크 메인으로"><span>keycheck<span class="ma-logo-dot">.</span></span><span class="ma-logo-ko">키체크</span></a>
+      <nav class="ma-nav" aria-label="지면">
+        <a href="#ma-ic"><span class="ma-nav-no">01</span>IC</a>
+        <a href="#ma-gb"><span class="ma-nav-no">02</span>공동구매</a>
+        <a href="#ma-sale"><span class="ma-nav-no">03</span>국내 판매</a>
+      </nav>
+      <span class="ma-login">로그인 자리</span>
+    </div>
+    <div class="ma-double-rule"></div>
+    <div class="ma-dateline">
+      <span><strong>2026년 11월 5일 목요일</strong> · 저녁</span>
+      <span>IC 30 · 공동구매 10 · 국내 판매 공지 9</span>
+      <span>geekhack 글은 30분마다 확인해요</span>
+    </div>
+  </header>
+
+  <!-- 커버 스토리 -->
+  <section class="ma-cover" id="ma-cover" aria-labelledby="ma-cover-title">
+    <div class="ma-cover-panel">
+      <div class="ma-cover-text">
+        <p class="ma-cover-kicker">
+          <span class="ma-label">Cover Story</span>
+          <span class="ma-rule-short"></span>
+          <span class="ma-badge ma-badge-gb">공동구매</span>
+        </p>
+        <div>
+          <h1 class="ma-cover-title" id="ma-cover-title"><span>SWG</span><span>Nightshift</span></h1>
+          <p class="ma-cover-deck">Swagkeys(SWG)가 제작하는 체리 프로파일 더블샷 ABS 키캡 세트 SWG Nightshift의 공동구매 글이에요.</p>
+          <p class="ma-cover-orig">원문 제목 · [GB] SWG Nightshift | Oct 30th -&gt; Nov 13th</p>
+        </div>
+        <div class="ma-cover-actions">
+          <a class="ma-btn ma-btn-solid" href="#">한국어 요약 읽기</a>
+          <a class="ma-btn ma-btn-ghost" href="https://geekhack.org/index.php?topic=127279.0" target="_blank" rel="noopener noreferrer">geekhack 원문 ↗</a>
+        </div>
+      </div>
+      <figure class="ma-cover-figure">
+        <img src="https://bord.design/nightshift/8.jpg" alt="" referrerpolicy="no-referrer">
+      </figure>
+      <p class="ma-cover-stamp"><span>마감까지</span><b>8일</b></p>
+    </div>
+    <dl class="ma-cover-facts">
+      <div><dt>공동구매 기간</dt><dd>10월 30일 → 11월 13일</dd></div>
+      <div><dt>분류</dt><dd>키캡 · 그 외</dd></div>
+      <div><dt>geekhack 반응</dt><dd>조회 6,800+ · 댓글 2 · 10월 31일 작성</dd></div>
+      <div class="ma-cover-link"><dt>국내에서도 살 수 있어요</dt><dd><a href="#ma-sale">swagkey 예약판매 · 11월 13일(금) 23:59까지 →</a></dd></div>
+    </dl>
+  </section>
+
+  <!-- 보조 기사 -->
+  <div class="ma-subs-head"><span class="ma-label">Also this week</span><span>커버와 함께 볼 소식</span></div>
+  <div class="ma-subs">
+    <article class="ma-sub">
+      <a href="#ma-sale">
+        <div class="ma-sub-media ma-sub-type">
+          <span class="ma-sub-type-top">swagkey · 드랍 판매</span>
+          <span class="ma-sub-type-time">19:30</span>
+          <span class="ma-sub-type-bottom">11월 5일 목요일 · 오늘 저녁</span>
+        </div>
+        <p class="ma-sub-kicker">국내 판매 · 오늘 시작</p>
+        <h3 class="ma-sub-title">GMK CYL Gonzales</h3>
+        <p class="ma-sub-deck ma-clamp2">swagkey에서 오늘 저녁 7시 30분부터 드랍으로 판매해요.</p>
+        <p class="ma-meta">swagkey 디스코드 공지</p>
+      </a>
+    </article>
+    <article class="ma-sub">
+      <a href="#">
+        <div class="ma-sub-media"><img src="https://i.imgur.com/PY72A0b.png" alt="" referrerpolicy="no-referrer"></div>
+        <p class="ma-sub-kicker">IC · 최근 7일 댓글이 가장 많아요</p>
+        <h3 class="ma-sub-title">[IC] GMK CYL nuSignal</h3>
+        <p class="ma-sub-deck ma-clamp2">GMK CYL 프로파일로 나오는 nuSignal 키캡 세트의 관심도 조사(IC)예요.</p>
+        <p class="ma-meta">10월 31일 작성 · 조회 8,500+ · 댓글 15</p>
+      </a>
+    </article>
+    <article class="ma-sub">
+      <a href="#">
+        <div class="ma-sub-media"><img src="https://i.imgur.com/ppgcj2r.png" alt="" referrerpolicy="no-referrer"></div>
+        <p class="ma-sub-kicker">공동구매 · 11월 16일 마감, 11일 남았어요</p>
+        <h3 class="ma-sub-title">[GB] MW Datenshi | 26 Oct - 16 Nov</h3>
+        <p class="ma-sub-deck ma-clamp2">디자이너 Minisofu가 만든 MW 키캡 세트 Datenshi의 공동구매 글이에요.</p>
+        <p class="ma-meta">10월 26일 작성 · 조회 1.6만+ · 댓글 2</p>
+      </a>
+    </article>
+  </div>
+
+  <!-- 차례 + 시안 메모 -->
+  <div class="ma-guide">
+    <nav class="ma-toc" aria-label="이번 호 차례">
+      <p class="ma-label ma-label-ko">이번 호 차례</p>
+      <ol>
+        <li><a href="#ma-ic"><span class="ma-toc-no">01</span><span class="ma-toc-name">IC</span><span class="ma-toc-count">관심 조사 글 30개</span></a></li>
+        <li><a href="#ma-gb"><span class="ma-toc-no">02</span><span class="ma-toc-name">공동구매</span><span class="ma-toc-count">공동구매 글 10개</span></a></li>
+        <li><a href="#ma-sale"><span class="ma-toc-no">03</span><span class="ma-toc-name">국내 판매</span><span class="ma-toc-count">swagkey 판매 공지 9건</span></a></li>
+      </ol>
+    </nav>
+    <aside class="ma-memo" aria-label="시안 메모">
+      <p class="ma-memo-title"><span>시안 메모</span>하이라이트를 고르는 규칙</p>
+      <ul>
+        <li><b>커버</b>: 진행 중인 공동구매 가운데 국내 판매처에서도 예약판매하는 글. 없으면 최근 7일 새 글 중 조회수 1위.</li>
+        <li><b>보조 ①</b>: 오늘 판매가 시작되는 국내 판매 공지(여럿이면 가장 이른 시각).</li>
+        <li><b>보조 ②</b>: 최근 7일 IC 중 댓글이 가장 많은 글.</li>
+        <li><b>보조 ③</b>: 제목에 적힌 마감일이 가장 가까운 공동구매(커버 제외).</li>
+        <li>아래 IC·공동구매 지면에는 하이라이트에 쓴 글을 다시 넣지 않아요.</li>
+      </ul>
+    </aside>
+  </div>
+
+  <!-- 01 IC -->
+  <section class="ma-sec" id="ma-ic" aria-labelledby="ma-ic-title">
+    <header class="ma-sec-head">
+      <div class="ma-sec-name">
+        <span class="ma-sec-no">01 —</span>
+        <h2 class="ma-sec-title" id="ma-ic-title">IC</h2>
+      </div>
+      <div class="ma-sec-intro">
+        <p class="ma-sec-sub">Interest Checks</p>
+        <p class="ma-sec-desc">관심 조사 글이에요. 아직 판매 전이라 의견을 모으는 단계예요.</p>
+      </div>
+      <a class="ma-more" href="#">IC 전체 보기 →</a>
+    </header>
+
+    <div class="ma-spread">
+      <article class="ma-feature">
+        <a href="#">
+          <div class="ma-feature-media"><img src="https://i.imgur.com/KSEcDYd.jpeg" alt="" referrerpolicy="no-referrer"></div>
+          <p class="ma-cat"><span class="ma-badge ma-badge-ic">IC</span><span>기타</span></p>
+          <h3 class="ma-feature-title">[IC] GSD Crib Artisan Tray</h3>
+          <p class="ma-pull">GSD 스타일의 아티산 키캡 보관용 트레이인 GSD Crib의 관심 체크 글이에요.</p>
+          <p class="ma-meta">10월 26일 작성 · 조회 1.3만+ · 댓글 1</p>
+        </a>
+      </article>
+      <aside class="ma-rank" aria-labelledby="ma-rank-title">
+        <h3 class="ma-rank-title" id="ma-rank-title">많이 본 IC</h3>
+        <p class="ma-rank-sub">최근 30일 동안 올라온 글, 조회수 순</p>
+        <ol>
+          <li><a href="#"><span class="ma-rank-no">1</span><span class="ma-rank-name">[IC] Constance 60</span><span class="ma-rank-cat">키보드 · 60%</span><span class="ma-meta">조회 3.9만+ · 댓글 13</span></a></li>
+          <li><a href="#"><span class="ma-rank-no">2</span><span class="ma-rank-name">[IC] DCS Allsorts</span><span class="ma-rank-cat">키캡 · SP</span><span class="ma-meta">조회 3.6만+ · 댓글 15</span></a></li>
+          <li><a href="#"><span class="ma-rank-no">3</span><span class="ma-rank-name">[IC] PBTfans Genius #81</span><span class="ma-rank-cat">키캡 · PBTfans</span><span class="ma-meta">조회 3.3만+ · 댓글 3</span></a></li>
+          <li><a href="#"><span class="ma-rank-no">4</span><span class="ma-rank-name">[IC] GMK MTNU Moon Wake</span><span class="ma-rank-cat">키캡 · GMK</span><span class="ma-meta">조회 3.3만+ · 댓글 3</span></a></li>
+          <li><a href="#"><span class="ma-rank-no">5</span><span class="ma-rank-name">[IC] KKB 1001 Nights</span><span class="ma-rank-cat">키캡 · KKB</span><span class="ma-meta">조회 2.8만+ · 댓글 5</span></a></li>
+        </ol>
+      </aside>
+    </div>
+
+    <div class="ma-grid4">
+      <article class="ma-card">
+        <a href="#">
+          <div class="ma-card-media"><img src="https://i.postimg.cc/Y0ntLgVm/01-keycaps-c64-angle.jpg" alt="" referrerpolicy="no-referrer"></div>
+          <p class="ma-cat"><span class="ma-badge ma-badge-ic">IC</span><span>키캡 · SP</span></p>
+          <h3 class="ma-card-title ma-clamp3">[IC] SA 64 / SA 64C / SA 16 — SA keycaps for the Commodore 64, 64C and 16</h3>
+          <p class="ma-card-deck ma-clamp2">코모도어 64, 64C, 16 컴퓨터의 원래 색상을 재현한 SA 프로파일 키캡 3종(SA 64, SA 64C, SA 16)의 관심 조사예요.</p>
+          <p class="ma-meta">10월 23일 · 조회 1.2만+ · 댓글 0</p>
+        </a>
+      </article>
+      <article class="ma-card">
+        <a href="#">
+          <div class="ma-card-media"><img src="https://cdn.shopify.com/s/files/1/0607/5351/0626/files/DSC02284.jpg?v=1792743092" alt="" referrerpolicy="no-referrer"></div>
+          <p class="ma-cat"><span class="ma-badge ma-badge-ic">IC</span><span>키보드 · 60%</span></p>
+          <h3 class="ma-card-title ma-clamp3">[IC] Class 60 V2 — 60% Retro Design Board</h3>
+          <p class="ma-card-deck ma-clamp2">MM Studio가 DEC VT220의 LK201 키보드에서 영감을 받아 만든 60% 커스텀 키보드 키트 Class 60 V2의 관심 조사(IC)예요.</p>
+          <p class="ma-meta">10월 23일 · 조회 2만+ · 댓글 5</p>
+        </a>
+      </article>
+      <article class="ma-card">
+        <a href="#">
+          <div class="ma-card-media"><img src="https://media.biipmk.com/gmk-video2048/GMK_Power-2048-Renders-1.jpg" alt="" referrerpolicy="no-referrer"></div>
+          <p class="ma-cat"><span class="ma-badge ma-badge-ic">IC</span><span>키캡 · GMK</span></p>
+          <h3 class="ma-card-title ma-clamp3">[IC] GMK CYL Video 2048</h3>
+          <p class="ma-card-deck ma-clamp2">GMK CYL 프로파일로 만드는 키캡 세트 GMK CYL Video 2048의 관심 체크(IC)예요.</p>
+          <p class="ma-meta">10월 19일 · 조회 2.5만+ · 댓글 3</p>
+        </a>
+      </article>
+      <article class="ma-card">
+        <a href="#">
+          <div class="ma-card-media"><img src="https://mugen.cat/projects/zoltraak/assets/forum/samples-6200k-1.jpg" alt="" referrerpolicy="no-referrer"></div>
+          <p class="ma-cat"><span class="ma-badge ma-badge-ic">IC</span><span>키캡 · MW</span></p>
+          <h3 class="ma-card-title ma-clamp3">[IC] MW Zoltraak</h3>
+          <p class="ma-card-deck ma-clamp2">MW Keys에서 제작하는 체리 프로파일 더블샷 ABS 키캡 세트 'Zoltraak'의 관심 조사(IC)예요.</p>
+          <p class="ma-meta">10월 15일 · 조회 2.4만+ · 댓글 5</p>
+        </a>
+      </article>
+    </div>
+  </section>
+
+  <!-- 02 공동구매 -->
+  <section class="ma-sec" id="ma-gb" aria-labelledby="ma-gb-title">
+    <header class="ma-sec-head">
+      <div class="ma-sec-name">
+        <span class="ma-sec-no">02 —</span>
+        <h2 class="ma-sec-title" id="ma-gb-title">공동구매</h2>
+      </div>
+      <div class="ma-sec-intro">
+        <p class="ma-sec-sub">Group Buys</p>
+        <p class="ma-sec-desc">주문을 받는 중이거나 곧 받을 글이에요. 기간과 벤더를 확인해 보세요.</p>
+      </div>
+      <a class="ma-more" href="#">공동구매 전체 보기 →</a>
+    </header>
+
+    <div class="ma-spread">
+      <div class="ma-grid2">
+        <article class="ma-card ma-gb">
+          <a href="#">
+            <div class="ma-card-media"><img src="https://imagedelivery.net/5Lj-4KVs36OWCtiVSZ4L1Q/c993d042-652b-456f-f48c-83165ef24100/public" alt="" referrerpolicy="no-referrer"></div>
+            <p class="ma-cat"><span class="ma-badge ma-badge-gb">공동구매</span><span>키캡 · GMK</span></p>
+            <h3 class="ma-card-title ma-clamp3">[GB] GMK Salamander</h3>
+            <p class="ma-card-deck ma-clamp2">NyxKeys가 친구 Glen과 함께 디자인한 GMK 체리 프로파일 키캡 세트예요.</p>
+            <p class="ma-meta">10월 20일 · 조회 2.3만+ · 댓글 5</p>
+          </a>
+        </article>
+        <article class="ma-card ma-gb">
+          <a href="#">
+            <div class="ma-card-media"><img src="https://i.postimg.cc/fDn8NbZW/Black-Base.png" alt="" referrerpolicy="no-referrer"></div>
+            <p class="ma-cat"><span class="ma-badge ma-badge-gb">공동구매</span><span>키캡 · GMK</span></p>
+            <h3 class="ma-card-title ma-clamp3">[GB] GMK CYL Blanks</h3>
+            <p class="ma-card-deck ma-clamp2">GMK CYL 프로파일의 블랭크 키캡 세트로, 각인 없이 색상만 있는 키캡이에요.</p>
+            <p class="ma-meta">10월 16일 · 조회 2.7만+ · 댓글 9</p>
+          </a>
+        </article>
+        <article class="ma-card ma-gb">
+          <a href="#">
+            <div class="ma-card-media"><img src="https://i.imgur.com/pc8l2Nb.jpeg" alt="" referrerpolicy="no-referrer"></div>
+            <p class="ma-cat"><span class="ma-badge ma-badge-gb">공동구매</span><span>키보드 · 65%</span></p>
+            <h3 class="ma-card-title ma-clamp3">[GB]Space66% Spaceforge</h3>
+            <p class="ma-card-deck ma-clamp2">Graystudio에서 진행하는 66% 배열 알루미늄 키보드 Space66% Spaceforge의 공동구매 글이에요.</p>
+            <p class="ma-meta">10월 9일 · 조회 3.4만+ · 댓글 2</p>
+          </a>
+        </article>
+        <article class="ma-card ma-gb">
+          <a href="#">
+            <div class="ma-card-media"><img src="https://i.postimg.cc/8zwCCyD3/DCS-SMRT-165.jpg" alt="" referrerpolicy="no-referrer"></div>
+            <p class="ma-cat"><span class="ma-badge ma-badge-gb">공동구매</span><span>키캡 · SP</span></p>
+            <h3 class="ma-card-title ma-clamp3">[GB] DCS SMRT R2 - GB Complete</h3>
+            <p class="ma-card-deck ma-clamp2">Piperaceae가 디자인한 DCS SMRT의 두 번째 런(R2) 키캡 세트예요.</p>
+            <p class="ma-meta">9월 20일 · 조회 6.6만+ · 댓글 23</p>
+          </a>
+        </article>
+      </div>
+      <aside class="ma-brief" aria-labelledby="ma-brief-title">
+        <h3 class="ma-brief-title" id="ma-brief-title">공동구매 단신</h3>
+        <p class="ma-brief-sub">이미지 없이 짧게 훑어보는 글</p>
+        <ol>
+          <li><a href="#">
+            <span class="ma-brief-date">10.26 · 키보드 · 65%</span>
+            <span class="ma-brief-name">[GB] Seed Plan Linedge 65 Keyboard</span>
+            <span class="ma-brief-deck ma-clamp2">Seed Plan의 Linedge 65는 Tonish TKL 디자이너 CC가 만든 첫 65% 키보드의 공동구매 글이에요.</span>
+            <span class="ma-meta">조회 1.7만+ · 댓글 3</span>
+          </a></li>
+          <li><a href="#">
+            <span class="ma-brief-date">10.17 · 키보드 · 80%</span>
+            <span class="ma-brief-name">[GB] Code:002 TKL</span>
+            <span class="ma-brief-deck ma-clamp2">Cafege의 Code:002 TKL 키보드 공동구매 글이에요.</span>
+            <span class="ma-meta">조회 2.9만+ · 댓글 0</span>
+          </a></li>
+          <li><a href="#">
+            <span class="ma-brief-date">07.10 · 키캡 · MW</span>
+            <span class="ma-brief-name">[GB] MW Meteor Dreams</span>
+            <span class="ma-brief-deck ma-clamp2">MW에서 제작하는 Meteor Dreams 키캡 세트의 공동구매 글이에요.</span>
+            <span class="ma-meta">조회 3.1만+ · 댓글 1</span>
+          </a></li>
+          <li><a href="#">
+            <span class="ma-brief-date">07.10 · 키캡 · 그 외</span>
+            <span class="ma-brief-name">[GB] SWG Neowell - July 6th to July 27th</span>
+            <span class="ma-brief-deck ma-clamp2">SWG Neowell은 옛 Honeywell 터미널 배색을 재해석한 Cylindrical Cherry 프로파일 키캡 세트예요.</span>
+            <span class="ma-meta">조회 17.4만+ · 댓글 3</span>
+          </a></li>
+        </ol>
+      </aside>
+    </div>
+  </section>
+
+  <!-- 03 국내 판매 -->
+  <div class="ma-sale">
+    <section class="ma-sec" id="ma-sale" aria-labelledby="ma-sale-title">
+      <header class="ma-sec-head">
+        <div class="ma-sec-name">
+          <span class="ma-sec-no">03 —</span>
+          <h2 class="ma-sec-title" id="ma-sale-title">국내 판매</h2>
+        </div>
+        <div class="ma-sec-intro">
+          <p class="ma-sec-sub">판매처 공지</p>
+          <p class="ma-sec-desc">국내 판매처 디스코드 공지에서 예약판매·드랍·입고 판매·래플만 골라 판매 건마다 정리해요.</p>
+        </div>
+        <a class="ma-more" href="#">판매 공지 전체 보기 →</a>
+      </header>
+
+      <div class="ma-chips" aria-label="판매처">
+        <span class="ma-chip ma-chip-on">전체 9</span>
+        <span class="ma-chip">swagkey 9</span>
+        <span class="ma-chip ma-chip-dim">geonworks 준비 중</span>
+      </div>
+
+      <div class="ma-tickets">
+        <article class="ma-ticket">
+          <div class="ma-stub ma-stub-drop">
+            <span class="ma-stub-type">드랍 판매</span>
+            <span class="ma-stub-time">19:30</span>
+            <span class="ma-stub-when">11월 5일 목요일 · 오늘 저녁 시작</span>
+          </div>
+          <div class="ma-ticket-body">
+            <p class="ma-ticket-shop">swagkey · 디스코드 공지</p>
+            <h3 class="ma-ticket-name">GMK CYL Gonzales</h3>
+            <p class="ma-ticket-deck">swagkey에서 오늘 저녁 7시 30분부터 드랍으로 판매해요.</p>
+            <dl class="ma-ticket-facts">
+              <dt>판매 시작</dt><dd>11월 5일(목) 19:30</dd>
+              <dt>방식</dt><dd>드랍 판매</dd>
+            </dl>
+            <a class="ma-ticket-link" href="#">디스코드 공지 원문 →</a>
+          </div>
+        </article>
+        <article class="ma-ticket">
+          <div class="ma-stub ma-stub-pre">
+            <span class="ma-stub-type">예약판매</span>
+            <span class="ma-stub-time"><small>~</small>11.13</span>
+            <span class="ma-stub-when">금요일 23:59까지 · 8일 남았어요</span>
+          </div>
+          <div class="ma-ticket-body">
+            <p class="ma-ticket-shop">swagkey · 11월 3일 공지</p>
+            <h3 class="ma-ticket-name">SWG Nightshift ABS 이중사출 키캡</h3>
+            <dl class="ma-ticket-facts">
+              <dt>예약 기간</dt><dd>11월 13일(금) 23:59까지</dd>
+              <dt>발송</dt><dd>2027년 8월 말</dd>
+            </dl>
+            <a class="ma-ticket-tie" href="#ma-cover">geekhack 공동구매 글과 같은 상품이에요<br>커버 스토리에서 요약 보기 ↑</a>
+            <a class="ma-ticket-link" href="#">디스코드 공지 원문 →</a>
+          </div>
+        </article>
+        <article class="ma-ticket">
+          <div class="ma-stub ma-stub-pre">
+            <span class="ma-stub-type">예약판매</span>
+            <span class="ma-stub-time"><small>~</small>11.27</span>
+            <span class="ma-stub-when">금요일 23:59까지 · 22일 남았어요</span>
+          </div>
+          <div class="ma-ticket-body">
+            <p class="ma-ticket-shop">swagkey · 10월 22일 공지</p>
+            <h3 class="ma-ticket-name">SW 트랜지션87 HE 블랙 투명</h3>
+            <dl class="ma-ticket-facts">
+              <dt>가격</dt><dd><s>148,000원</s> <span class="ma-price">133,200원</span><span class="ma-ticket-tag">예약 10% 할인</span></dd>
+              <dt>예약 기간</dt><dd>11월 27일(금) 23:59까지</dd>
+              <dt>배송</dt><dd>12월 중순</dd>
+            </dl>
+            <a class="ma-ticket-link" href="#">디스코드 공지 원문 →</a>
+          </div>
+        </article>
+      </div>
+
+      <div class="ma-ledger-head">
+        <h3 class="ma-ledger-title">이미 시작된 판매</h3>
+        <p class="ma-ledger-note">같은 상품이라도 "판매 예정"과 "판매 시작" 공지는 한 줄씩 따로 보여줘요.</p>
+      </div>
+      <table class="ma-ledger">
+        <thead>
+          <tr><th>판매 시점</th><th>판매처</th><th>구분</th><th>상품</th><th>내용</th><th>원문</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="ma-ledger-date"><b>11.04</b><span>수 19:00</span></td>
+            <td class="ma-ledger-shop">swagkey</td>
+            <td><span class="ma-type ma-type-drop">드랍 판매</span></td>
+            <td class="ma-ledger-name">SWG Classic Blue ABS 이중사출 키캡</td>
+            <td class="ma-ledger-desc">어제 저녁 7시에 판매를 시작했어요.</td>
+            <td><a class="ma-ledger-link" href="#">공지 →</a></td>
+          </tr>
+          <tr class="ma-ledger-pair">
+            <td class="ma-ledger-date"><b>10.30</b><span>금 19:00</span></td>
+            <td class="ma-ledger-shop">swagkey</td>
+            <td><span class="ma-type ma-type-drop">드랍 판매 시작</span></td>
+            <td class="ma-ledger-name">Baionlenja Synovia</td>
+            <td class="ma-ledger-desc">판매를 시작했다는 10월 30일 공지예요.</td>
+            <td><a class="ma-ledger-link" href="#">공지 →</a></td>
+          </tr>
+          <tr>
+            <td class="ma-ledger-date"><b>10.30</b><span>금 19:00</span></td>
+            <td class="ma-ledger-shop">swagkey</td>
+            <td><span class="ma-type ma-type-plan">드랍 판매 예정</span></td>
+            <td class="ma-ledger-name">Baionlenja Synovia</td>
+            <td class="ma-ledger-desc">하루 앞서 판매 시각을 알린 10월 29일 공지예요.</td>
+            <td><a class="ma-ledger-link" href="#">공지 →</a></td>
+          </tr>
+          <tr>
+            <td class="ma-ledger-date"><b>10.29</b><span>목 19:00</span></td>
+            <td class="ma-ledger-shop">swagkey</td>
+            <td><span class="ma-type">입고 판매</span></td>
+            <td class="ma-ledger-name">Qwertykeys NEO80 Cu</td>
+            <td class="ma-ledger-desc">베어본킷·기판·보강판을 판매해요.</td>
+            <td><a class="ma-ledger-link" href="#">공지 →</a></td>
+          </tr>
+          <tr>
+            <td class="ma-ledger-date"><b>10.27</b><span>화 19:00</span></td>
+            <td class="ma-ledger-shop">swagkey</td>
+            <td><span class="ma-type">입고 판매</span></td>
+            <td class="ma-ledger-name">SW 나이트 스테빌라이저 스냅인</td>
+            <td class="ma-ledger-desc">저녁 7시에 입고분 판매를 시작했어요.</td>
+            <td><a class="ma-ledger-link" href="#">공지 →</a></td>
+          </tr>
+          <tr>
+            <td class="ma-ledger-date"><b>10.22</b><span>목 · 공지</span></td>
+            <td class="ma-ledger-shop">swagkey</td>
+            <td><span class="ma-type">판매</span></td>
+            <td class="ma-ledger-name">Eave65 MX 유무선 완제품</td>
+            <td class="ma-ledger-desc">네이버 스토어에서 판매해요.</td>
+            <td><a class="ma-ledger-link" href="#">공지 →</a></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="ma-example" aria-label="geonworks 예시">
+        <span class="ma-example-shop">geonworks<em>예시</em></span>
+        <span><span class="ma-type ma-type-plan">입고 판매</span></span>
+        <span>아직 공지 샘플이 없어 자리만 보여드려요. geonworks 공지가 들어오면 이 표에 같은 모양으로 한 줄씩 들어가요.</span>
+      </div>
+      <p class="ma-sale-note">판매처 디스코드 공지에서 판매 건만 골라 AI가 한국어로 정리했어요. 가격·기간·수량은 원문 공지에서 한 번 더 확인해 주세요.</p>
+    </section>
+  </div>
+
+  <!-- 푸터 -->
+  <footer class="ma-footer">
+    <div class="ma-footer-grid">
+      <div>
+        <p class="ma-footer-logo">keycheck<span class="ma-logo-dot">.</span></p>
+        <p class="ma-footer-about">geekhack의 IC·공동구매 글과 국내 판매처 공지를 한국어 요약, 대표 이미지, 원문 링크로 모아 보여줘요.</p>
+      </div>
+      <div>
+        <p class="ma-label ma-label-ko ma-footer-h">지면</p>
+        <ul>
+          <li><a href="#ma-ic">01 IC</a></li>
+          <li><a href="#ma-gb">02 공동구매</a></li>
+          <li><a href="#ma-sale">03 국내 판매</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="ma-label ma-label-ko ma-footer-h">출처</p>
+        <ul>
+          <li>geekhack · Interest Checks</li>
+          <li>geekhack · Group Buys and Preorders</li>
+          <li>swagkey 디스코드 공지</li>
+        </ul>
+      </div>
+    </div>
+    <p class="ma-footer-legal">글과 이미지의 권리는 원문 작성자와 판매처에 있어요. 자세한 내용은 원문에서 확인해 주세요.</p>
+    <p class="ma-mobile-note">모바일에서는: 커버는 이미지를 화면 폭에 꽉 채우고 큰 제목·요약·정보 칸을 그 아래로 쌓아요. 보조 기사 3개는 옆으로 넘기는 띠가 되고, 섹션 제목은 64px로 줄여요. IC·공동구매 카드는 한 줄에 하나씩 놓고 "많이 본 IC"·"공동구매 단신"은 카드 아래로 내리며, 국내 판매 표는 날짜가 앞에 붙은 카드 목록으로 바꿔요.</p>
+  </footer>
+
+</div>
+</div></div></div>
+<div class="doc-row"><div class="doc-col" style="width:1120px"><p class="doc-label">B안 · 데일리 브리핑</p><div class="doc-box" style="width:1120px"><style>
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap");
+
+/* B안 · 데일리 브리핑 — 모든 선택자는 .mb-root 아래로 한정 */
+.mb-root {
+  --mb-bg: #f3f4f1;
+  --mb-surface: #ffffff;
+  --mb-text: #16181a;
+  --mb-body: #2e3236;
+  --mb-muted: #4f555a;
+  --mb-soft: #6b7075;
+  --mb-faint: #a3a8a3;
+  --mb-accent: #b93a0b;
+  --mb-accent-hover: #8f2c07;
+  --mb-accent-soft: #f6e4da;
+  --mb-border: #d5d7d2;
+  --mb-divider: #e4e5e1;
+  --mb-sans: "IBM Plex Sans KR", system-ui, sans-serif;
+  --mb-mono: "IBM Plex Mono", ui-monospace, monospace;
+  box-sizing: border-box;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 24px 28px;
+  background: var(--mb-bg);
+  color: var(--mb-text);
+  font-family: var(--mb-sans);
+  font-size: 16px;
+  line-height: 1.5;
+  text-align: left;
+  word-break: keep-all;
+  -webkit-font-smoothing: antialiased;
+}
+
+.mb-root div, .mb-root section, .mb-root article, .mb-root header, .mb-root footer,
+.mb-root nav, .mb-root span, .mb-root img, .mb-root ol, .mb-root ul, .mb-root li,
+.mb-root p, .mb-root h1, .mb-root h2, .mb-root h3, .mb-root h4 {
+  box-sizing: border-box;
+}
+
+.mb-root h1, .mb-root h2, .mb-root h3, .mb-root h4, .mb-root p,
+.mb-root ol, .mb-root ul, .mb-root li {
+  margin: 0;
+  padding: 0;
+}
+
+.mb-root ol, .mb-root ul { list-style: none; }
+.mb-root img { display: block; max-width: 100%; }
+.mb-root s { color: var(--mb-soft); }
+.mb-root .mb-mono { font-family: var(--mb-mono); }
+
+/* ── 사이트 헤더 ── */
+.mb-root .mb-header {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  min-height: 64px;
+  border-bottom: 2px solid var(--mb-text);
+}
+.mb-root .mb-logo {
+  font-size: 26px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+.mb-root .mb-nav { display: flex; gap: 28px; }
+.mb-root .mb-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  border-bottom: 3px solid transparent;
+  color: var(--mb-muted);
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.mb-root .mb-nav-link:hover { color: var(--mb-text); }
+.mb-root .mb-nav-new {
+  padding: 0 5px;
+  border-radius: 3px;
+  background: var(--mb-accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+}
+.mb-root .mb-login {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px dashed var(--mb-faint);
+  border-radius: 6px;
+  color: var(--mb-soft);
+  font-size: 13px;
+}
+
+/* ── 마스트헤드 ── */
+.mb-root .mb-mast { padding-top: 14px; }
+.mb-root .mb-mast-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--mb-text);
+  color: var(--mb-muted);
+  font-size: 12.5px;
+}
+.mb-root .mb-mast-top strong { color: var(--mb-text); font-weight: 700; letter-spacing: 0.02em; }
+.mb-root .mb-mast-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 24px;
+  padding: 16px 0 14px;
+}
+.mb-root .mb-mast-title {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  font-weight: 700;
+}
+.mb-root .mb-mast-date {
+  font-size: 92px;
+  line-height: 0.95;
+  letter-spacing: -0.055em;
+}
+.mb-root .mb-mast-name {
+  font-size: 34px;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--mb-accent);
+}
+.mb-root .mb-mast-name::before {
+  content: "·";
+  margin-right: 16px;
+  color: var(--mb-text);
+}
+.mb-root .mb-mast-stamp {
+  margin-left: auto;
+  padding: 8px 0 6px 18px;
+  border-left: 1px solid var(--mb-border);
+  font-variant-numeric: tabular-nums;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--mb-muted);
+  text-align: right;
+  white-space: nowrap;
+}
+.mb-root .mb-mast-stamp strong { color: var(--mb-text); font-weight: 600; }
+.mb-root .mb-rule {
+  height: 7px;
+  border-top: 4px solid var(--mb-text);
+  border-bottom: 1px solid var(--mb-text);
+}
+
+/* 숫자 띠 */
+.mb-root .mb-index {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  border-bottom: 1px solid var(--mb-text);
+}
+.mb-root .mb-index-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-left: 1px solid var(--mb-border);
+}
+.mb-root .mb-index-cell:first-child { padding-left: 0; border-left: 0; }
+.mb-root .mb-index-num {
+  font-family: var(--mb-mono);
+  font-size: 26px;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.mb-root .mb-index-hot .mb-index-num { color: var(--mb-accent); }
+.mb-root .mb-index-label {
+  font-size: 12.5px;
+  line-height: 1.35;
+  color: var(--mb-muted);
+}
+
+/* ── 공통 섹션 머리 ── */
+.mb-root .mb-sechead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 26px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--mb-text);
+}
+.mb-root .mb-flag {
+  padding: 3px 8px;
+  background: var(--mb-text);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.04em;
+}
+.mb-root .mb-sechead h2 {
+  font-size: 22px;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.mb-root .mb-sechead-note { font-size: 13px; color: var(--mb-muted); }
+.mb-root .mb-sechead-right {
+  margin-left: auto;
+  font-family: var(--mb-mono);
+  font-size: 12px;
+  color: var(--mb-muted);
+}
+
+.mb-root .mb-kicker {
+  margin-bottom: 4px;
+  color: var(--mb-accent);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+.mb-root .mb-kicker-ink { color: var(--mb-text); }
+.mb-root .mb-meta {
+  margin-top: 6px;
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--mb-muted);
+}
+
+/* ── 하이라이트: 톱 · 일정표 · 달력 ── */
+.mb-root .mb-hl {
+  display: grid;
+  grid-template-columns: 316px minmax(0, 1fr) 228px;
+  border-bottom: 1px solid var(--mb-text);
+}
+.mb-root .mb-hl-col {
+  min-width: 0;
+  padding: 18px 22px 22px;
+  border-left: 1px solid var(--mb-border);
+}
+.mb-root .mb-hl-col:first-child { padding-left: 0; border-left: 0; }
+.mb-root .mb-hl-col:last-child { padding-right: 0; }
+
+/* 톱 기사 */
+.mb-root .mb-clock {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 188px;
+  margin: 6px 0 14px;
+  padding: 14px 16px 12px;
+  background:
+    repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.055) 0 1px, transparent 1px 7px),
+    var(--mb-text);
+  color: #fff;
+}
+.mb-root .mb-clock-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-variant-numeric: tabular-nums;
+  font-size: 12.5px;
+  color: #c9ccc8;
+}
+.mb-root .mb-clock-tag {
+  padding: 1px 7px;
+  background: var(--mb-accent);
+  color: #fff;
+  font-family: var(--mb-sans);
+  font-size: 12px;
+  font-weight: 700;
+}
+.mb-root .mb-clock-time {
+  font-family: var(--mb-mono);
+  font-size: 84px;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+}
+.mb-root .mb-clock-left { color: #ffb48f; font-weight: 600; }
+.mb-root .mb-top-title {
+  font-size: 25px;
+  line-height: 1.3;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+.mb-root .mb-top-deck {
+  margin-top: 8px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--mb-body);
+}
+.mb-root .mb-sub {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 12px;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--mb-text);
+}
+.mb-root .mb-sub-thumb {
+  width: 76px;
+  height: 76px;
+  overflow: hidden;
+  background: var(--mb-divider);
+}
+.mb-root .mb-sub-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.mb-root .mb-sub-title {
+  font-size: 15.5px;
+  line-height: 1.4;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.mb-root .mb-sub-text {
+  margin-top: 4px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--mb-body);
+}
+
+/* 일정표 */
+.mb-root .mb-tl-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.mb-root .mb-tl-head h3 { font-size: 16px; font-weight: 700; }
+.mb-root .mb-legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--mb-muted);
+}
+.mb-root .mb-day {
+  position: relative;
+  display: grid;
+  grid-template-columns: 68px minmax(0, 1fr);
+  padding: 11px 0;
+  border-top: 1px solid var(--mb-divider);
+}
+.mb-root .mb-day:first-child { border-top: 0; }
+.mb-root .mb-day::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 68px;
+  width: 1px;
+  background: var(--mb-faint);
+}
+.mb-root .mb-day:first-child::before { top: 21px; }
+.mb-root .mb-day:last-child::before { bottom: auto; height: 21px; }
+.mb-root .mb-day::after {
+  content: "";
+  position: absolute;
+  top: 16px;
+  left: 63px;
+  box-sizing: border-box;
+  width: 11px;
+  height: 11px;
+  border: 2px solid var(--mb-text);
+  border-radius: 50%;
+  background: var(--mb-bg);
+}
+.mb-root .mb-day-today::after { background: var(--mb-accent); border-color: var(--mb-accent); }
+.mb-root .mb-day-past { color: var(--mb-soft); }
+.mb-root .mb-day-past::after { border-color: var(--mb-faint); }
+.mb-root .mb-date { padding-right: 16px; text-align: right; }
+.mb-root .mb-date-num {
+  display: block;
+  font-family: var(--mb-mono);
+  font-size: 24px;
+  line-height: 1.05;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+.mb-root .mb-date-num small { font-size: 12px; font-weight: 500; letter-spacing: 0; }
+.mb-root .mb-date-name {
+  display: block;
+  margin-top: 3px;
+  font-size: 12px;
+  color: var(--mb-muted);
+}
+.mb-root .mb-date-dday {
+  display: block;
+  margin-top: 1px;
+  font-family: var(--mb-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mb-accent);
+}
+.mb-root .mb-day-past .mb-date-name,
+.mb-root .mb-day-past .mb-date-dday { color: var(--mb-soft); }
+.mb-root .mb-events {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding-left: 18px;
+}
+.mb-root .mb-ev {
+  display: grid;
+  grid-template-columns: 44px 36px minmax(0, 1fr);
+  gap: 0 9px;
+  align-items: baseline;
+}
+.mb-root .mb-ev-time {
+  font-family: var(--mb-mono);
+  font-size: 14px;
+  font-weight: 600;
+}
+.mb-root .mb-tag {
+  display: inline-block;
+  padding: 0 4px;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+.mb-root .mb-tag-start { border-color: var(--mb-accent); background: var(--mb-accent); color: #fff; }
+.mb-root .mb-tag-end { border-color: var(--mb-text); color: var(--mb-text); }
+.mb-root .mb-day-past .mb-tag-start { border-color: var(--mb-faint); background: var(--mb-faint); }
+.mb-root .mb-ev-title {
+  font-size: 15px;
+  line-height: 1.4;
+  font-weight: 600;
+}
+.mb-root .mb-ev-sub {
+  margin-top: 1px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--mb-muted);
+}
+.mb-root .mb-ev-sub b { color: var(--mb-accent); font-weight: 600; }
+.mb-root .mb-day-past .mb-ev-sub { color: var(--mb-soft); }
+.mb-root .mb-ev-now {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--mb-accent);
+  font-variant-numeric: tabular-nums;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.mb-root .mb-ev-now::after {
+  content: "";
+  flex: 1;
+  border-top: 1.5px dashed var(--mb-accent);
+}
+.mb-root .mb-pair {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 2px 0 2px 6px;
+  margin-left: -8px;
+  border-left: 2px solid var(--mb-accent);
+}
+.mb-root .mb-pair-note {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--mb-accent);
+  font-weight: 600;
+}
+.mb-root .mb-tl-foot {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--mb-divider);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--mb-soft);
+}
+
+/* 미니 달력 */
+.mb-root .mb-cal-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.mb-root .mb-cal-head h3 { font-size: 16px; font-weight: 700; }
+.mb-root .mb-cal-head span { font-family: var(--mb-mono); font-size: 12px; color: var(--mb-muted); }
+.mb-root .mb-cal {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 2px;
+  border-top: 1px solid var(--mb-text);
+  padding-top: 6px;
+  text-align: center;
+}
+.mb-root .mb-cal-wd {
+  padding-bottom: 2px;
+  font-size: 11px;
+  color: var(--mb-muted);
+}
+.mb-root .mb-cal-d {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  font-family: var(--mb-mono);
+  font-size: 12.5px;
+}
+.mb-root .mb-cal-past { color: var(--mb-faint); }
+.mb-root .mb-cal-today { background: var(--mb-text); color: #fff; font-weight: 600; }
+.mb-root .mb-cal-start::after,
+.mb-root .mb-cal-end::after {
+  content: "";
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  margin-left: -2.5px;
+}
+.mb-root .mb-cal-start::after { border-radius: 50%; background: var(--mb-accent); }
+.mb-root .mb-cal-today.mb-cal-start::after { background: #ff9a6b; }
+.mb-root .mb-cal-end::after { background: var(--mb-text); }
+.mb-root .mb-cal-end { font-weight: 600; }
+.mb-root .mb-cal-legend {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--mb-muted);
+}
+.mb-root .mb-dot, .mb-root .mb-sq {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 4px;
+  vertical-align: 1px;
+}
+.mb-root .mb-dot { border-radius: 50%; background: var(--mb-accent); }
+.mb-root .mb-sq { background: var(--mb-text); }
+
+/* 시안 메모 */
+.mb-root .mb-memo {
+  margin-top: 18px;
+  padding: 11px 13px 12px;
+  border: 1.5px dashed #9a9f99;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.55);
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--mb-muted);
+}
+.mb-root .mb-memo-label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--mb-text);
+}
+.mb-root .mb-memo li { position: relative; padding-left: 10px; }
+.mb-root .mb-memo li + li { margin-top: 4px; }
+.mb-root .mb-memo li::before { content: "–"; position: absolute; left: 0; }
+.mb-root .mb-memo b { color: var(--mb-text); font-weight: 600; }
+
+.mb-root .mb-fold {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 22px;
+  color: var(--mb-soft);
+  font-size: 12px;
+}
+.mb-root .mb-fold::before,
+.mb-root .mb-fold::after {
+  content: "";
+  flex: 1;
+  border-top: 1px dashed var(--mb-faint);
+}
+
+/* ── 3단 목록 ── */
+.mb-root .mb-grid3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.mb-root .mb-cell {
+  min-width: 0;
+  padding: 0 22px;
+  border-left: 1px solid var(--mb-border);
+}
+.mb-root .mb-cell-first { padding-left: 0; border-left: 0; }
+.mb-root .mb-cell-last { padding-right: 0; }
+.mb-root .mb-span2 { grid-column: span 2; }
+
+.mb-root .mb-colhead {
+  margin-bottom: 14px;
+  padding: 10px 0 10px;
+  border-bottom: 1px solid var(--mb-text);
+}
+.mb-root .mb-colhead-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.mb-root .mb-colhead h2 {
+  font-size: 20px;
+  line-height: 1.25;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.mb-root .mb-colhead-count {
+  font-family: var(--mb-mono);
+  font-size: 12.5px;
+  color: var(--mb-muted);
+  white-space: nowrap;
+}
+.mb-root .mb-colhead-note {
+  margin-top: 2px;
+  font-size: 12.5px;
+  color: var(--mb-muted);
+}
+.mb-root .mb-cols-top { border-top: 4px solid var(--mb-text); margin-top: 6px; }
+
+/* 단 첫 글 */
+.mb-root .mb-lead { padding-bottom: 14px; border-bottom: 1px solid var(--mb-border); }
+.mb-root .mb-lead-media {
+  aspect-ratio: 16 / 10;
+  margin-bottom: 12px;
+  overflow: hidden;
+  background: var(--mb-divider);
+}
+.mb-root .mb-lead-media img { width: 100%; height: 100%; object-fit: cover; }
+.mb-root .mb-lead-title {
+  font-size: 19px;
+  line-height: 1.35;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+.mb-root .mb-lead-sum {
+  margin-top: 6px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--mb-body);
+}
+.mb-root .mb-xbox {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: baseline;
+  margin-top: 12px;
+  padding: 9px 12px;
+  border-left: 3px solid var(--mb-accent);
+  background: var(--mb-accent-soft);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--mb-body);
+}
+.mb-root .mb-xbox-label { color: var(--mb-accent); font-weight: 700; white-space: nowrap; }
+
+/* 단 짧은 글 */
+.mb-root .mb-brief {
+  display: grid;
+  grid-template-columns: 68px minmax(0, 1fr);
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--mb-divider);
+}
+.mb-root .mb-thumb {
+  width: 68px;
+  height: 68px;
+  overflow: hidden;
+  background: var(--mb-divider);
+}
+.mb-root .mb-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.mb-root .mb-thumb-ph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: repeating-linear-gradient(45deg, #e4e5e1 0 4px, #ecede9 4px 8px);
+  color: var(--mb-muted);
+  font-family: var(--mb-mono);
+  font-size: 13px;
+  font-weight: 600;
+}
+.mb-root .mb-cat {
+  font-size: 11.5px;
+  line-height: 1.5;
+  font-weight: 600;
+  color: var(--mb-muted);
+}
+.mb-root .mb-brief-title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  font-size: 14.5px;
+  line-height: 1.4;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.mb-root .mb-brief-sum {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  margin-top: 2px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--mb-body);
+}
+.mb-root .mb-brief .mb-meta { margin-top: 4px; font-size: 11.5px; }
+.mb-root .mb-chip {
+  display: inline-block;
+  margin-right: 4px;
+  padding: 0 5px;
+  border-radius: 3px;
+  font-family: var(--mb-sans);
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 18px;
+  vertical-align: 1px;
+}
+.mb-root .mb-chip-hot { background: var(--mb-accent); color: #fff; }
+.mb-root .mb-chip-line { border: 1px solid var(--mb-accent); color: var(--mb-accent); line-height: 16px; }
+.mb-root .mb-chip-mute { border: 1px solid var(--mb-border); color: var(--mb-muted); line-height: 16px; }
+.mb-root .mb-divlabel {
+  padding: 10px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mb-soft);
+}
+.mb-root .mb-more {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  margin-top: 6px;
+  color: var(--mb-accent);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.mb-root .mb-more:hover { color: var(--mb-accent-hover); }
+.mb-root .mb-ended {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--mb-text);
+}
+.mb-root .mb-ended h3 { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+.mb-root .mb-ended li {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 5px 0;
+  border-bottom: 1px dotted var(--mb-border);
+  font-size: 13px;
+  color: var(--mb-soft);
+}
+.mb-root .mb-ended li span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mb-root .mb-ended li span:last-child { font-family: var(--mb-mono); font-size: 11.5px; white-space: nowrap; }
+
+/* 국내 판매 소식 */
+.mb-root .mb-stamp {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 68px;
+  height: 68px;
+  border: 1.5px solid var(--mb-text);
+  background: var(--mb-surface);
+}
+.mb-root .mb-stamp-type { font-size: 15px; line-height: 1.2; font-weight: 700; letter-spacing: -0.02em; }
+.mb-root .mb-stamp-date { font-family: var(--mb-mono); font-size: 11px; line-height: 1.2; }
+.mb-root .mb-stamp-drop {
+  background:
+    repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.08) 0 1px, transparent 1px 6px),
+    var(--mb-text);
+  color: #fff;
+}
+.mb-root .mb-stamp-pre { border-color: var(--mb-accent); background: var(--mb-accent-soft); color: var(--mb-accent); }
+.mb-root .mb-stamp-stock {
+  background: radial-gradient(circle, #cfd2cc 1px, transparent 1.2px) 0 0 / 6px 6px, var(--mb-surface);
+}
+.mb-root .mb-stamp-soon { border-style: dashed; background: transparent; }
+.mb-root .mb-stamp-ex { border: 1.5px dashed var(--mb-faint); background: transparent; color: var(--mb-soft); }
+.mb-root .mb-sale-today { background: linear-gradient(90deg, var(--mb-accent-soft), transparent 80%); }
+.mb-root .mb-src {
+  font-size: 11.5px;
+  line-height: 1.5;
+  font-weight: 600;
+  color: var(--mb-muted);
+}
+.mb-root .mb-sale-title { font-size: 14.5px; line-height: 1.4; font-weight: 600; }
+.mb-root .mb-sale-facts { margin-top: 2px; font-size: 13px; line-height: 1.5; color: var(--mb-body); }
+.mb-root .mb-price { font-size: 13px; font-variant-numeric: tabular-nums; }
+.mb-root .mb-price strong { color: var(--mb-accent); font-weight: 600; }
+.mb-root .mb-xref {
+  display: inline-block;
+  margin-top: 4px;
+  color: var(--mb-accent);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.mb-root .mb-note { margin-top: 3px; font-size: 12px; line-height: 1.45; color: var(--mb-soft); }
+.mb-root .mb-example .mb-sale-title,
+.mb-root .mb-example .mb-sale-facts { color: var(--mb-soft); }
+
+/* ── 색인 · 많이 본 글 ── */
+.mb-root .mb-archive { margin-top: 34px; }
+.mb-root .mb-icx li {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) 50px;
+  gap: 8px;
+  align-items: baseline;
+  padding: 6px 0;
+  border-bottom: 1px dotted var(--mb-border);
+  font-size: 13.5px;
+}
+.mb-root .mb-icx-date { font-family: var(--mb-mono); font-size: 11.5px; color: var(--mb-soft); }
+.mb-root .mb-icx-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+.mb-root .mb-icx-tag {
+  margin-right: 6px;
+  font-family: var(--mb-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--mb-accent);
+}
+.mb-root .mb-icx-views { font-family: var(--mb-mono); font-size: 11.5px; color: var(--mb-muted); text-align: right; }
+.mb-root .mb-rank li {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--mb-divider);
+}
+.mb-root .mb-rank-n {
+  font-family: var(--mb-mono);
+  font-size: 22px;
+  line-height: 1.1;
+  font-weight: 600;
+  color: var(--mb-faint);
+}
+.mb-root .mb-rank li:first-child .mb-rank-n { color: var(--mb-accent); }
+.mb-root .mb-rank-title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  font-size: 13.5px;
+  line-height: 1.4;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.mb-root .mb-rank .mb-meta { margin-top: 2px; font-size: 11.5px; }
+
+/* ── 푸터 ── */
+.mb-root .mb-footer {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr) auto;
+  gap: 28px;
+  margin-top: 40px;
+  padding-top: 16px;
+  border-top: 4px solid var(--mb-text);
+}
+.mb-root .mb-footer-logo { font-size: 22px; font-weight: 700; letter-spacing: -0.03em; }
+.mb-root .mb-footer-tag { margin-top: 2px; font-size: 13px; color: var(--mb-muted); }
+.mb-root .mb-footer-text { font-size: 13px; line-height: 1.65; color: var(--mb-body); }
+.mb-root .mb-footer-text p + p { margin-top: 4px; }
+.mb-root .mb-footer-meta {
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--mb-muted);
+  text-align: right;
+}
+.mb-root .mb-mobile {
+  margin-top: 28px;
+  padding-top: 12px;
+  border-top: 1px solid var(--mb-divider);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--mb-soft);
+}
+</style>
+<div class="mb-root">
+
+  <!-- 사이트 헤더 -->
+  <header class="mb-header">
+    <span class="mb-logo">키체크</span>
+    <nav class="mb-nav" aria-label="게시판">
+      <span class="mb-nav-link">IC</span>
+      <span class="mb-nav-link">공동구매</span>
+      <span class="mb-nav-link">국내 판매 <span class="mb-nav-new">새</span></span>
+    </nav>
+    <span class="mb-login">로그인 자리</span>
+  </header>
+
+  <!-- 마스트헤드 -->
+  <section class="mb-mast" aria-labelledby="mb-mast-title">
+    <div class="mb-mast-top">
+      <strong>키체크 데일리 브리핑</strong>
+      <span>geekhack IC·공동구매와 국내 판매처 공지를 하루 한 면에 모아요</span>
+      <span>2026년 · 1면</span>
+    </div>
+    <div class="mb-mast-row">
+      <h1 class="mb-mast-title" id="mb-mast-title">
+        <span class="mb-mast-date">11월 5일 목요일</span>
+        <span class="mb-mast-name">오늘의 키보드</span>
+      </h1>
+      <p class="mb-mast-stamp">
+        <strong>오후 6:30</strong> 확인<br>
+        다음 확인 오후 7:00<br>
+        30분마다 새로 확인해요
+      </p>
+    </div>
+    <div class="mb-rule" aria-hidden="true"></div>
+    <ul class="mb-index" aria-label="오늘의 숫자">
+      <li class="mb-index-cell mb-index-hot"><span class="mb-index-num">1</span><span class="mb-index-label">오늘<br>시작하는 판매</span></li>
+      <li class="mb-index-cell"><span class="mb-index-num">4</span><span class="mb-index-label">4주 안에<br>끝나는 일정</span></li>
+      <li class="mb-index-cell"><span class="mb-index-num">3</span><span class="mb-index-label">최근 7일<br>새 IC</span></li>
+      <li class="mb-index-cell"><span class="mb-index-num">8</span><span class="mb-index-label">진행 중<br>공동구매</span></li>
+      <li class="mb-index-cell"><span class="mb-index-num">9</span><span class="mb-index-label">최근 2주<br>국내 판매 공지</span></li>
+      <li class="mb-index-cell"><span class="mb-index-num">40</span><span class="mb-index-label">모아 둔<br>geekhack 글</span></li>
+    </ul>
+  </section>
+
+  <!-- 하이라이트: 오늘·이번 주 일정 -->
+  <section aria-labelledby="mb-hl-title">
+    <div class="mb-sechead">
+      <span class="mb-flag">하이라이트</span>
+      <h2 id="mb-hl-title">오늘·이번 주 일정</h2>
+      <span class="mb-sechead-note">드랍·예약판매·공동구매의 시작과 마감을 4주 앞까지 시간순으로 모았어요</span>
+      <span class="mb-sechead-right">11.04 — 11.27</span>
+    </div>
+
+    <div class="mb-hl">
+      <!-- 톱: 오늘 가장 가까운 일정 -->
+      <article class="mb-hl-col">
+        <p class="mb-kicker">오늘 저녁 · swagkey 드랍</p>
+        <div class="mb-clock" role="img" aria-label="오늘 오후 7시 30분 시작, 1시간 남음">
+          <div class="mb-clock-row"><span class="mb-clock-tag">시작</span><span>11.05 목</span></div>
+          <p class="mb-clock-time">19:30</p>
+          <div class="mb-clock-row"><span>지금 18:30</span><span class="mb-clock-left">1시간 남았어요</span></div>
+        </div>
+        <h3 class="mb-top-title">GMK CYL Gonzales 드랍 판매가 오늘 저녁 7시 30분에 열려요</h3>
+        <p class="mb-top-deck">swagkey가 디스코드에 올린 드랍 판매 공지예요. 어제 저녁 7시에는 같은 곳에서 SWG Classic Blue 드랍이 먼저 열렸어요.</p>
+        <p class="mb-meta">swagkey · 드랍 판매 · 11월 5일(목) 19:30부터</p>
+
+        <div class="mb-sub">
+          <div class="mb-sub-thumb"><img src="https://bord.design/nightshift/8.jpg" alt="" referrerpolicy="no-referrer"></div>
+          <div>
+            <p class="mb-kicker mb-kicker-ink">다음 주 금요일 · D-8</p>
+            <h4 class="mb-sub-title">SWG Nightshift, 공동구매와 국내 예약판매가 같은 날 끝나요</h4>
+            <p class="mb-sub-text">geekhack 공동구매는 10월 30일부터 11월 13일까지, swagkey 예약판매는 11월 13일(금) 23:59까지예요.</p>
+          </div>
+        </div>
+      </article>
+
+      <!-- 일정표 -->
+      <div class="mb-hl-col">
+        <div class="mb-tl-head">
+          <h3>일정표</h3>
+          <span class="mb-legend"><span class="mb-tag mb-tag-start">시작</span><span class="mb-tag mb-tag-end">마감</span>시각순</span>
+        </div>
+        <ol class="mb-tl">
+          <li class="mb-day mb-day-past">
+            <div class="mb-date"><span class="mb-date-num">4<small>일</small></span><span class="mb-date-name">수요일</span><span class="mb-date-dday">어제</span></div>
+            <ul class="mb-events">
+              <li class="mb-ev">
+                <span class="mb-ev-time">19:00</span><span class="mb-tag mb-tag-start">시작</span>
+                <div><p class="mb-ev-title">SWG Classic Blue ABS 이중사출 키캡</p><p class="mb-ev-sub">swagkey · 드랍 판매</p></div>
+              </li>
+            </ul>
+          </li>
+          <li class="mb-day mb-day-today">
+            <div class="mb-date"><span class="mb-date-num">5<small>일</small></span><span class="mb-date-name">목요일</span><span class="mb-date-dday">오늘</span></div>
+            <ul class="mb-events">
+              <li class="mb-ev-now">18:30 지금</li>
+              <li class="mb-ev">
+                <span class="mb-ev-time">19:30</span><span class="mb-tag mb-tag-start">시작</span>
+                <div><p class="mb-ev-title">GMK CYL Gonzales</p><p class="mb-ev-sub">swagkey · 드랍 판매 · <b>1시간 뒤</b></p></div>
+              </li>
+            </ul>
+          </li>
+          <li class="mb-day">
+            <div class="mb-date"><span class="mb-date-num">13<small>일</small></span><span class="mb-date-name">금요일</span><span class="mb-date-dday">D-8</span></div>
+            <ul class="mb-events">
+              <li class="mb-pair">
+                <div class="mb-ev">
+                  <span class="mb-ev-time">–:–</span><span class="mb-tag mb-tag-end">마감</span>
+                  <div><p class="mb-ev-title">SWG Nightshift 공동구매</p><p class="mb-ev-sub">geekhack 공동구매 · 10월 30일부터</p></div>
+                </div>
+                <div class="mb-ev">
+                  <span class="mb-ev-time">23:59</span><span class="mb-tag mb-tag-end">마감</span>
+                  <div><p class="mb-ev-title">SWG Nightshift ABS 이중사출 키캡 예약판매</p><p class="mb-ev-sub">swagkey · 발송 2027년 8월 말</p></div>
+                </div>
+                <p class="mb-pair-note">같은 키캡이에요. 공동구매와 국내 예약판매가 같은 날 끝나요.</p>
+              </li>
+            </ul>
+          </li>
+          <li class="mb-day">
+            <div class="mb-date"><span class="mb-date-num">16<small>일</small></span><span class="mb-date-name">월요일</span><span class="mb-date-dday">D-11</span></div>
+            <ul class="mb-events">
+              <li class="mb-ev">
+                <span class="mb-ev-time">–:–</span><span class="mb-tag mb-tag-end">마감</span>
+                <div><p class="mb-ev-title">MW Datenshi 공동구매</p><p class="mb-ev-sub">geekhack 공동구매 · 10월 26일부터</p></div>
+              </li>
+            </ul>
+          </li>
+          <li class="mb-day">
+            <div class="mb-date"><span class="mb-date-num">27<small>일</small></span><span class="mb-date-name">금요일</span><span class="mb-date-dday">D-22</span></div>
+            <ul class="mb-events">
+              <li class="mb-ev">
+                <span class="mb-ev-time">23:59</span><span class="mb-tag mb-tag-end">마감</span>
+                <div><p class="mb-ev-title">SW 트랜지션87 HE 블랙 투명 예약판매</p><p class="mb-ev-sub">swagkey · <span class="mb-price"><s>148,000원</s> → 133,200원</span> · 배송 12월 중순</p></div>
+              </li>
+            </ul>
+          </li>
+        </ol>
+        <p class="mb-tl-foot">–:–는 geekhack 제목에 마감 날짜만 있어서 시각을 비워 둔 일정이에요.</p>
+      </div>
+
+      <!-- 11월 달력 + 시안 메모 -->
+      <aside class="mb-hl-col" aria-label="11월 달력">
+        <div class="mb-cal-head"><h3>11월</h3><span>2026</span></div>
+        <div class="mb-cal">
+          <span class="mb-cal-wd">일</span><span class="mb-cal-wd">월</span><span class="mb-cal-wd">화</span><span class="mb-cal-wd">수</span><span class="mb-cal-wd">목</span><span class="mb-cal-wd">금</span><span class="mb-cal-wd">토</span>
+          <span class="mb-cal-d mb-cal-past">1</span><span class="mb-cal-d mb-cal-past">2</span><span class="mb-cal-d mb-cal-past">3</span><span class="mb-cal-d mb-cal-past mb-cal-start">4</span><span class="mb-cal-d mb-cal-today mb-cal-start">5</span><span class="mb-cal-d">6</span><span class="mb-cal-d">7</span>
+          <span class="mb-cal-d">8</span><span class="mb-cal-d">9</span><span class="mb-cal-d">10</span><span class="mb-cal-d">11</span><span class="mb-cal-d">12</span><span class="mb-cal-d mb-cal-end">13</span><span class="mb-cal-d">14</span>
+          <span class="mb-cal-d">15</span><span class="mb-cal-d mb-cal-end">16</span><span class="mb-cal-d">17</span><span class="mb-cal-d">18</span><span class="mb-cal-d">19</span><span class="mb-cal-d">20</span><span class="mb-cal-d">21</span>
+          <span class="mb-cal-d">22</span><span class="mb-cal-d">23</span><span class="mb-cal-d">24</span><span class="mb-cal-d">25</span><span class="mb-cal-d">26</span><span class="mb-cal-d mb-cal-end">27</span><span class="mb-cal-d">28</span>
+          <span class="mb-cal-d">29</span><span class="mb-cal-d">30</span>
+        </div>
+        <p class="mb-cal-legend"><span><span class="mb-dot"></span>시작</span><span><span class="mb-sq"></span>마감</span></p>
+
+        <div class="mb-memo">
+          <span class="mb-memo-label">시안 메모 · 하이라이트 규칙</span>
+          <ul>
+            <li><b>어제부터 4주 안</b>에 시작하거나 끝나는 일정만 시각순으로 올려요.</li>
+            <li>일정은 국내 판매 공지의 드랍·입고 시작 시각과 예약판매 마감, geekhack 공동구매 제목에 적힌 마감 날짜에서 뽑아요.</li>
+            <li>왼쪽 톱은 <b>지금 이후 가장 가까운 오늘 일정</b> 하나예요. 오늘 일정이 없으면 가장 가까운 마감이 톱이 돼요.</li>
+            <li>같은 상품의 공동구매와 국내 판매가 겹치면 한 줄로 묶어요.</li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <p class="mb-fold">시안 메모 · 첫 화면은 하이라이트까지, 아래로 내리면 목록이 이어져요</p>
+
+  <!-- 목록: 신문 3단 -->
+  <section aria-labelledby="mb-list-title">
+    <div class="mb-sechead">
+      <span class="mb-flag">목록</span>
+      <h2 id="mb-list-title">새 글과 판매 소식</h2>
+      <span class="mb-sechead-note">IC·공동구매·국내 판매를 한 단씩, IC와 공동구매는 첫 글을 크게 보여줘요</span>
+    </div>
+
+    <div class="mb-grid3">
+      <!-- 1단: 새로 올라온 IC -->
+      <div class="mb-cell mb-cell-first">
+        <div class="mb-colhead">
+          <div class="mb-colhead-row"><h2>새로 올라온 IC</h2><span class="mb-colhead-count">7일 3건</span></div>
+          <p class="mb-colhead-note">관심 체크 단계 글 · 올라온 순</p>
+        </div>
+        <article class="mb-lead">
+          <div class="mb-lead-media"><img src="https://i.imgur.com/PY72A0b.png" alt="" referrerpolicy="no-referrer"></div>
+          <p class="mb-kicker">새 IC 중 댓글이 가장 많아요</p>
+          <h3 class="mb-lead-title">GMK CYL nuSignal</h3>
+          <p class="mb-lead-sum">GMK CYL 프로파일로 나오는 nuSignal 키캡 세트의 관심도 조사(IC)예요.</p>
+          <p class="mb-meta">키캡 · GMK · 10.31 토 · 조회 8,500+ · 댓글 15</p>
+        </article>
+        <ul>
+          <li class="mb-brief">
+            <div class="mb-thumb mb-thumb-ph">SP</div>
+            <div>
+              <p class="mb-cat">키캡 · SP</p>
+              <h3 class="mb-brief-title">SA Paperwork - 40% Monokit</h3>
+              <p class="mb-brief-sum">Trashman의 클래식 컬러웨이 Paperwork를 SA 프로파일로 내놓는 키캡 세트의 관심 체크예요.</p>
+              <p class="mb-meta">11.01 · 조회 5,300+ · 댓글 5</p>
+            </div>
+          </li>
+          <li class="mb-brief">
+            <div class="mb-thumb mb-thumb-ph">키캡</div>
+            <div>
+              <p class="mb-cat">키캡 · 그 외</p>
+              <h3 class="mb-brief-title">KEYMOJI Sanctuary - LOTR inspired metal keycap set with embossed legends</h3>
+              <p class="mb-brief-sum">KEYMOJI에서 반지의 제왕을 모티브로 만든 77키 알루미늄 메탈 키캡 세트예요.</p>
+              <p class="mb-meta">10.29 · 조회 8,700+ · 댓글 0</p>
+            </div>
+          </li>
+          <li class="mb-divlabel">그 전에 올라온 IC</li>
+          <li class="mb-brief">
+            <div class="mb-thumb"><img src="https://i.imgur.com/KSEcDYd.jpeg" alt="" referrerpolicy="no-referrer"></div>
+            <div>
+              <p class="mb-cat">기타</p>
+              <h3 class="mb-brief-title">GSD Crib Artisan Tray</h3>
+              <p class="mb-brief-sum">GSD 스타일의 아티산 키캡 보관용 트레이인 GSD Crib의 관심 체크 글이에요.</p>
+              <p class="mb-meta">10.26 · 조회 1.3만+ · 댓글 1</p>
+            </div>
+          </li>
+          <li class="mb-brief">
+            <div class="mb-thumb"><img src="https://i.postimg.cc/Y0ntLgVm/01-keycaps-c64-angle.jpg" alt="" referrerpolicy="no-referrer"></div>
+            <div>
+              <p class="mb-cat">키캡 · SP</p>
+              <h3 class="mb-brief-title">SA 64 / SA 64C / SA 16 — SA keycaps for the Commodore 64, 64C and 16</h3>
+              <p class="mb-brief-sum">코모도어 64, 64C, 16 컴퓨터의 원래 색상을 재현한 SA 프로파일 키캡 3종(SA 64, SA 64C, SA 16)의 관심 조사예요.</p>
+              <p class="mb-meta">10.23 · 조회 1.2만+ · 댓글 0</p>
+            </div>
+          </li>
+          <li class="mb-brief">
+            <div class="mb-thumb"><img src="https://cdn.shopify.com/s/files/1/0607/5351/0626/files/DSC02284.jpg?v=1792743092" alt="" referrerpolicy="no-referrer"></div>
+            <div>
+              <p class="mb-cat">키보드 · 60%</p>
+              <h3 class="mb-brief-title">Class 60 V2 — 60% Retro Design Board</h3>
+              <p class="mb-brief-sum">MM Studio가 DEC VT220의 LK201 키보드에서 영감을 받아 만든 60% 커스텀 키보드 키트 Class 60 V2의 관심 조사(IC)예요.</p>
+              <p class="mb-meta">10.23 · 조회 2만+ · 댓글 5</p>
+            </div>
+          </li>
+          <li class="mb-brief">
+            <div class="mb-thumb"><img src="https://media.biipmk.com/gmk-video2048/GMK_Power-2048-Renders-1.jpg" alt="" referrerpolicy="no-referrer"></div>
+            <div>
+              <p class="mb-cat">키캡 · GMK</p>
+              <h3 class="mb-brief-title">GMK CYL Video 2048</h3>
+              <p class="mb-brief-sum">GMK CYL 프로파일로 만드는 키캡 세트 GMK CYL Video 2048의 관심 체크(IC)예요.</p>
+              <p class="mb-meta">10.19 · 조회 2.5만+ · 댓글 3</p>
+            </div>
+          </li>
+        </ul>
+        <span class="mb-more">IC 30건 모두 보기 →</span>
+      </div>
+
+      <!-- 2단: 진행 중 공동구매 -->
+      <div class="mb-cell">
+        <div class="mb-colhead">
+          <div class="mb-colhead-row"><h2>진행 중 공동구매</h2><span class="mb-colhead-count">8건</span></div>
+          <p class="mb-colhead-note">마감이 가까운 순 · 마감일 없는 글은 올라온 순</p>
+        </div>
+        <article class="mb-lead">
+          <div class="mb-lead-media"><img src="https://bord.design/nightshift/8.jpg" alt="" referrerpolicy="no-referrer"></div>
+          <p class="mb-kicker">마감 11월 13일(금) · D-8</p>
+          <h3 class="mb-lead-title">SWG Nightshift | Oct 30th -&gt; Nov 13th</h3>
+          <p class="mb-lead-sum">Swagkeys(SWG)가 제작하는 체리 프로파일 더블샷 ABS 키캡 세트 SWG Nightshift의 공동구매 글이에요.</p>
+          <p class="mb-meta">키캡 · 그 외 · 10.31 토 · 조회 6,800+ · 댓글 2</p>
+          <div class="mb-xbox">
+            <span class="mb-xbox-label">국내에서도</span>
+            <span>swagkey 예약판매 · 11월 13일(금) 23:59까지 · 발송 2027년 8월 말</span>
+          </div>
+        </article>
+        <ul>
+          <li class="mb-brief">
+            <div class="mb-thumb"><img src="https://i.imgur.com/ppgcj2r.png" alt="" referrerpolicy="no-referrer"></div>
+            <div>
+              <p class="mb-cat">키캡 · MW</p>
+              <h3 class="mb-brief-title">MW Datenshi | 26 Oct - 16 Nov</h3>
+              <p class="mb-brief-sum">디자이너 Minisofu가 만든 MW 키캡 세트 Datenshi의 공동구매 글이에요.</p>
+              <p class="mb-meta"><span class="mb-chip mb-chip-line">D-11</span>10.26 · 조회 1.6만+ · 댓글 2</p>
+            </div>
+          </li>
+          <li class="mb-brief">
+            <div class="mb-thumb mb-thumb-ph">65%</div>
+            <div>
+              <p class="mb-cat">키보드 · 65%</p>
+              <h3 class="mb-brief-title">Seed Plan Linedge 65 Keyboard</h3>
+              <p class="mb-brief-sum">Seed Plan의 Linedge 65는 Tonish TKL 디자이너 CC가 만든 첫 65% 키보드의 공동구매 글이에요.</p>
+              <p class="mb-meta">10.26 · 조회 1.7만+ · 댓글 3</p>
+            </div>
+          </li>
+          <li class="mb-brief">
+            <div class="mb-thumb"><img src="https://imagedelivery.net/5Lj-4KVs36OWCtiVSZ4L1Q/c993d042-652b-456f-f48c-83165ef24100/public" alt="" referrerpolicy="no-referrer"></div>
+            <div>
+              <p class="mb-cat">키캡 · GMK</p>
+              <h3 class="mb-brief-title">GMK Salamander</h3>
+              <p class="mb-brief-sum">NyxKeys가 친구 Glen과 함께 디자인한 GMK 체리 프로파일 키캡 세트예요.</p>
+              <p class="mb-meta">10.20 · 조회 2.3만+ · 댓글 5</p>
+            </div>
+          </li>
+          <li class="mb-brief">
+            <div class="mb-thumb mb-thumb-ph">80%</div>
+            <div>
+              <p class="mb-cat">키보드 · 80%</p>
+              <h3 class="mb-brief-title">Code:002 TKL</h3>
+              <p class="mb-brief-sum">Cafege의 Code:002 TKL 키보드 공동구매 글이에요.</p>
+              <p class="mb-meta">10.17 · 조회 2.9만+ · 댓글 0</p>
+            </div>
+          </li>
+          <li class="mb-brief">
+            <div class="mb-thumb"><img src="https://i.postimg.cc/fDn8NbZW/Black-Base.png" alt="" referrerpolicy="no-referrer"></div>
+            <div>
+              <p class="mb-cat">키캡 · GMK</p>
+              <h3 class="mb-brief-title">GMK CYL Blanks</h3>
+              <p class="mb-brief-sum">GMK CYL 프로파일의 블랭크 키캡 세트로, 각인 없이 색상만 있는 키캡이에요.</p>
+              <p class="mb-meta">10.16 · 조회 2.7만+ · 댓글 9</p>
+            </div>
+          </li>
+          <li class="mb-brief">
+            <div class="mb-thumb"><img src="https://i.imgur.com/pc8l2Nb.jpeg" alt="" referrerpolicy="no-referrer"></div>
+            <div>
+              <p class="mb-cat">키보드 · 65%</p>
+              <h3 class="mb-brief-title">Space66% Spaceforge</h3>
+              <p class="mb-brief-sum">Graystudio에서 진행하는 66% 배열 알루미늄 키보드 Space66% Spaceforge의 공동구매 글이에요.</p>
+              <p class="mb-meta">10.09 · 조회 3.4만+ · 댓글 2</p>
+            </div>
+          </li>
+        </ul>
+        <span class="mb-more">공동구매 8건 모두 보기 →</span>
+        <div class="mb-ended">
+          <h3>최근 끝난 공동구매</h3>
+          <ul>
+            <li><span>DCS SMRT R2 - GB Complete</span><span>09.20 · 6.6만+</span></li>
+            <li><span>SWG Neowell - July 6th to July 27th</span><span>07.10 · 17.4만+</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 3단: 국내 판매 소식 -->
+      <div class="mb-cell mb-cell-last">
+        <div class="mb-colhead">
+          <div class="mb-colhead-row"><h2>국내 판매 소식</h2><span class="mb-colhead-count">2주 9건</span></div>
+          <p class="mb-colhead-note">swagkey·geonworks 디스코드 공지 · 판매 건마다 하나씩</p>
+        </div>
+        <ul>
+          <li class="mb-brief mb-sale-today">
+            <div class="mb-stamp mb-stamp-drop"><span class="mb-stamp-type">드랍</span><span class="mb-stamp-date">11.05</span></div>
+            <div>
+              <p class="mb-src">swagkey</p>
+              <h3 class="mb-sale-title">GMK CYL Gonzales</h3>
+              <p class="mb-sale-facts"><span class="mb-chip mb-chip-hot">오늘 19:30</span>드랍 판매</p>
+            </div>
+          </li>
+          <li class="mb-brief">
+            <div class="mb-stamp mb-stamp-drop"><span class="mb-stamp-type">드랍</span><span class="mb-stamp-date">11.04</span></div>
+            <div>
+              <p class="mb-src">swagkey</p>
+              <h3 class="mb-sale-title">SWG Classic Blue ABS 이중사출 키캡</h3>
+              <p class="mb-sale-facts"><span class="mb-chip mb-chip-mute">어제 시작</span>드랍 판매 · 11월 4일(수) 19:00부터</p>
+            </div>
+          </li>
+          <li class="mb-brief">
+            <div class="mb-stamp mb-stamp-pre"><span class="mb-stamp-type">예약</span><span class="mb-stamp-date">11.03</span></div>
+            <div>
+              <p class="mb-src">swagkey</p>
+              <h3 class="mb-sale-title">SWG Nightshift ABS 이중사출 키캡</h3>
+              <p class="mb-sale-facts"><span class="mb-chip mb-chip-line">D-8</span>예약판매 · 11월 13일(금) 23:59까지 · 발송 2027년 8월 말</p>
+              <span class="mb-xref">geekhack 공동구매 글과 같은 상품이에요 →</span>
+            </div>
+          </li>
+          <li class="mb-brief">
+            <div class="mb-stamp mb-stamp-drop"><span class="mb-stamp-type">드랍</span><span class="mb-stamp-date">10.30</span></div>
+            <div>
+              <p class="mb-src">swagkey</p>
+              <h3 class="mb-sale-title">Baionlenja Synovia</h3>
+              <p class="mb-sale-facts">드랍 판매 시작 · 10월 30일(금)</p>
+            </div>
+          </li>
+          <li class="mb-brief">
+            <div class="mb-stamp mb-stamp-soon"><span class="mb-stamp-type">예정</span><span class="mb-stamp-date">10.29</span></div>
+            <div>
+              <p class="mb-src">swagkey</p>
+              <h3 class="mb-sale-title">Baionlenja Synovia</h3>
+              <p class="mb-sale-facts">드랍 판매 예정 · 10월 30일(금) 19:00</p>
+              <p class="mb-note">판매 시작 공지는 바로 위에 따로 있어요.</p>
+            </div>
+          </li>
+          <li class="mb-brief">
+            <div class="mb-stamp mb-stamp-stock"><span class="mb-stamp-type">입고</span><span class="mb-stamp-date">10.29</span></div>
+            <div>
+              <p class="mb-src">swagkey</p>
+              <h3 class="mb-sale-title">Qwertykeys NEO80 Cu</h3>
+              <p class="mb-sale-facts">입고 판매 · 10월 29일(목) 19:00부터 · 베어본킷·기판·보강판</p>
+            </div>
+          </li>
+          <li class="mb-brief">
+            <div class="mb-stamp mb-stamp-stock"><span class="mb-stamp-type">입고</span><span class="mb-stamp-date">10.27</span></div>
+            <div>
+              <p class="mb-src">swagkey</p>
+              <h3 class="mb-sale-title">SW 나이트 스테빌라이저 스냅인</h3>
+              <p class="mb-sale-facts">입고 판매 · 10월 27일(화) 19:00부터</p>
+            </div>
+          </li>
+          <li class="mb-brief">
+            <div class="mb-stamp mb-stamp-pre"><span class="mb-stamp-type">예약</span><span class="mb-stamp-date">10.22</span></div>
+            <div>
+              <p class="mb-src">swagkey</p>
+              <h3 class="mb-sale-title">SW 트랜지션87 HE 블랙 투명</h3>
+              <p class="mb-sale-facts"><span class="mb-chip mb-chip-line">D-22</span>예약판매 · 11월 27일(금) 23:59까지 · 배송 12월 중순</p>
+              <p class="mb-price"><s>148,000원</s> → <strong>133,200원</strong> · 예약 10% 할인</p>
+            </div>
+          </li>
+          <li class="mb-brief">
+            <div class="mb-stamp"><span class="mb-stamp-type">판매</span><span class="mb-stamp-date">10.22</span></div>
+            <div>
+              <p class="mb-src">swagkey</p>
+              <h3 class="mb-sale-title">Eave65 MX 유무선 완제품</h3>
+              <p class="mb-sale-facts">판매 · 네이버 스토어</p>
+            </div>
+          </li>
+          <li class="mb-brief mb-example">
+            <div class="mb-stamp mb-stamp-ex"><span class="mb-stamp-type">예시</span><span class="mb-stamp-date">—</span></div>
+            <div>
+              <p class="mb-src">geonworks · 예시</p>
+              <h3 class="mb-sale-title">geonworks 판매 공지가 이 자리에 들어와요</h3>
+              <p class="mb-sale-facts">아직 받은 공지가 없어 자리만 잡아 둔 예시예요. 실제 판매 정보가 아니에요.</p>
+            </div>
+          </li>
+        </ul>
+        <span class="mb-more">국내 판매 소식 모두 보기 →</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 색인: 지난 IC · 많이 본 글 -->
+  <section class="mb-archive" aria-labelledby="mb-archive-title">
+    <div class="mb-grid3 mb-cols-top">
+      <div class="mb-cell mb-cell-first mb-span2">
+        <div class="mb-colhead">
+          <div class="mb-colhead-row"><h2 id="mb-archive-title">지난 IC 한눈에</h2><span class="mb-colhead-count">23건</span></div>
+          <p class="mb-colhead-note">위에 나오지 않은 IC를 제목만 모았어요 · 올라온 순</p>
+        </div>
+      </div>
+      <div class="mb-cell mb-cell-last">
+        <div class="mb-colhead">
+          <div class="mb-colhead-row"><h2>많이 본 글</h2><span class="mb-colhead-count">조회수 순</span></div>
+          <p class="mb-colhead-note">모아 둔 IC·공동구매 40건 중</p>
+        </div>
+      </div>
+
+      <ol class="mb-cell mb-cell-first mb-icx">
+        <li><span class="mb-icx-date">10.15</span><span class="mb-icx-title"><span class="mb-icx-tag">MW</span>MW Zoltraak</span><span class="mb-icx-views">2.4만+</span></li>
+        <li><span class="mb-icx-date">10.15</span><span class="mb-icx-title"><span class="mb-icx-tag">KKB</span>KKB 1001 Nights</span><span class="mb-icx-views">2.8만+</span></li>
+        <li><span class="mb-icx-date">10.14</span><span class="mb-icx-title"><span class="mb-icx-tag">SP</span>DCS Doubleshot Hangul (Beige/WoB Alphas)</span><span class="mb-icx-views">2.4만+</span></li>
+        <li><span class="mb-icx-date">10.13</span><span class="mb-icx-title"><span class="mb-icx-tag">SP</span>DSS Neon Nights r2</span><span class="mb-icx-views">162</span></li>
+        <li><span class="mb-icx-date">10.13</span><span class="mb-icx-title"><span class="mb-icx-tag">SP</span>DCS Allsorts</span><span class="mb-icx-views">3.6만+</span></li>
+        <li><span class="mb-icx-date">10.13</span><span class="mb-icx-title"><span class="mb-icx-tag">60%</span>Constance 60</span><span class="mb-icx-views">3.9만+</span></li>
+        <li><span class="mb-icx-date">10.12</span><span class="mb-icx-title"><span class="mb-icx-tag">GMK</span>GMK MTNU Moon Wake</span><span class="mb-icx-views">3.3만+</span></li>
+        <li><span class="mb-icx-date">10.12</span><span class="mb-icx-title"><span class="mb-icx-tag">PBTfans</span>PBTfans Genius #81</span><span class="mb-icx-views">3.3만+</span></li>
+        <li><span class="mb-icx-date">10.07</span><span class="mb-icx-title"><span class="mb-icx-tag">키캡</span>KBS Flat Out — A Motorsport Inspired Keycap Set</span><span class="mb-icx-views">1.3만+</span></li>
+        <li><span class="mb-icx-date">09.28</span><span class="mb-icx-title"><span class="mb-icx-tag">GMK</span>GMK CYL Rareabic</span><span class="mb-icx-views">5.9만+</span></li>
+        <li><span class="mb-icx-date">09.23</span><span class="mb-icx-title"><span class="mb-icx-tag">65%</span>Radius 68: A Mac-Friendly Keyboard with Nacre</span><span class="mb-icx-views">4.9만+</span></li>
+        <li><span class="mb-icx-date">09.23</span><span class="mb-icx-title"><span class="mb-icx-tag">60%</span>RHINO60 Custom Keyboard - JACKY DESIGN</span><span class="mb-icx-views">7만+</span></li>
+      </ol>
+      <ol class="mb-cell mb-icx">
+        <li><span class="mb-icx-date">09.21</span><span class="mb-icx-title"><span class="mb-icx-tag">키캡</span>KeyMaze Eden Sin</span><span class="mb-icx-views">6.7만+</span></li>
+        <li><span class="mb-icx-date">09.20</span><span class="mb-icx-title"><span class="mb-icx-tag">키보드</span>VS9009 R2 by Fusion Lab — Vintech Series No. 2 | A Modern Battleship</span><span class="mb-icx-views">6.1만+</span></li>
+        <li><span class="mb-icx-date">09.20</span><span class="mb-icx-title"><span class="mb-icx-tag">40%</span>NEX40 | 40% keyboard | Tape Radio, Retro-futurism - By Keynex Studio</span><span class="mb-icx-views">4만+</span></li>
+        <li><span class="mb-icx-date">09.18</span><span class="mb-icx-title"><span class="mb-icx-tag">60%</span>F8X | Geonworks x Nuxroskb Collaboration | Update the sale date, vendors,......</span><span class="mb-icx-views">8.3만+</span></li>
+        <li><span class="mb-icx-date">09.16</span><span class="mb-icx-title"><span class="mb-icx-tag">GMK</span>GMK CYL Hephaestus</span><span class="mb-icx-views">7.8만+</span></li>
+        <li><span class="mb-icx-date">09.16</span><span class="mb-icx-title"><span class="mb-icx-tag">PBTfans</span>PBTfans IDOL TENSHI ♥*3</span><span class="mb-icx-views">5만+</span></li>
+        <li><span class="mb-icx-date">09.12</span><span class="mb-icx-title"><span class="mb-icx-tag">SP</span>DCS Blue On Black</span><span class="mb-icx-views">59</span></li>
+        <li><span class="mb-icx-date">09.11</span><span class="mb-icx-title"><span class="mb-icx-tag">SP</span>SA SAIL R2</span><span class="mb-icx-views">5.4만+</span></li>
+        <li><span class="mb-icx-date">09.04</span><span class="mb-icx-title"><span class="mb-icx-tag">GMK</span>GMK CYL Draco</span><span class="mb-icx-views">9.9만+</span></li>
+        <li><span class="mb-icx-date">09.04</span><span class="mb-icx-title"><span class="mb-icx-tag">키캡</span>KBS-Dirty</span><span class="mb-icx-views">6.2만+</span></li>
+        <li><span class="mb-icx-date">08.27</span><span class="mb-icx-title"><span class="mb-icx-tag">GMK</span>GMK Imperator</span><span class="mb-icx-views">5.3만+</span></li>
+      </ol>
+      <ol class="mb-cell mb-cell-last mb-rank">
+        <li><span class="mb-rank-n">1</span><div><p class="mb-rank-title">SWG Neowell - July 6th to July 27th</p><p class="mb-meta">공동구매 · 끝남 · 조회 17.4만+</p></div></li>
+        <li><span class="mb-rank-n">2</span><div><p class="mb-rank-title">GMK CYL Draco</p><p class="mb-meta">IC · 09.04 · 조회 9.9만+</p></div></li>
+        <li><span class="mb-rank-n">3</span><div><p class="mb-rank-title">F8X | Geonworks x Nuxroskb Collaboration | Update the sale date, vendors,......</p><p class="mb-meta">IC · 09.18 · 조회 8.3만+</p></div></li>
+        <li><span class="mb-rank-n">4</span><div><p class="mb-rank-title">GMK CYL Hephaestus</p><p class="mb-meta">IC · 09.16 · 조회 7.8만+</p></div></li>
+        <li><span class="mb-rank-n">5</span><div><p class="mb-rank-title">RHINO60 Custom Keyboard - JACKY DESIGN</p><p class="mb-meta">IC · 09.23 · 조회 7만+</p></div></li>
+        <li><span class="mb-rank-n">6</span><div><p class="mb-rank-title">KeyMaze Eden Sin</p><p class="mb-meta">IC · 09.21 · 조회 6.7만+</p></div></li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- 푸터 -->
+  <footer class="mb-footer">
+    <div>
+      <p class="mb-footer-logo">키체크</p>
+      <p class="mb-footer-tag">오늘의 키보드를 한 면에</p>
+    </div>
+    <div class="mb-footer-text">
+      <p>geekhack의 Interest Checks와 Group Buys and Preorders 글을 한국어로 요약하고, swagkey·geonworks 디스코드의 판매 공지를 판매 건마다 정리해요.</p>
+      <p>요약은 AI가 써요. 일정과 가격은 원문과 판매처 공지에서 한 번 더 확인해 주세요.</p>
+    </div>
+    <p class="mb-footer-meta">30분마다 새로 확인<br>원문 저작권은 각 작성자에게</p>
+  </footer>
+
+  <p class="mb-mobile">모바일에서는: 마스트헤드를 날짜 한 줄로 줄이고 숫자 띠는 가로로 밀어 보게 해요. 톱 기사(오늘 19:30) 아래에 일정표를 세로로 쌓고 달력은 접어 두며, 아래 세 단은 'IC · 공동구매 · 국내 판매' 탭으로 바꿔 한 단씩 보여줘요.</p>
+</div>
+</div></div></div>
+<div class="doc-row"><div class="doc-col" style="width:1120px"><p class="doc-label">C안 · 벤토 갤러리</p><div class="doc-box" style="width:1120px"><style>
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap");
+
+.mc-root {
+  --mc-bg: #f3f4f1;
+  --mc-surface: #ffffff;
+  --mc-ink: #16181a;
+  --mc-body: #2e3236;
+  --mc-muted: #4f555a;
+  --mc-faint: #9ba09c;
+  --mc-accent: #b93a0b;
+  --mc-accent-dark: #8f2c07;
+  --mc-border: #d5d7d2;
+  --mc-divider: #e4e5e1;
+  --mc-sans: "IBM Plex Sans KR", system-ui, sans-serif;
+  --mc-mono: "IBM Plex Mono", ui-monospace, monospace;
+  box-sizing: border-box;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 24px 28px;
+  background: var(--mc-bg);
+  color: var(--mc-ink);
+  font-family: var(--mc-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+.mc-root a { color: inherit; text-decoration: none; }
+
+/* ---------- 헤더 ---------- */
+.mc-root .mc-header {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  margin: 0 -24px;
+  padding: 14px 24px;
+  border-bottom: 2px solid var(--mc-ink);
+}
+.mc-root .mc-logo {
+  font-size: 28px;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.045em;
+}
+.mc-root .mc-nav { display: flex; gap: 28px; }
+.mc-root .mc-nav-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  border-bottom: 3px solid transparent;
+  color: var(--mc-muted);
+  font-size: 16px;
+  font-weight: 500;
+}
+.mc-root .mc-nav-link:hover { color: var(--mc-ink); }
+.mc-root .mc-login {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 14px 0 6px;
+  border: 1px dashed var(--mc-faint);
+  border-radius: 999px;
+  color: var(--mc-muted);
+  font-size: 13px;
+}
+.mc-root .mc-login-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--mc-divider);
+}
+
+/* ---------- 날짜 띠 ---------- */
+.mc-root .mc-dateline {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--mc-border);
+  font-family: var(--mc-mono);
+  font-size: 12px;
+  color: var(--mc-muted);
+  letter-spacing: 0.02em;
+}
+.mc-root .mc-dateline-strong { color: var(--mc-ink); font-weight: 600; }
+
+/* ---------- 하이라이트 머리 ---------- */
+.mc-root .mc-hl { padding-top: 34px; }
+.mc-root .mc-hl-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 40px;
+  margin-bottom: 22px;
+}
+.mc-root .mc-kicker {
+  margin: 0 0 10px;
+  font-family: var(--mc-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: var(--mc-accent);
+}
+.mc-root .mc-hl-title {
+  margin: 0;
+  font-size: 46px;
+  line-height: 1.12;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  word-break: keep-all;
+}
+.mc-root .mc-hl-lead {
+  margin: 0;
+  max-width: 33ch;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--mc-body);
+  word-break: keep-all;
+}
+
+/* ---------- 벤토 ---------- */
+.mc-root .mc-bento {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: 244px 244px 196px;
+  grid-template-areas:
+    "a a b d"
+    "a a b e"
+    "c c c f";
+  gap: 12px;
+}
+.mc-root .mc-cell {
+  position: relative;
+  isolation: isolate;
+  display: block;
+  overflow: hidden;
+  border-radius: 16px;
+  background-color: #2a2d30;
+  color: #ffffff;
+}
+.mc-root .mc-cell-a { grid-area: a; }
+.mc-root .mc-cell-b { grid-area: b; }
+.mc-root .mc-cell-c { grid-area: c; }
+.mc-root .mc-cell-d { grid-area: d; }
+.mc-root .mc-cell-e { grid-area: e; }
+.mc-root .mc-cell-f { grid-area: f; }
+.mc-root .mc-cell-img {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s ease;
+}
+.mc-root .mc-cell:hover .mc-cell-img { transform: scale(1.04); }
+.mc-root .mc-cell-shade {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, rgba(12, 13, 14, 0) 28%, rgba(12, 13, 14, 0.9) 100%);
+}
+.mc-root .mc-cell-a .mc-cell-shade {
+  background: linear-gradient(180deg, rgba(12, 13, 14, 0.05) 25%, rgba(12, 13, 14, 0.62) 55%, rgba(12, 13, 14, 0.92) 100%);
+}
+.mc-root .mc-cell-d .mc-cell-shade {
+  background: linear-gradient(180deg, rgba(12, 13, 14, 0) 22%, rgba(12, 13, 14, 0.9) 62%);
+}
+.mc-root .mc-badges {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  display: flex;
+  gap: 6px;
+}
+.mc-root .mc-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+.mc-root .mc-badge-ic { background: #ffffff; color: var(--mc-ink); }
+.mc-root .mc-badge-gb { background: var(--mc-accent); color: #ffffff; }
+.mc-root .mc-badge-kr {
+  background: var(--mc-ink);
+  color: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+}
+.mc-root .mc-badge-tag {
+  background: rgba(22, 24, 26, 0.55);
+  color: #ffffff;
+  font-family: var(--mc-mono);
+  font-weight: 500;
+  backdrop-filter: blur(6px);
+}
+.mc-root .mc-cell-body {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px;
+}
+.mc-root .mc-cell-a .mc-cell-body { gap: 10px; padding: 24px; }
+.mc-root .mc-cell-kicker {
+  font-family: var(--mc-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.8);
+}
+.mc-root .mc-cell-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 17px;
+  line-height: 1.3;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.mc-root .mc-cell-a .mc-cell-title { font-size: 44px; line-height: 1.05; letter-spacing: -0.04em; }
+.mc-root .mc-cell-b .mc-cell-title { font-size: 23px; line-height: 1.22; letter-spacing: -0.025em; -webkit-line-clamp: 3; }
+.mc-root .mc-cell-sum {
+  max-width: 46ch;
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.88);
+  word-break: keep-all;
+}
+.mc-root .mc-cell-meta {
+  font-family: var(--mc-mono);
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+/* 큰 칸: 같은 상품 두 출처 */
+.mc-root .mc-ledger {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.3);
+}
+.mc-root .mc-ledger-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 12px 0 0;
+}
+.mc-root .mc-ledger-item + .mc-ledger-item {
+  padding-left: 16px;
+  border-left: 1px solid rgba(255, 255, 255, 0.3);
+}
+.mc-root .mc-ledger-k {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.mc-root .mc-ledger-dot { width: 8px; height: 8px; border-radius: 2px; background: var(--mc-accent); }
+.mc-root .mc-ledger-dot-kr { background: #ffffff; }
+.mc-root .mc-ledger-v {
+  font-family: var(--mc-mono);
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* 사진 없는 칸: 판매 방식별 색 + 키 배열 무늬 */
+.mc-root .mc-keys::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: conic-gradient(from 90deg at 4px 4px, rgba(255, 255, 255, 0.1) 90deg, transparent 0) 0 0 / 30px 30px;
+  -webkit-mask-image: linear-gradient(115deg, transparent 30%, #000000 100%);
+  mask-image: linear-gradient(115deg, transparent 30%, #000000 100%);
+}
+.mc-root .mc-panel-drop { background-color: var(--mc-accent); }
+.mc-root .mc-panel-pre { background-color: var(--mc-ink); }
+
+.mc-root .mc-cell-c {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 24px;
+  padding: 22px 26px 22px 22px;
+}
+.mc-root .mc-drop-text { display: flex; flex-direction: column; gap: 6px; }
+.mc-root .mc-drop-title { font-size: 32px; line-height: 1.1; font-weight: 700; letter-spacing: -0.035em; }
+.mc-root .mc-drop-time {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-family: var(--mc-mono);
+  line-height: 1;
+}
+.mc-root .mc-drop-today {
+  margin-bottom: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--mc-accent);
+  font-family: var(--mc-sans);
+  font-size: 13px;
+  font-weight: 700;
+}
+.mc-root .mc-drop-clock { font-size: 92px; font-weight: 500; letter-spacing: -0.06em; }
+
+.mc-root .mc-cell-f .mc-cell-body { gap: 4px; }
+.mc-root .mc-price { display: flex; align-items: baseline; gap: 8px; margin-top: 4px; }
+.mc-root .mc-price-now { font-family: var(--mc-mono); font-size: 22px; font-weight: 600; letter-spacing: -0.03em; }
+.mc-root .mc-price-was { font-family: var(--mc-mono); font-size: 12px; color: rgba(255, 255, 255, 0.55); text-decoration: line-through; }
+.mc-root .mc-price-off {
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--mc-accent);
+  font-family: var(--mc-mono);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* ---------- 시안 메모 ---------- */
+.mc-root .mc-memo {
+  display: grid;
+  grid-template-columns: 104px 1fr;
+  gap: 8px 18px;
+  margin-top: 16px;
+  padding: 14px 18px;
+  border: 1.5px dashed var(--mc-faint);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.45);
+  color: var(--mc-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.mc-root .mc-memo-label {
+  font-family: var(--mc-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mc-ink);
+  letter-spacing: 0.04em;
+}
+.mc-root .mc-memo-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 28px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  word-break: keep-all;
+}
+.mc-root .mc-memo-key { color: var(--mc-ink); font-weight: 600; }
+
+/* ---------- 바로 가기 ---------- */
+.mc-root .mc-jump {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 28px;
+}
+.mc-root .mc-jump-cue { margin-right: 6px; font-family: var(--mc-mono); font-size: 12px; color: var(--mc-muted); }
+.mc-root .mc-jump-link {
+  display: inline-flex;
+  align-items: center;
+  height: 34px;
+  padding: 0 14px;
+  border: 1px solid var(--mc-ink);
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.mc-root .mc-jump-link:hover { background: var(--mc-ink); color: var(--mc-bg); }
+
+/* ---------- 섹션과 캐러셀 ---------- */
+.mc-root .mc-sec { margin-top: 44px; padding-top: 36px; border-top: 1px solid var(--mc-border); }
+.mc-root .mc-sec-head { display: flex; align-items: flex-end; gap: 18px; margin-bottom: 18px; }
+.mc-root .mc-sec-no {
+  font-family: var(--mc-mono);
+  font-size: 48px;
+  line-height: 0.85;
+  font-weight: 500;
+  letter-spacing: -0.05em;
+  color: var(--mc-accent);
+}
+.mc-root .mc-sec-title { margin: 0; font-size: 27px; line-height: 1.2; font-weight: 700; letter-spacing: -0.03em; }
+.mc-root .mc-sec-sub { margin: 4px 0 0; font-size: 14px; color: var(--mc-muted); }
+.mc-root .mc-sec-tools { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.mc-root .mc-count { margin-right: 6px; font-family: var(--mc-mono); font-size: 12px; color: var(--mc-muted); }
+.mc-root .mc-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--mc-ink);
+  border-radius: 50%;
+  color: var(--mc-ink);
+}
+.mc-root .mc-arrow-off { border-color: var(--mc-border); color: var(--mc-faint); }
+.mc-root .mc-more { margin-left: 12px; font-size: 14px; font-weight: 600; color: var(--mc-accent); }
+.mc-root .mc-ico { display: block; }
+
+.mc-root .mc-legend { display: inline-flex; flex-wrap: wrap; gap: 4px 12px; margin-left: 10px; font-size: 12px; color: var(--mc-muted); vertical-align: 1px; }
+.mc-root .mc-legend-item { display: inline-flex; align-items: center; gap: 5px; }
+.mc-root .mc-sw { width: 10px; height: 10px; border-radius: 3px; }
+.mc-root .mc-sw-drop { background: var(--mc-accent); }
+.mc-root .mc-sw-soon { box-shadow: inset 0 0 0 2px var(--mc-accent); }
+.mc-root .mc-sw-pre { background: var(--mc-ink); }
+.mc-root .mc-sw-stock { background: repeating-linear-gradient(135deg, var(--mc-faint) 0 2px, var(--mc-divider) 2px 4px); }
+.mc-root .mc-sw-sale { background: #ffffff; box-shadow: inset 0 0 0 1px var(--mc-faint); }
+
+.mc-root .mc-rail { position: relative; margin-right: -24px; }
+.mc-root .mc-track {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  padding: 2px 24px 4px 0;
+}
+.mc-root .mc-track::-webkit-scrollbar { display: none; }
+.mc-root .mc-track-kr { padding-top: 34px; }
+.mc-root .mc-rail::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 110px;
+  background: linear-gradient(90deg, rgba(243, 244, 241, 0), var(--mc-bg) 88%);
+  pointer-events: none;
+}
+.mc-root .mc-rail-next {
+  position: absolute;
+  right: 26px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #ffffff;
+  color: var(--mc-ink);
+  box-shadow: 0 8px 22px rgba(22, 24, 26, 0.18);
+  pointer-events: none;
+}
+.mc-root .mc-rail-ic .mc-rail-next { top: 124px; }
+.mc-root .mc-rail-gb .mc-rail-next { top: 83px; }
+.mc-root .mc-rail-kr .mc-rail-next { top: 105px; }
+.mc-root .mc-progress { position: relative; height: 2px; margin-top: 16px; background: var(--mc-divider); }
+.mc-root .mc-progress-bar { position: absolute; top: 0; left: 0; bottom: 0; background: var(--mc-ink); }
+
+.mc-root .mc-card { flex: none; display: flex; flex-direction: column; gap: 8px; scroll-snap-align: start; }
+.mc-root .mc-card-ic { width: 236px; }
+.mc-root .mc-card-gb { width: 320px; }
+.mc-root .mc-card-kr { width: 190px; }
+.mc-root .mc-media {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: 12px;
+  background-color: var(--mc-divider);
+  background-image: conic-gradient(from 90deg at 3px 3px, rgba(22, 24, 26, 0.05) 90deg, transparent 0);
+  background-size: 22px 22px;
+}
+.mc-root .mc-card-ic .mc-media { aspect-ratio: 4 / 5; }
+.mc-root .mc-card-gb .mc-media { aspect-ratio: 3 / 2; }
+.mc-root .mc-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+.mc-root .mc-card:hover .mc-img { transform: scale(1.05); }
+.mc-root .mc-chip {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--mc-ink);
+  font-size: 11px;
+  font-weight: 600;
+}
+.mc-root .mc-chip-date {
+  top: auto;
+  bottom: 10px;
+  background: rgba(22, 24, 26, 0.84);
+  color: #ffffff;
+  font-family: var(--mc-mono);
+  font-weight: 500;
+}
+.mc-root .mc-chip-end { background: rgba(255, 255, 255, 0.9); color: var(--mc-muted); }
+.mc-root .mc-card-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 15px;
+  line-height: 1.38;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+.mc-root .mc-card:hover .mc-card-title { text-decoration: underline; text-underline-offset: 3px; }
+.mc-root .mc-card-meta { font-family: var(--mc-mono); font-size: 12px; color: var(--mc-muted); }
+.mc-root .mc-card-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mc-accent);
+}
+
+/* 국내 판매 포스터 */
+.mc-root .mc-poster {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  padding: 14px 16px 16px;
+  border-radius: 12px;
+}
+.mc-root .mc-poster-drop { background-color: var(--mc-accent); color: #ffffff; }
+.mc-root .mc-poster-pre { background-color: var(--mc-ink); color: var(--mc-bg); }
+.mc-root .mc-poster-soon { background-color: var(--mc-surface); color: var(--mc-accent); box-shadow: inset 0 0 0 2px var(--mc-accent); }
+.mc-root .mc-poster-stock {
+  background-color: var(--mc-divider);
+  background-image: repeating-linear-gradient(135deg, rgba(22, 24, 26, 0.07) 0 6px, transparent 6px 14px);
+  color: var(--mc-ink);
+}
+.mc-root .mc-poster-sale { background-color: var(--mc-surface); color: var(--mc-ink); box-shadow: inset 0 0 0 1px var(--mc-border); }
+.mc-root .mc-poster-ex { background-color: transparent; color: var(--mc-muted); border: 1.5px dashed var(--mc-faint); }
+.mc-root .mc-poster-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; }
+.mc-root .mc-poster-store { font-family: var(--mc-mono); font-size: 11px; font-weight: 500; opacity: 0.8; }
+.mc-root .mc-poster-big {
+  display: block;
+  font-family: var(--mc-mono);
+  font-size: 42px;
+  line-height: 1;
+  font-weight: 500;
+  letter-spacing: -0.05em;
+}
+.mc-root .mc-poster-word { display: block; font-size: 26px; line-height: 1.12; font-weight: 700; letter-spacing: -0.04em; }
+.mc-root .mc-poster-note { display: block; font-size: 14px; line-height: 1.55; word-break: keep-all; }
+.mc-root .mc-poster-sub {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-family: var(--mc-mono);
+  font-size: 15px;
+}
+.mc-root .mc-flag {
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-family: var(--mc-sans);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.mc-root .mc-flag-light { background: #ffffff; color: var(--mc-accent); }
+.mc-root .mc-flag-accent { background: var(--mc-accent); color: #ffffff; }
+.mc-root .mc-flag-quiet { background: rgba(255, 255, 255, 0.2); color: inherit; }
+.mc-root .mc-flag-line { box-shadow: inset 0 0 0 1px currentColor; }
+
+.mc-root .mc-pair { position: relative; flex: none; display: flex; gap: 16px; }
+.mc-root .mc-pair-cap {
+  position: absolute;
+  top: -32px;
+  left: 0;
+  right: 0;
+  height: 22px;
+  border-bottom: 1.5px solid var(--mc-ink);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mc-ink);
+  white-space: nowrap;
+}
+.mc-root .mc-pair-cap::before,
+.mc-root .mc-pair-cap::after {
+  content: "";
+  position: absolute;
+  bottom: -7px;
+  width: 1.5px;
+  height: 7px;
+  background: var(--mc-ink);
+}
+.mc-root .mc-pair-cap::before { left: 0; }
+.mc-root .mc-pair-cap::after { right: 0; }
+
+/* ---------- 푸터 ---------- */
+.mc-root .mc-footer {
+  margin-top: 56px;
+  padding-top: 22px;
+  border-top: 2px solid var(--mc-ink);
+}
+.mc-root .mc-footer-top { display: flex; align-items: center; gap: 28px; }
+.mc-root .mc-footer-logo { font-size: 20px; font-weight: 700; letter-spacing: -0.045em; }
+.mc-root .mc-footer-nav { display: flex; gap: 18px; font-size: 14px; color: var(--mc-muted); }
+.mc-root .mc-footer-text {
+  max-width: 70ch;
+  margin: 12px 0 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--mc-muted);
+  word-break: keep-all;
+}
+.mc-root .mc-mobile-note {
+  margin: 28px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--mc-divider);
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--mc-faint);
+  word-break: keep-all;
+}
+</style>
+<div class="mc-root">
+
+  <header class="mc-header">
+    <a class="mc-logo" href="#">keycheck</a>
+    <nav class="mc-nav" aria-label="게시판">
+      <a class="mc-nav-link" href="#mc-ic">IC</a>
+      <a class="mc-nav-link" href="#mc-gb">공동구매</a>
+      <a class="mc-nav-link" href="#mc-kr">국내 판매</a>
+    </nav>
+    <span class="mc-login" title="나중에 로그인이 들어갈 자리"><span class="mc-login-dot"></span>로그인</span>
+  </header>
+
+  <div class="mc-dateline">
+    <span><span class="mc-dateline-strong">2026.11.05 목</span> · 저녁판</span>
+    <span>최근 7일 새 IC <span class="mc-dateline-strong">3</span> · 새 공동구매 <span class="mc-dateline-strong">1</span> · 오늘 드랍 <span class="mc-dateline-strong">1</span></span>
+  </div>
+
+  <!-- ================= 하이라이트 ================= -->
+  <section class="mc-hl" aria-labelledby="mc-hl-title">
+    <div class="mc-hl-head">
+      <div>
+        <p class="mc-kicker">HIGHLIGHT</p>
+        <h1 class="mc-hl-title" id="mc-hl-title">요즘 키보드·키캡,<br>사진으로 먼저 봐요</h1>
+      </div>
+      <p class="mc-hl-lead">geekhack IC·공동구매 글과 국내 판매처 공지에서 지금 볼 만한 여섯 개를 골랐어요. 아래로 내리면 출처별 목록이 이어져요.</p>
+    </div>
+
+    <div class="mc-bento">
+      <!-- 큰 칸: 최근 7일 새 공동구매 조회 1위 + 같은 상품의 국내 예약판매 -->
+      <a class="mc-cell mc-cell-a" href="#">
+        <img class="mc-cell-img" src="https://bord.design/nightshift/8.jpg" alt="SWG Nightshift 대표 이미지" referrerpolicy="no-referrer" style="object-position: 50% 20%;">
+        <span class="mc-cell-shade"></span>
+        <span class="mc-badges">
+          <span class="mc-badge mc-badge-gb">공동구매</span>
+          <span class="mc-badge mc-badge-kr">국내 판매</span>
+          <span class="mc-badge mc-badge-tag">키캡</span>
+        </span>
+        <span class="mc-cell-body">
+          <span class="mc-cell-kicker">최근 7일 새 공동구매 · 조회 1위</span>
+          <span class="mc-cell-title">SWG Nightshift</span>
+          <span class="mc-cell-sum">Swagkeys(SWG)가 제작하는 체리 프로파일 더블샷 ABS 키캡 세트 SWG Nightshift의 공동구매 글이에요.</span>
+          <span class="mc-ledger">
+            <span class="mc-ledger-item">
+              <span class="mc-ledger-k"><span class="mc-ledger-dot"></span>geekhack 공동구매</span>
+              <span class="mc-ledger-v">10/30 → 11/13</span>
+              <span class="mc-ledger-v">조회 6,800+ · 댓글 2</span>
+            </span>
+            <span class="mc-ledger-item">
+              <span class="mc-ledger-k"><span class="mc-ledger-dot mc-ledger-dot-kr"></span>swagkey 예약판매</span>
+              <span class="mc-ledger-v">~11/13(금) 23:59 마감</span>
+              <span class="mc-ledger-v">2027년 8월 말 발송</span>
+            </span>
+          </span>
+        </span>
+      </a>
+
+      <!-- 세로 칸: 최근 2주 새 IC 조회 1위 -->
+      <a class="mc-cell mc-cell-b" href="#">
+        <img class="mc-cell-img" src="https://cdn.shopify.com/s/files/1/0607/5351/0626/files/DSC02284.jpg?v=1792743092" alt="Class 60 V2 대표 이미지" referrerpolicy="no-referrer" style="object-position: 54% 50%;">
+        <span class="mc-cell-shade"></span>
+        <span class="mc-badges">
+          <span class="mc-badge mc-badge-ic">IC</span>
+          <span class="mc-badge mc-badge-tag">60%</span>
+        </span>
+        <span class="mc-cell-body">
+          <span class="mc-cell-kicker">최근 2주 새 IC · 조회 1위</span>
+          <span class="mc-cell-title">Class 60 V2 — 60% Retro Design Board</span>
+          <span class="mc-cell-meta">조회 2만+ · 댓글 5 · 10/23</span>
+        </span>
+      </a>
+
+      <!-- 작은 칸: 최근 2주 새 공동구매 조회 1위 -->
+      <a class="mc-cell mc-cell-d" href="#">
+        <img class="mc-cell-img" src="https://geekhack.org/index.php?action=dlattach;topic=127251.0;attach=318601;image" alt="Seed Plan Linedge 65 대표 이미지" referrerpolicy="no-referrer">
+        <span class="mc-cell-shade"></span>
+        <span class="mc-badges">
+          <span class="mc-badge mc-badge-gb">공동구매</span>
+        </span>
+        <span class="mc-cell-body">
+          <span class="mc-cell-kicker">2주 새 공동구매 · 조회 1위</span>
+          <span class="mc-cell-title">Seed Plan Linedge 65 Keyboard</span>
+          <span class="mc-cell-meta">조회 1.7만+ · 댓글 3 · 10/26</span>
+        </span>
+      </a>
+
+      <!-- 작은 칸: 최근 2주 새 IC 조회 2위 -->
+      <a class="mc-cell mc-cell-e" href="#">
+        <img class="mc-cell-img" src="https://i.imgur.com/KSEcDYd.jpeg" alt="GSD Crib Artisan Tray 대표 이미지" referrerpolicy="no-referrer">
+        <span class="mc-cell-shade"></span>
+        <span class="mc-badges">
+          <span class="mc-badge mc-badge-ic">IC</span>
+        </span>
+        <span class="mc-cell-body">
+          <span class="mc-cell-kicker">2주 새 IC · 조회 2위</span>
+          <span class="mc-cell-title">GSD Crib Artisan Tray</span>
+          <span class="mc-cell-meta">조회 1.3만+ · 댓글 1 · 10/26</span>
+        </span>
+      </a>
+
+      <!-- 가로 띠: 오늘 시작하는 국내 판매 -->
+      <a class="mc-cell mc-cell-c mc-panel-drop mc-keys" href="#">
+        <span class="mc-badges">
+          <span class="mc-badge mc-badge-kr">국내 판매</span>
+          <span class="mc-badge mc-badge-tag">swagkey</span>
+        </span>
+        <span class="mc-drop-text">
+          <span class="mc-cell-kicker">오늘 시작하는 드랍 판매</span>
+          <span class="mc-drop-title">GMK CYL Gonzales</span>
+          <span class="mc-cell-meta">11/5(목) 19:30부터 · swagkey 디스코드 공지</span>
+        </span>
+        <span class="mc-drop-time">
+          <span class="mc-drop-today">오늘</span>
+          <span class="mc-drop-clock">19:30</span>
+        </span>
+      </a>
+
+      <!-- 작은 칸: 마감이 가까운 국내 예약판매 -->
+      <a class="mc-cell mc-cell-f mc-panel-pre mc-keys" href="#">
+        <span class="mc-badges">
+          <span class="mc-badge mc-badge-kr">국내 판매</span>
+        </span>
+        <span class="mc-cell-body">
+          <span class="mc-cell-kicker">예약판매 · 마감 D-22</span>
+          <span class="mc-cell-title">SW 트랜지션87 HE 블랙 투명</span>
+          <span class="mc-price">
+            <span class="mc-price-now">133,200원</span>
+            <span class="mc-price-was">148,000원</span>
+            <span class="mc-price-off">-10%</span>
+          </span>
+          <span class="mc-cell-meta">~11/27(금) 23:59 · 12월 중순 배송</span>
+        </span>
+      </a>
+    </div>
+
+    <aside class="mc-memo" aria-label="시안 메모">
+      <span class="mc-memo-label">시안 메모<br>고르는 규칙</span>
+      <ul class="mc-memo-list">
+        <li><span class="mc-memo-key">큰 칸</span> 최근 7일 새로 올라온 공동구매 중 조회수 1위. 같은 상품의 국내 판매 공지가 있으면 한 칸에 묶어요.</li>
+        <li><span class="mc-memo-key">세로 칸</span> 최근 14일 새 IC 중 조회수 1위</li>
+        <li><span class="mc-memo-key">가로 띠</span> 오늘 시작하는 국내 판매. 없으면 내일 시작, 그다음은 마감이 가장 가까운 판매</li>
+        <li><span class="mc-memo-key">작은 칸 셋</span> 최근 14일 공동구매 조회 1위, 최근 14일 IC 조회 2위, 마감이 가장 가까운 국내 예약판매. 앞 칸에서 이미 고른 상품은 건너뛰어요.</li>
+        <li><span class="mc-memo-key">사진 없는 칸</span> 국내 판매는 사진이 없어서 판매 방식별 색(드랍=주황, 예약판매=먹색)과 키 배열 무늬로 채워요.</li>
+        <li><span class="mc-memo-key">갱신</span> geekhack 글을 확인하는 30분마다 다시 골라요.</li>
+      </ul>
+    </aside>
+
+    <nav class="mc-jump" aria-label="목록 바로 가기">
+      <span class="mc-jump-cue">↓ 아래로 이어져요</span>
+      <a class="mc-jump-link" href="#mc-ic">IC</a>
+      <a class="mc-jump-link" href="#mc-gb">공동구매</a>
+      <a class="mc-jump-link" href="#mc-kr">국내 판매</a>
+    </nav>
+  </section>
+
+  <!-- ================= 01 IC ================= -->
+  <section class="mc-sec" id="mc-ic" aria-labelledby="mc-ic-title">
+    <div class="mc-sec-head">
+      <span class="mc-sec-no">01</span>
+      <div>
+        <h2 class="mc-sec-title" id="mc-ic-title">IC · 관심 조사</h2>
+        <p class="mc-sec-sub">geekhack Interest Checks · 새로 올라온 순</p>
+      </div>
+      <div class="mc-sec-tools">
+        <span class="mc-count">1–4 / 10</span>
+        <span class="mc-arrow mc-arrow-off" aria-hidden="true"><svg class="mc-ico" viewBox="0 0 24 24" width="18" height="18"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <span class="mc-arrow" aria-hidden="true"><svg class="mc-ico" viewBox="0 0 24 24" width="18" height="18"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <a class="mc-more" href="#">전체 보기 →</a>
+      </div>
+    </div>
+    <div class="mc-rail mc-rail-ic">
+      <div class="mc-track">
+        <a class="mc-card mc-card-ic" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://geekhack.org/index.php?action=dlattach;topic=127286.0;attach=318663;image" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">SP</span></span>
+          <span class="mc-card-title">SA Paperwork - 40% Monokit</span>
+          <span class="mc-card-meta">조회 5,300+ · 댓글 5 · 11/1</span>
+        </a>
+        <a class="mc-card mc-card-ic" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://i.imgur.com/PY72A0b.png" alt="" referrerpolicy="no-referrer" loading="lazy" style="object-position: 10% 50%;"><span class="mc-chip">GMK</span></span>
+          <span class="mc-card-title">GMK CYL nuSignal</span>
+          <span class="mc-card-meta">조회 8,500+ · 댓글 15 · 10/31</span>
+        </a>
+        <a class="mc-card mc-card-ic" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://geekhack.org/index.php?action=dlattach;topic=127254.0;attach=318621;image" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">키캡</span></span>
+          <span class="mc-card-title">KEYMOJI Sanctuary - LOTR inspired metal keycap set with embossed legends</span>
+          <span class="mc-card-meta">조회 8,700+ · 댓글 0 · 10/29</span>
+        </a>
+        <a class="mc-card mc-card-ic" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://i.imgur.com/KSEcDYd.jpeg" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">기타</span></span>
+          <span class="mc-card-title">GSD Crib Artisan Tray</span>
+          <span class="mc-card-meta">조회 1.3만+ · 댓글 1 · 10/26</span>
+        </a>
+        <a class="mc-card mc-card-ic" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://i.postimg.cc/Y0ntLgVm/01-keycaps-c64-angle.jpg" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">SP</span></span>
+          <span class="mc-card-title">SA 64 / SA 64C / SA 16 — SA keycaps for the Commodore 64, 64C and 16</span>
+          <span class="mc-card-meta">조회 1.2만+ · 댓글 0 · 10/23</span>
+        </a>
+        <a class="mc-card mc-card-ic" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://cdn.shopify.com/s/files/1/0607/5351/0626/files/DSC02284.jpg?v=1792743092" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">60%</span></span>
+          <span class="mc-card-title">Class 60 V2 — 60% Retro Design Board</span>
+          <span class="mc-card-meta">조회 2만+ · 댓글 5 · 10/23</span>
+        </a>
+        <a class="mc-card mc-card-ic" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://media.biipmk.com/gmk-video2048/GMK_Power-2048-Renders-1.jpg" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">GMK</span></span>
+          <span class="mc-card-title">GMK CYL Video 2048</span>
+          <span class="mc-card-meta">조회 2.5만+ · 댓글 3 · 10/19</span>
+        </a>
+        <a class="mc-card mc-card-ic" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://mugen.cat/projects/zoltraak/assets/forum/samples-6200k-1.jpg" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">MW</span></span>
+          <span class="mc-card-title">MW Zoltraak</span>
+          <span class="mc-card-meta">조회 2.4만+ · 댓글 5 · 10/15</span>
+        </a>
+        <a class="mc-card mc-card-ic" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://i.imgur.com/MGX3IrH.jpeg" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">KKB</span></span>
+          <span class="mc-card-title">KKB 1001 Nights</span>
+          <span class="mc-card-meta">조회 2.8만+ · 댓글 5 · 10/15</span>
+        </a>
+        <a class="mc-card mc-card-ic" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://i.imgur.com/jxzP4ZE.jpeg" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">SP</span></span>
+          <span class="mc-card-title">DCS Doubleshot Hangul (Beige/WoB Alphas)</span>
+          <span class="mc-card-meta">조회 2.4만+ · 댓글 3 · 10/14</span>
+        </a>
+      </div>
+      <span class="mc-rail-next" aria-hidden="true"><svg class="mc-ico" viewBox="0 0 24 24" width="20" height="20"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </div>
+    <div class="mc-progress"><span class="mc-progress-bar" style="width: 40%;"></span></div>
+  </section>
+
+  <!-- ================= 02 공동구매 ================= -->
+  <section class="mc-sec" id="mc-gb" aria-labelledby="mc-gb-title">
+    <div class="mc-sec-head">
+      <span class="mc-sec-no">02</span>
+      <div>
+        <h2 class="mc-sec-title" id="mc-gb-title">공동구매</h2>
+        <p class="mc-sec-sub">geekhack Group Buys and Preorders · 새로 올라온 순</p>
+      </div>
+      <div class="mc-sec-tools">
+        <span class="mc-count">1–3 / 10</span>
+        <span class="mc-arrow mc-arrow-off" aria-hidden="true"><svg class="mc-ico" viewBox="0 0 24 24" width="18" height="18"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <span class="mc-arrow" aria-hidden="true"><svg class="mc-ico" viewBox="0 0 24 24" width="18" height="18"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <a class="mc-more" href="#">전체 보기 →</a>
+      </div>
+    </div>
+    <div class="mc-rail mc-rail-gb">
+      <div class="mc-track">
+        <a class="mc-card mc-card-gb" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://bord.design/nightshift/8.jpg" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">키캡</span><span class="mc-chip mc-chip-date">10/30 → 11/13</span></span>
+          <span class="mc-card-title">SWG Nightshift</span>
+          <span class="mc-card-meta">조회 6,800+ · 댓글 2 · 10/31</span>
+          <span class="mc-card-link">↔ swagkey 예약판매도 열렸어요</span>
+        </a>
+        <a class="mc-card mc-card-gb" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://geekhack.org/index.php?action=dlattach;topic=127251.0;attach=318601;image" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">65%</span></span>
+          <span class="mc-card-title">Seed Plan Linedge 65 Keyboard</span>
+          <span class="mc-card-meta">조회 1.7만+ · 댓글 3 · 10/26</span>
+        </a>
+        <a class="mc-card mc-card-gb" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://i.imgur.com/ppgcj2r.png" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">MW</span><span class="mc-chip mc-chip-date">10/26 → 11/16</span></span>
+          <span class="mc-card-title">MW Datenshi</span>
+          <span class="mc-card-meta">조회 1.6만+ · 댓글 2 · 10/26</span>
+        </a>
+        <a class="mc-card mc-card-gb" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://imagedelivery.net/5Lj-4KVs36OWCtiVSZ4L1Q/c993d042-652b-456f-f48c-83165ef24100/public" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">GMK</span></span>
+          <span class="mc-card-title">GMK Salamander</span>
+          <span class="mc-card-meta">조회 2.3만+ · 댓글 5 · 10/20</span>
+        </a>
+        <a class="mc-card mc-card-gb" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://geekhack.org/index.php?action=dlattach;topic=127224.0;attach=318491;image" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">80%</span></span>
+          <span class="mc-card-title">Code:002 TKL</span>
+          <span class="mc-card-meta">조회 2.9만+ · 댓글 0 · 10/17</span>
+        </a>
+        <a class="mc-card mc-card-gb" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://i.postimg.cc/fDn8NbZW/Black-Base.png" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">GMK</span></span>
+          <span class="mc-card-title">GMK CYL Blanks</span>
+          <span class="mc-card-meta">조회 2.7만+ · 댓글 9 · 10/16</span>
+        </a>
+        <a class="mc-card mc-card-gb" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://i.imgur.com/pc8l2Nb.jpeg" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">65%</span></span>
+          <span class="mc-card-title">Space66% Spaceforge</span>
+          <span class="mc-card-meta">조회 3.4만+ · 댓글 2 · 10/9</span>
+        </a>
+        <a class="mc-card mc-card-gb" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://i.postimg.cc/8zwCCyD3/DCS-SMRT-165.jpg" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">SP</span><span class="mc-chip mc-chip-date mc-chip-end">공동구매 끝남</span></span>
+          <span class="mc-card-title">DCS SMRT R2</span>
+          <span class="mc-card-meta">조회 6.6만+ · 댓글 23 · 9/20</span>
+        </a>
+        <a class="mc-card mc-card-gb" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://i.postimg.cc/rFQr0090/Katana80_1b.webp" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">MW</span></span>
+          <span class="mc-card-title">MW Meteor Dreams</span>
+          <span class="mc-card-meta">조회 3.1만+ · 댓글 1 · 7/10</span>
+        </a>
+        <a class="mc-card mc-card-gb" href="#">
+          <span class="mc-media"><img class="mc-img" src="https://i.imgur.com/yYvb5pL.jpeg" alt="" referrerpolicy="no-referrer" loading="lazy"><span class="mc-chip">키캡</span><span class="mc-chip mc-chip-date mc-chip-end">7/6 → 7/27 끝남</span></span>
+          <span class="mc-card-title">SWG Neowell</span>
+          <span class="mc-card-meta">조회 17.4만+ · 댓글 3 · 7/10</span>
+        </a>
+      </div>
+      <span class="mc-rail-next" aria-hidden="true"><svg class="mc-ico" viewBox="0 0 24 24" width="20" height="20"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </div>
+    <div class="mc-progress"><span class="mc-progress-bar" style="width: 30%;"></span></div>
+  </section>
+
+  <!-- ================= 03 국내 판매 ================= -->
+  <section class="mc-sec" id="mc-kr" aria-labelledby="mc-kr-title">
+    <div class="mc-sec-head">
+      <span class="mc-sec-no">03</span>
+      <div>
+        <h2 class="mc-sec-title" id="mc-kr-title">국내 판매</h2>
+        <p class="mc-sec-sub">swagkey 디스코드 판매 공지 · 판매 건마다 한 장
+          <span class="mc-legend">
+            <span class="mc-legend-item"><span class="mc-sw mc-sw-drop"></span>드랍</span>
+            <span class="mc-legend-item"><span class="mc-sw mc-sw-soon"></span>판매 예정</span>
+            <span class="mc-legend-item"><span class="mc-sw mc-sw-pre"></span>예약판매</span>
+            <span class="mc-legend-item"><span class="mc-sw mc-sw-stock"></span>입고 판매</span>
+            <span class="mc-legend-item"><span class="mc-sw mc-sw-sale"></span>판매</span>
+          </span>
+        </p>
+      </div>
+      <div class="mc-sec-tools">
+        <span class="mc-count">1–5 / 9</span>
+        <span class="mc-arrow mc-arrow-off" aria-hidden="true"><svg class="mc-ico" viewBox="0 0 24 24" width="18" height="18"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <span class="mc-arrow" aria-hidden="true"><svg class="mc-ico" viewBox="0 0 24 24" width="18" height="18"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <a class="mc-more" href="#">전체 보기 →</a>
+      </div>
+    </div>
+    <div class="mc-rail mc-rail-kr">
+      <div class="mc-track mc-track-kr">
+        <a class="mc-card mc-card-kr" href="#">
+          <span class="mc-poster mc-poster-drop mc-keys">
+            <span class="mc-poster-top"><span>드랍 판매</span><span class="mc-poster-store">swagkey</span></span>
+            <span>
+              <span class="mc-poster-big">11.05</span>
+              <span class="mc-poster-sub"><span>목 19:30</span><span class="mc-flag mc-flag-light">오늘</span></span>
+            </span>
+          </span>
+          <span class="mc-card-title">GMK CYL Gonzales</span>
+          <span class="mc-card-meta">11/5(목) 19:30부터</span>
+        </a>
+        <a class="mc-card mc-card-kr" href="#">
+          <span class="mc-poster mc-poster-drop mc-keys">
+            <span class="mc-poster-top"><span>드랍 판매</span><span class="mc-poster-store">swagkey</span></span>
+            <span>
+              <span class="mc-poster-big">11.04</span>
+              <span class="mc-poster-sub"><span>수 19:00</span><span class="mc-flag mc-flag-quiet">어제</span></span>
+            </span>
+          </span>
+          <span class="mc-card-title">SWG Classic Blue ABS 이중사출 키캡</span>
+          <span class="mc-card-meta">11/4(수) 19:00부터</span>
+        </a>
+        <a class="mc-card mc-card-kr" href="#">
+          <span class="mc-poster mc-poster-pre mc-keys">
+            <span class="mc-poster-top"><span>예약판매</span><span class="mc-poster-store">swagkey</span></span>
+            <span>
+              <span class="mc-poster-big">~11.13</span>
+              <span class="mc-poster-sub"><span>금 23:59</span><span class="mc-flag mc-flag-accent">D-8</span></span>
+            </span>
+          </span>
+          <span class="mc-card-title">SWG Nightshift ABS 이중사출 키캡</span>
+          <span class="mc-card-meta">2027년 8월 말 발송 · 공지 11/3</span>
+          <span class="mc-card-link">↔ geekhack 공동구매와 같은 상품</span>
+        </a>
+        <div class="mc-pair">
+          <span class="mc-pair-cap">Baionlenja Synovia · 시작과 예정 공지를 따로 한 장씩</span>
+          <a class="mc-card mc-card-kr" href="#">
+            <span class="mc-poster mc-poster-drop mc-keys">
+              <span class="mc-poster-top"><span>드랍 판매 시작</span><span class="mc-poster-store">swagkey</span></span>
+              <span>
+                <span class="mc-poster-big">10.30</span>
+                <span class="mc-poster-sub"><span>금 19:00</span></span>
+              </span>
+            </span>
+            <span class="mc-card-title">Baionlenja Synovia</span>
+            <span class="mc-card-meta">시작 공지 10/30</span>
+          </a>
+          <a class="mc-card mc-card-kr" href="#">
+            <span class="mc-poster mc-poster-soon">
+              <span class="mc-poster-top"><span>드랍 판매 예정</span><span class="mc-poster-store">swagkey</span></span>
+              <span>
+                <span class="mc-poster-big">10.30</span>
+                <span class="mc-poster-sub"><span>금 19:00</span><span class="mc-flag mc-flag-line">예정</span></span>
+              </span>
+            </span>
+            <span class="mc-card-title">Baionlenja Synovia</span>
+            <span class="mc-card-meta">예정 공지 10/29</span>
+          </a>
+        </div>
+        <a class="mc-card mc-card-kr" href="#">
+          <span class="mc-poster mc-poster-stock">
+            <span class="mc-poster-top"><span>입고 판매</span><span class="mc-poster-store">swagkey</span></span>
+            <span>
+              <span class="mc-poster-big">10.29</span>
+              <span class="mc-poster-sub"><span>목 19:00</span></span>
+            </span>
+          </span>
+          <span class="mc-card-title">Qwertykeys NEO80 Cu</span>
+          <span class="mc-card-meta">베어본킷·기판·보강판</span>
+        </a>
+        <a class="mc-card mc-card-kr" href="#">
+          <span class="mc-poster mc-poster-stock">
+            <span class="mc-poster-top"><span>입고 판매</span><span class="mc-poster-store">swagkey</span></span>
+            <span>
+              <span class="mc-poster-big">10.27</span>
+              <span class="mc-poster-sub"><span>화 19:00</span></span>
+            </span>
+          </span>
+          <span class="mc-card-title">SW 나이트 스테빌라이저 스냅인</span>
+          <span class="mc-card-meta">10/27(화) 19:00부터</span>
+        </a>
+        <a class="mc-card mc-card-kr" href="#">
+          <span class="mc-poster mc-poster-pre mc-keys">
+            <span class="mc-poster-top"><span>예약판매</span><span class="mc-poster-store">swagkey</span></span>
+            <span>
+              <span class="mc-poster-big">~11.27</span>
+              <span class="mc-poster-sub"><span>금 23:59</span><span class="mc-flag mc-flag-accent">D-22</span></span>
+            </span>
+          </span>
+          <span class="mc-card-title">SW 트랜지션87 HE 블랙 투명</span>
+          <span class="mc-card-meta">133,200원(예약 10% 할인) · 12월 중순 배송</span>
+        </a>
+        <a class="mc-card mc-card-kr" href="#">
+          <span class="mc-poster mc-poster-sale">
+            <span class="mc-poster-top"><span>판매</span><span class="mc-poster-store">swagkey</span></span>
+            <span>
+              <span class="mc-poster-word">네이버<br>스토어</span>
+              <span class="mc-poster-sub"><span>공지 10.22</span></span>
+            </span>
+          </span>
+          <span class="mc-card-title">Eave65 MX 유무선 완제품</span>
+          <span class="mc-card-meta">네이버 스토어에서 판매 · 공지 10/22</span>
+        </a>
+        <a class="mc-card mc-card-kr" href="#">
+          <span class="mc-poster mc-poster-ex">
+            <span class="mc-poster-top"><span>geonworks · 예시</span></span>
+            <span class="mc-poster-note">아직 실제 공지 샘플이 없어요. 판매 공지가 들어오면 이 자리에 한 장씩 떠요.</span>
+          </span>
+          <span class="mc-card-title">geonworks 판매 공지 자리</span>
+          <span class="mc-card-meta">예시</span>
+        </a>
+      </div>
+      <span class="mc-rail-next" aria-hidden="true"><svg class="mc-ico" viewBox="0 0 24 24" width="20" height="20"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </div>
+    <div class="mc-progress"><span class="mc-progress-bar" style="width: 56%;"></span></div>
+  </section>
+
+  <footer class="mc-footer">
+    <div class="mc-footer-top">
+      <span class="mc-footer-logo">keycheck</span>
+      <nav class="mc-footer-nav" aria-label="푸터 메뉴">
+        <a href="#mc-ic">IC</a>
+        <a href="#mc-gb">공동구매</a>
+        <a href="#mc-kr">국내 판매</a>
+      </nav>
+    </div>
+    <p class="mc-footer-text">geekhack의 Interest Checks·Group Buys and Preorders 글과 국내 판매처의 디스코드 판매 공지를 모아 한국어로 짧게 정리해요. geekhack 글은 30분마다 확인해요. 사진과 원문의 권리는 각 작성자에게 있어요.</p>
+  </footer>
+
+  <p class="mc-mobile-note">모바일에서는: 벤토의 큰 칸(공동구매+국내 판매)이 화면 폭을 꽉 채워 맨 위에 오고, 나머지 다섯 칸은 2열로 접혀요(가로 띠는 한 줄 전체). 목록 줄은 카드를 화면 폭의 70% 정도로 키워 다음 카드가 살짝 보이게 하고 손가락으로 넘기며, 좌우 화살표와 "1–4 / 10" 표시는 숨겨요.</p>
+</div>
+</div></div></div>
+</body>
+</html>

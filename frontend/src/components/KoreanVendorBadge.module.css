@@ -1,0 +1,14 @@
+/* 크기는 BoardBadge와 같다 */
+.badge {
+  flex: none;
+  display: inline-block;
+  padding: 1px 8px;
+  border: 1px solid var(--color-accent);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-accent);
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: 600;
+  white-space: nowrap;
+}

@@ -1,0 +1,50 @@
+.header {
+  width: 100%;
+  border-bottom: 2px solid var(--color-text);
+  background: var(--color-bg);
+}
+
+.headerInner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px 40px;
+  padding: 14px 28px;
+}
+
+/* 손가락으로 누르기 쉽게 모든 폭에서 높이 44px 이상(헤더 줄은 메뉴 링크로 이미 44px라 모양은 같다) */
+.logo {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--color-text);
+  font-size: 30px;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  text-decoration: none;
+}
+
+.logo:hover {
+  color: var(--color-text);
+}
+
+.main {
+  display: block;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 28px 20px 56px;
+}
+
+/* 모바일에서는 로고만 한 줄에 두고, 메뉴는 그 아래 두 칸 탭 줄로 내린다(시안) */
+@media (max-width: 599px) {
+  .headerInner {
+    gap: 0;
+    padding: 6px 16px 0;
+  }
+
+  .logo {
+    font-size: 24px;
+  }
+}

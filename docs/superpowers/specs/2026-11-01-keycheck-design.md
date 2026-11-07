@@ -5,7 +5,7 @@
 
 ## 1. 목표
 
-geekhack Interest Checks 게시판(board 132)의 키보드·키캡 글을 국내 유저가 한국어로 빠르게 훑어볼 수 있게 한다. 각 글은 한국어 핵심 요약, 대표 이미지, 원문 링크로 보여준다. 읽기 전용 공개 서비스다.
+geekhack Interest Checks 게시판(board 132)과 Group Buys and Preorders 게시판(board 70, 2026-11-04 추가)의 키보드·키캡 글을 국내 유저가 한국어로 빠르게 훑어볼 수 있게 한다. 각 글은 한국어 핵심 요약, 대표 이미지, 원문 링크로 보여준다. 읽기 전용 공개 서비스다.
 
 UI는 승인된 시안(https://claude.ai/artifact/H3wUMv8ZWu3XaMcVL8gsQh)의 구조를 따른다: 카드 목록, 필터(전체/키보드/키캡), 정렬(최근/조회순), 상세 화면(요약, 스펙표, 원문 링크).
 
@@ -32,7 +32,7 @@ UI는 승인된 시안(https://claude.ai/artifact/H3wUMv8ZWu3XaMcVL8gsQh)의 구
 
 ```
 keycheck/
-├── backend/            # Spring Boot + Kotlin (Gradle Kotlin DSL)
+├── backend/            # Spring Boot + Java (Gradle Groovy)
 ├── frontend/           # Next.js (App Router, TypeScript)
 ├── docker-compose.yml  # 로컬 PostgreSQL
 └── docs/
@@ -41,37 +41,48 @@ keycheck/
 ## 4. 백엔드
 
 ### 4.1 기술 선택
-- Spring Boot, Kotlin, Java 21. 정확한 버전은 구현 계획 단계에서 그 시점 최신 안정판으로 정한다.
-- Spring MVC(동기 방식). 코루틴·WebFlux는 쓰지 않는다.
+- Spring Boot, Java 21. 정확한 버전은 구현 계획 단계에서 그 시점 최신 안정판으로 정한다.
+- Spring MVC(동기 방식). WebFlux는 쓰지 않는다.
 - Spring Data JPA + PostgreSQL. 스키마는 Flyway로 관리한다.
-- `kotlin("plugin.spring")`, `kotlin("plugin.jpa")` 사용. 엔티티는 `data class`가 아닌 일반 `class`로 만든다.
+- Lombok 사용. DTO와 값 타입은 `private final` 필드와 `@Getter`, 엔티티는 일반 클래스와 정적 `create` 메서드로 만든다.
 - HTML 파싱: Jsoup. HTTP 요청: Spring `RestClient`.
 - 스케줄링: `@Scheduled`.
-
-Kotlin 초보를 고려해 Java와 다른 문법(널 안전성, 주 생성자, `val`/`var` 등)은 구현 중에 짧게 설명한다.
 
 ### 4.2 패키지 구성
 
 ```
 com.keycheck
-├── crawl/      # geekhack 요청, 목록·본문 파싱, 수집 스케줄
-├── post/       # 엔티티, 리포지토리, 조회 서비스, API 컨트롤러
-├── image/      # 대표 이미지 후보 필터링·선택
-├── classify/   # 키보드/키캡/기타 분류
-└── summary/    # Summarizer 인터페이스와 구현체
+├── crawl/      # geekhack 요청, 목록·본문 파싱, 수집 스케줄 (client, parser, service, scheduler, config, dto)
+├── post/       # 글 조회 API (controller, service, repository, domain, dto)
+├── image/      # 대표 이미지 후보 필터링·선택 (service, domain, dto)
+├── classify/   # 키보드/키캡/기타 분류 (service)
+└── summary/    # Summarizer 인터페이스와 구현체 (service, dto)
 ```
 
 ### 4.3 수집
 
 확인된 사실:
 - 로그인 없이 목록·본문 HTML과 RSS(`action=.xml;type=rss;board=132`)를 받을 수 있다.
-- 응답 인코딩은 ISO-8859-1이며, 일부 문자는 HTML 엔티티로 온다.
+- 응답은 ISO-8859-1로 선언하지만 실제 바이트는 Windows-1252이며, 그 밖의 문자는 HTML 엔티티로 온다 (`docs/geekhack-html-notes.md`).
 - robots.txt에 제한이 없다. 이용약관은 아직 확인하지 않았다.
 
 방식:
 - RSS에는 조회수가 없으므로 게시판 목록 HTML을 기본 소스로 쓴다.
-- 30분마다 게시판 목록 1~2페이지를 읽어 글 ID, 제목, 작성자, 작성일, 조회수, 댓글 수를 저장하거나 갱신한다. 이때 `stats_checked_at`도 갱신한다.
-- 처음 보는 글만 본문 페이지를 열어 첫 글 HTML에서 본문 텍스트와 이미지 URL을 뽑는다. 외부 이미지와 `dlattach` 첨부 둘 다 수집한다.
+- 30분마다 게시판 목록 1~2페이지(마지막 댓글 순)를 읽어 글 ID, 제목, 작성자, 조회수, 댓글 수를 저장하거나 갱신한다. 이때 `stats_checked_at`도 갱신한다. 목록에는 작성일이 없어, 작성일은 글 페이지에서 읽는다.
+- 처음 보는 글만 본문 페이지를 열어 첫 글 HTML에서 본문 텍스트, 작성일, 이미지 URL을 뽑는다. 외부 이미지와 `dlattach` 첨부 둘 다 수집한다. 글 페이지를 읽지 못하면 틀 글(아래)로 저장해 두고 다음 수집이나 상세 조회 때 채운다.
+
+두 게시판 (2026-11-04 추가):
+- IC(132)와 GB(70)를 같은 방식으로 다룬다. 목록 HTML 구조가 같아 같은 파서를 쓴다. 글마다 게시판(post.board)을 저장하고, 다른 게시판 목록에서 보이면(운영자가 옮긴 글) 게시판을 바꾼다.
+- 정기 수집은 두 게시판 각각 0~1쪽을 읽는다. 과거 글 확보 상태는 게시판별로 둔다.
+- "전체" 최근 목록은 두 게시판 모두 빠짐없이 받아 둔 범위(각 게시판 floor 중 큰 값 이상, 끝까지 받은 게시판은 제한 없음)만 보여주고, 모자라면 덜 받은 게시판의 다음 쪽을 받는다. 분류 필터가 있으면 게시판별 범위를 합친다.
+- 요약 지시에 게시판을 알려 주고, GB 글은 공동구매 기간·벤더·가격·MOQ를 스펙에 우선 넣게 한다.
+
+과거 글 확보 (2026-11-03 결정, 사용자 활동으로 글을 늘린다):
+- 목록을 끝까지 내리면 서버가 geekhack 작성순 목록(`;sort=first_post;desc`, 50개씩, 글 번호 내림차순)의 다음 쪽을 한 번 읽어, 처음 보는 글을 "틀 글"로 저장한다. 틀 글은 목록에서 읽은 제목, 작성자, 조회수, 댓글 수만 있고 본문, 작성일, 이미지, 요약이 없다. 분류는 미분류(4.4).
+- 작성순 목록을 0쪽부터 몇 쪽까지 받았는지와 그 최소 글 번호(floor)를 `board_backfill`에 둔다. 글 번호가 floor 이상인 글은 모두 DB에 있다고 보고, "최근" 목록은 이 범위만 보여준다. 끝(geekhack 목록의 마지막 쪽)에 닿으면 더 받지 않는다.
+- 누군가 틀 글의 상세를 열면 그때 글 첫 페이지를 읽어 본문, 작성일, 이미지, 대표 이미지, 분류, 요약을 채운다. 동시에 여러 명이 열어도 한 번만 채운다. 읽지 못하면 틀 그대로 보여준다.
+- 이 요청들도 2초 간격 제한을 공유한다. 목록 요청은 최대 3초, 상세 채우기는 최대 5초까지 간격을 기다리고, 그 안에 못 얻으면 지금 있는 것만 돌려준다. 한 번의 목록 요청은 geekhack 목록을 최대 한 쪽만 읽는다.
+- 정기 수집이 꺼져 있어도 첫 목록 요청이 작성순 0쪽부터 확보를 시작한다. 다만 수집이 꺼져 있으면 확보 이후 새로 올라온 글은 들어오지 않는다.
 
 조회수·댓글 수 갱신 (목록 2페이지 밖으로 밀려난 글):
 - 상세 화면은 저장된 글을 바로 보여주고, 화면이 뜬 뒤 브라우저가 `GET /api/posts/{id}/stats`를 따로 호출한다. 목록 조회는 갱신을 일으키지 않는다.
@@ -81,36 +92,47 @@ com.keycheck
 - 글 페이지에서 조회수·댓글 수를 어떻게 읽을지(글 페이지 표시 vs 목록 검색)는 구현 계획 단계에서 실제 HTML로 확인한다.
 - 요청 사이에 최소 2초 간격을 두고, 연락처를 담은 User-Agent를 보낸다.
 - 원문 본문 텍스트는 요약용으로만 DB에 저장하고 API로 노출하지 않는다.
+- 제목이 정확히 `deleted`인 글은 작성자가 지운 글로 본다. 새 글이면 저장하지 않고, 이미 저장된 글이면 숨긴다.
+- 수집 스케줄러는 실제 사이트에 요청하므로 기본으로 꺼 둔다. `CRAWL_ENABLED=true`일 때만 동작한다.
 
 본문의 가격·일정·상태는 글쓴이가 갱신하지 않아 낡았을 수 있다(예: Della). 그래서 화면에는 "가격·일정은 원문에서 확인" 안내를 항상 붙인다.
 
 ### 4.4 분류
 
-제목 키워드 규칙으로 분류한다.
-- 키캡: `GMK`, `KAT`, `MT3`, `SA `, `DSA`, `keycap`, `PBT` 등
-- 키보드: `TKL`, `65%`, `75%`, `keyboard`, `PCB`, `case` 등
-- 둘 다 아니면 기타. 기타 글은 "전체"에서만 보인다.
+키보드 글 제목은 제품명만 있는 경우가 많아(예: `Della 960`, `RHINO60`) 키보드 단어로는 잡히지 않는다. 그래서 키캡·기타를 먼저 가려내고 나머지를 키보드로 본다. 순서대로 적용한다.
 
-키워드 목록은 실제 글로 테스트하며 조정한다. 분류가 틀린 글은 첫 버전에서 DB로 직접 고친다.
+1. 제목에 키캡 단어가 있으면 키캡: `GMK`, `KAT`, `MT3`, `SA`, `DSA`, `DCS`, `XDA`, `PBT`, `ePBT`, `keycap(s)`, `keyset` 등
+2. 제목에 기타 단어가 있으면 기타: `deskmat`, `desk mat`, `switch(es)`, `artisan(s)`, `cable(s)` 등
+3. 본문에서 키보드 사양 단어와 키캡 사양 단어가 각각 몇 종류 나오는지 세어 많은 쪽
+   - 키보드: `plate`, `PCB`, `gasket`, `mount`, `typing angle`, `weight`, `hotswap`, `case`
+   - 키캡: `base kit`, `alphas`, `modifiers`, `novelties`, `spacebars`, `colorway`, `profile`
+   - 본문은 다른 분류 이름도 자주 언급하므로(키캡 글의 "65% 키보드 렌더" 등) 상품명이 아니라 사양 항목 단어만 센다.
+4. 같거나 둘 다 0이면 키보드
+
+틀 글(4.3 과거 글 확보)은 본문이 없어 분류하지 않고 미분류(UNCLASSIFIED)로 둔다. 상세를 열어 본문을 읽을 때 위 규칙으로 정한다. 미분류 글은 "전체"에서만 보이고, 키보드·키캡 필터 목록은 과거 글을 더 받지 않는다(받아도 미분류라 붙지 않는다).
+
+단어는 대소문자를 무시하고 단어 경계로 비교한다(`SA`가 `SALE`에 걸리지 않게). 기타 글은 "전체"에서만 보인다.
+
+단어 목록과 본문 판정은 실제 글로 검증하지 않았다. Task 12에서 샘플로 확인하고 조정한다. 분류가 틀린 글은 첫 버전에서 DB로 직접 고친다. 실제 AI 요약기를 붙이면 분류도 AI에 맡기고 이 규칙은 예비로 둘 수 있다.
 
 ### 4.5 대표 이미지 선택
 
 geekhack에는 대표 이미지 표시가 없다. 시안용 샘플 8건 중 4건은 첫 이미지가 배너·로고 등이라 부적합했다.
 
 첫 버전은 규칙 기반 후보 필터링만 구현한다.
-- 제외: 이모티콘, 아바타, 사이트 테마 이미지, 서명 영역 이미지, 후원·디스코드 버튼, 파일명에 `logo`, `banner`, `divider` 등이 들어간 이미지
+- 제외: 이모티콘, 아바타, 사이트 테마 이미지, 후원·디스코드 버튼, 파일명에 `logo`, `banner`, `divider` 등이 들어간 이미지
 - 남은 후보 중 첫 번째를 대표로 정하고, 후보 목록 전체를 저장한다.
 - 후보가 없으면 대표 이미지 없이 기본 그림을 보여준다.
 
 이 규칙이 샘플 8건에서 얼마나 맞는지는 아직 검증하지 않았다. 구현 후 8건으로 확인하고 결과를 기록한다. 나중 단계로 AI 이미지 선택과 관리자 교체를 붙일 수 있게 선택 로직을 인터페이스로 분리한다.
 
-이미지는 원본 URL을 그대로 쓴다(핫링크). 외부 호스트가 핫링크를 막는 경우와 저장 방식은 배포 단계에서 다시 정한다.
+이미지는 원본 URL을 저장하고, 화면에서는 Next.js 이미지 최적화(`next/image`)로 표시 크기에 맞게 줄여 보여준다(2026-11-03 결정). 원본은 수 MB, 큰 것은 15MB라 그대로 쓰면 목록 한 페이지가 수십 MB가 되기 때문이다. 축소본은 Next 서버 디스크에 캐시되고, 원본 요청이 7초 안에 끝나지 않아 최적화가 실패하면 원본 주소를 그대로 불러온다. 축소본 보관의 권리 문제와 배포 환경의 저장 방식은 배포 단계에서 다시 정한다.
 
 ### 4.6 요약
 
-```kotlin
-interface Summarizer {
-    fun summarize(source: PostSource): SummaryResult
+```java
+public interface Summarizer {
+  SummaryResult summarize(PostSource source);
 }
 ```
 
@@ -127,12 +149,13 @@ interface Summarizer {
 | id | PK |
 | topic_id | geekhack 글 ID (유니크) |
 | title, author | |
-| category | KEYBOARD / KEYCAP / OTHER |
-| posted_at | 원문 작성일 |
+| category | KEYBOARD / KEYCAP / OTHER / UNCLASSIFIED(틀 글) |
+| posted_at | 원문 작성일 (틀 글은 null) |
 | views, replies | 조회수·댓글 수 (4.3 갱신 규칙) |
 | stats_checked_at | 조회수·댓글 수를 마지막으로 확인한 시각 |
 | original_url | 원문 링크 |
-| body_text | 요약용 원문 텍스트 (비공개) |
+| body_text | 요약용 원문 텍스트 (비공개, 틀 글은 null) |
+| detail_fetched_at | 글 페이지를 읽어 채운 시각. null이면 틀 글 |
 | summary_status | PENDING / DONE / FAILED |
 | summary_lines | jsonb, 한국어 요약 |
 | specs | jsonb, 스펙 키-값 |
@@ -150,12 +173,17 @@ interface Summarizer {
 | position | 본문 내 순서 |
 | excluded_reason | 후보에서 빠진 이유, 후보면 null |
 
+`board_backfill` (게시판별 한 줄, board IC/GB): next_page(작성순 목록에서 다음에 받을 쪽), floor_topic_id(받은 범위의 최소 글 번호), exhausted(끝까지 받음)
+
 ### 4.8 API
 
-- `GET /api/posts?category={all|keyboard|keycap}&sort={recent|views}&page={n}`
-  - 숨김 글 제외. 카드에 필요한 필드만 반환(제목, 분류, 대표 이미지 URL, 요약 첫 줄, 조회수, 댓글 수, `stats_checked_at`, 작성일).
+- `GET /api/posts?board={all|ic|gb}&category={all|keyboard|keycap}&sub={세부}&sort={recent|views}&cursor={c}` (무한 스크롤, 한 번에 20건)
+  - 응답 `{items, nextCursor, hasMore}`. 다음 요청에 nextCursor를 넘긴다. items가 비었는데 hasMore면 잠시 뒤 같은 cursor로 다시 요청한다.
+  - recent: 글 번호 내림차순, 과거 글 확보 범위(floor 이상)만. 모자라면 작성순 목록 다음 쪽을 한 번 읽는다("전체"일 때만). cursor는 마지막 글 번호.
+  - views: 수집한 글 전체의 조회수 내림차순. geekhack을 읽지 않는다. cursor는 "조회수_글번호".
+  - 숨김 글 제외. 카드 필드: 제목, 분류, 대표 이미지 URL, 요약 첫 줄, 조회수, 댓글 수, `stats_checked_at`, 작성일, detailLoaded(틀 글이면 false).
 - `GET /api/posts/{id}`
-  - 요약 전체, 스펙표, 대표 이미지, 원문 링크, 저장된 조회수, 댓글 수, `stats_checked_at`. geekhack을 호출하지 않는다.
+  - 요약 전체, 스펙표, 대표 이미지, 후보 이미지 목록(imageUrls, 본문 순서, 중복 제외), 원문 링크, 저장된 조회수, 댓글 수, `stats_checked_at`, detailLoaded. 틀 글이면 이때 geekhack 글 페이지를 읽어 채운다(4.3).
 - `GET /api/posts/{id}/stats`
   - 조회수, 댓글 수, `stats_checked_at`. 1시간보다 오래된 값이면 geekhack에서 다시 읽는다(4.3).
 - 조회수는 원래 숫자로 반환하고, 표기 변환은 프론트에서 한다.
@@ -163,8 +191,11 @@ interface Summarizer {
 ## 5. 프론트엔드
 
 - Next.js App Router + TypeScript. 서버 컴포넌트에서 백엔드 API를 호출한다.
-- `/`: 카드 목록, 필터·정렬은 URL 쿼리로 유지한다(공유·뒤로가기 가능).
-- `/posts/[id]`: 상세. 요약, 스펙표, "가격·일정은 원문에서 확인" 안내, 원문 링크.
+- 헤더: 좌우를 채우는 띠, 왼쪽에 로고와 IC·공동구매 메뉴. 오른쪽은 나중 로그인 자리로 비운다.
+- `/`: 메인. 짧은 소개와 IC·공동구매 두 칸(각 최근 10개, 전체 보기). 예전 `/?category=…` 주소는 `/ic`로 넘긴다.
+- `/ic`, `/gb`: 게시판별 카드 목록(무한 스크롤). 필터·정렬은 URL 쿼리로 유지한다(공유·뒤로가기 가능). 첫 20건은 서버가 그리고, 다음 묶음은 브라우저가 받아 붙인다. 상세에 갔다 돌아오면 보던 목록과 스크롤 위치를 복원한다.
+- 틀 글 카드는 이미지 자리에 "글을 열면 이미지를 불러와요", 분류는 "미분류"로 보인다. "조회순" 옆 안내 아이콘은 수집한 글 안에서의 순서라는 점을 알린다.
+- `/posts/[id]`: 상세. 요약, 스펙표, "가격·일정은 원문에서 확인" 안내, 원문 링크, 원문 이미지 갤러리. 썸네일을 누르면 페이지 안에서 크게 보고 화살표·키보드·스와이프로 넘긴다. 틀 글을 채우지 못했으면 다시 시도 안내를 보여준다.
 - 조회수 표기: 1,000 미만은 그대로, 1,000 이상 1만 미만은 앞 두 자리만 남기고 내림해 `3,400+`, 1만 이상은 만 단위 소수 첫째 자리까지 내림해 `1.2만+`, `8만+`(소수가 0이면 생략).
 - 댓글 수는 내림 없이 그대로 보여준다.
 - 상세 화면의 조회수·댓글 수는 클라이언트 컴포넌트가 `/stats`를 호출해 받은 값으로 바꿔 보여준다. 응답 전에는 저장된 값을 보여준다.

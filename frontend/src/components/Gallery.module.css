@@ -1,0 +1,150 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* 원본은 비율이 제각각이라 같은 크기 칸에 잘리지 않게 담는다 */
+.thumb {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  padding: 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  overflow: hidden;
+  cursor: zoom-in;
+}
+
+.thumb:hover,
+.thumb:focus-visible {
+  border-color: var(--color-text);
+}
+
+.thumbImage {
+  object-fit: contain;
+}
+
+/* 확대 보기: 화면 전체를 덮는 어두운 바탕 위에 이미지 하나 */
+.viewer {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: rgba(12, 13, 14, 0.97);
+  color: #f3f4f1;
+}
+
+.viewer[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.viewer::backdrop {
+  background: transparent;
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px max(16px, env(safe-area-inset-right, 0px)) 12px max(16px, env(safe-area-inset-left, 0px));
+  padding-top: max(12px, env(safe-area-inset-top, 0px));
+}
+
+.counter {
+  font-family: var(--font-code);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.source {
+  margin-left: auto;
+  font-size: 14px;
+  color: #f3f4f1;
+  text-underline-offset: 4px;
+}
+
+.source:hover {
+  color: #ffffff;
+}
+
+.stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  padding: 0 72px max(24px, env(safe-area-inset-bottom, 0px));
+}
+
+.frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.image {
+  object-fit: contain;
+}
+
+.close,
+.nav {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 1px solid rgba(243, 244, 241, 0.35);
+  border-radius: 50%;
+  background: rgba(22, 24, 26, 0.7);
+  color: #f3f4f1;
+  cursor: pointer;
+}
+
+.close:hover,
+.nav:hover,
+.close:focus-visible,
+.nav:focus-visible {
+  border-color: #f3f4f1;
+  background: rgba(22, 24, 26, 0.95);
+}
+
+.close svg,
+.nav svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.prev {
+  left: max(12px, env(safe-area-inset-left, 0px));
+}
+
+.next {
+  right: max(12px, env(safe-area-inset-right, 0px));
+}
+
+/* 좁은 화면에서는 화살표를 이미지 위에 겹쳐 이미지 폭을 넓힌다 */
+@media (max-width: 640px) {
+  .stage {
+    padding: 0 0 max(16px, env(safe-area-inset-bottom, 0px));
+  }
+}
