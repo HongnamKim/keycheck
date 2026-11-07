@@ -1,11 +1,14 @@
 import { unstable_rethrow } from "next/navigation";
 import { getNeighbors, type Board, type PostNeighbors } from "@/lib/api";
 import { listTitle } from "@/lib/format";
-import { initialPage } from "@/lib/neighbors";
+import { initialPage, NEIGHBOR_PAGE_SIZE } from "@/lib/neighbors";
 import { listHref, neighborsQuery, type ListQuery } from "@/lib/query";
 import NeighborPager, { type RowPost } from "./NeighborPager";
 
-/** 처음 페이지에서 위아래 각각 보여줄 글 수 (위 5개 + 지금 글 + 아래 5개) */
+/**
+ * 처음 페이지에서 위아래 각각 보여줄 글 수(위 5개 + 지금 글 + 아래 5개 = 11줄). 목록 맨 위·맨 아래 근처라 한쪽이 모자라면
+ * 다른 쪽을 더 보여 줘 줄 수를 맞추므로, 위아래를 NEIGHBOR_PAGE_SIZE(10)개씩 받는다.
+ */
 const NEIGHBOR_SIZE = 5;
 
 /**
@@ -27,7 +30,7 @@ export default async function NeighborList({
   const query = neighborsQuery(from, board);
   let neighbors: PostNeighbors;
   try {
-    neighbors = await getNeighbors(post.id, query, NEIGHBOR_SIZE);
+    neighbors = await getNeighbors(post.id, query, NEIGHBOR_PAGE_SIZE);
   } catch (err) {
     unstable_rethrow(err);
     // 주변 글은 덧붙이는 정보라 실패해도 상세는 그대로 둔다
@@ -60,7 +63,7 @@ export default async function NeighborList({
       query={query}
       from={from}
       currentId={post.id}
-      initial={initialPage<RowPost>(neighbors.before, current, neighbors.after, NEIGHBOR_SIZE)}
+      initial={initialPage<RowPost>(neighbors.before, current, neighbors.after, NEIGHBOR_PAGE_SIZE, NEIGHBOR_SIZE)}
     />
   );
 }

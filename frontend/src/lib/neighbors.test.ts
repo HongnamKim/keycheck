@@ -21,6 +21,52 @@ describe("initialPage", () => {
   });
 });
 
+describe("initialPage: 위아래 side개씩, 모자란 쪽은 다른 쪽으로 채워 늘 같은 줄 수", () => {
+  // 위아래를 10개씩 받아 5개씩 보여 준다(지금 글 포함 11줄). 지금 글은 11
+  const page = (before: number[], after: number[]) => initialPage(before, 11, after, 10, 5);
+
+  it("목록 가운데면 위 5개, 아래 5개", () => {
+    const result = page(range(1, 10), range(12, 10));
+    expect(result.items).toEqual([6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]);
+    expect(result.hasPrev).toBe(true);
+    expect(result.hasNext).toBe(true);
+  });
+
+  it("위가 모자라면(목록 맨 위쪽) 아래를 더 보여 준다", () => {
+    const result = page([10], range(12, 10));
+    expect(result.items).toEqual([10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]);
+    expect(result.hasPrev).toBe(false);
+    expect(result.hasNext).toBe(true);
+  });
+
+  it("목록 첫 글이면 아래만 10개", () => {
+    const result = page([], range(12, 10));
+    expect(result.items).toEqual([11, ...range(12, 10)]);
+    expect(result.hasPrev).toBe(false);
+    expect(result.hasNext).toBe(true);
+  });
+
+  it("아래가 모자라면(목록 끝쪽) 위를 더 보여 준다", () => {
+    const result = page(range(1, 10), [12, 13]);
+    expect(result.items).toEqual([3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
+    expect(result.hasPrev).toBe(true);
+    expect(result.hasNext).toBe(false);
+  });
+
+  it("아래 글을 받은 만큼 다 보여 줬고 10개보다 적으면 다음이 없다", () => {
+    const result = page([10], range(12, 9));
+    expect(result.items).toHaveLength(11);
+    expect(result.hasNext).toBe(false);
+  });
+
+  it("글이 적으면 있는 만큼만", () => {
+    const result = page([9, 10], [12, 13, 14]);
+    expect(result.items).toEqual([9, 10, 11, 12, 13, 14]);
+    expect(result.hasPrev).toBe(false);
+    expect(result.hasNext).toBe(false);
+  });
+});
+
 describe("nextPage", () => {
   const page = initialPage(range(1, 5), 6, range(7, 5), 5);
 
