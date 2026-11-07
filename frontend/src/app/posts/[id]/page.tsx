@@ -1,14 +1,15 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, unstable_rethrow } from "next/navigation";
 import { Fragment, Suspense } from "react";
 import BoardBadge from "@/components/BoardBadge";
 import Gallery from "@/components/Gallery";
+import LoadFailed from "@/components/LoadFailed";
 import NeighborList from "@/components/NeighborList";
 import PostDates from "@/components/PostDates";
 import RemoteImage from "@/components/RemoteImage";
 import StatsLive from "@/components/StatsLive";
 import SummaryWatcher from "@/components/SummaryWatcher";
-import { getPost } from "@/lib/api";
+import { getPost, type PostDetail as PostDetailData } from "@/lib/api";
 import { postCategoryLabel } from "@/lib/format";
 import { imageSources } from "@/lib/image";
 import { backHref, parseDetailQuery, parsePostId, postHref } from "@/lib/query";
@@ -27,11 +28,27 @@ async function PostDetail({ params, searchParams }: PageProps<"/posts/[id]">) {
   const postId = parsePostId((await params).id);
   if (postId === null) notFound();
 
-  const post = await getPost(postId);
-  if (!post) notFound();
-
   // 목록 카드는 보던 게시판·필터·정렬을 상세 주소에 실어 보낸다(postHref). 그 목록으로, 없으면(메인에서 열면) 메인으로 돌아간다.
   const from = parseDetailQuery(await searchParams);
+
+  let post: PostDetailData | null;
+  try {
+    post = await getPost(postId);
+  } catch (err) {
+    unstable_rethrow(err);
+    // 백엔드가 멈췄거나 느리면(시간 제한) 안내를 띄운다. 없는 글(404)은 아래 notFound로 따로 간다
+    console.error(err);
+    return (
+      <LoadFailed>
+        {/* 같은 주소를 새로 열어 다시 불러온다 */}
+        <a href={postHref(postId, from)} className="outline-button">
+          다시 시도
+        </a>
+      </LoadFailed>
+    );
+  }
+  if (!post) notFound();
+
   const renderedAt = new Date().toISOString();
   const hasSummary = post.summaryStatus === "DONE" && post.summaryLines.length > 0;
   // 맨 위 큰 이미지는 대표 이미지의 큰 축소본(1280px)을 쓴다

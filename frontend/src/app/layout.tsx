@@ -1,3 +1,4 @@
+import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
 import { IBM_Plex_Mono, IBM_Plex_Sans_KR } from "next/font/google";
 import Link from "next/link";
@@ -18,9 +19,15 @@ const plexMono = IBM_Plex_Mono({
   subsets: ["latin"],
 });
 
+const description = "geekhack의 키보드·키캡 IC와 공동구매 글을 한국어 요약으로 먼저 훑어보세요";
+
 export const metadata: Metadata = {
+  // OG 이미지·canonical 같은 상대 주소의 기준 주소. 운영 주소가 기본이다
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://keycheck.kr"),
   title: { default: "키체크", template: "%s · 키체크" },
-  description: "geekhack의 키보드·키캡 IC와 공동구매 글을 한국어 요약으로 먼저 훑어보세요",
+  description,
+  // 링크를 공유했을 때 보이는 기본 카드. 페이지가 openGraph를 따로 두지 않으면 이 값을 쓴다
+  openGraph: { title: "키체크", description, siteName: "키체크", locale: "ko_KR" },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -40,6 +47,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           </div>
         </header>
         <main className={styles.main}>{children}</main>
+        {/* Vercel Web Analytics. 개발 모드는 보내지 않고 콘솔에만 찍고, Vercel 밖의 운영 빌드는 수집 스크립트(/_vercel/insights)가 없어 보내지 않는다 */}
+        <Analytics />
       </body>
     </html>
   );

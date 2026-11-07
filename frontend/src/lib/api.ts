@@ -1,5 +1,6 @@
 /** 백엔드 응답 타입과 호출 함수. 응답 형식은 backend의 post/dto와 맞춘다. */
 
+import { cache } from "react";
 import type { ListQuery } from "./query";
 
 /** UNCLASSIFIED: 틀 글이라 아직 분류하지 않음. "전체"에서만 보인다 */
@@ -184,6 +185,37 @@ export interface PostStats {
 // 목록 다음 묶음과 상세 화면의 조회수 갱신은 브라우저에서 호출하므로 NEXT_PUBLIC_ 변수를 쓴다.
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
 
+/** 백엔드 호출 시간 제한. 백엔드가 멈추거나 느리면 이 시간 뒤 실패로 보고 화면이 안내로 바뀐다 */
+const API_TIMEOUT_MS = 8000;
+/** 상세 시간 제한. 처음 여는 틀 글은 백엔드가 geekhack 요청 차례를 5초까지 기다린 뒤 원문을 읽어(시간 제한 10초) 채운다 */
+const POST_TIMEOUT_MS = 15000;
+
+/**
+ * 백엔드 호출 옵션. 모든 호출에 시간 제한을 걸고, 호출자가 signal을 넘기면 둘 중 먼저 끊기는 쪽을 따른다.
+ * 화면 서버에서 부를 때(isServer)만 토큰이 있으면 X-Keycheck-Server 헤더를 붙인다(Cloudflare 속도 제한에서 빼는 표시).
+ */
+export function apiRequestInit(
+  isServer: boolean,
+  token: string | undefined,
+  signal?: AbortSignal,
+  timeoutMs = API_TIMEOUT_MS,
+): RequestInit {
+  const timeout = AbortSignal.timeout(timeoutMs);
+  const init: RequestInit = { signal: timeout };
+  if (signal) {
+    // AbortSignal.any가 없는 브라우저(Safari 17.4 전 등, Next 16 지원 범위 안)에서는 호출자의 signal만 따른다
+    init.signal = typeof AbortSignal.any === "function" ? AbortSignal.any([signal, timeout]) : signal;
+  }
+  if (isServer && token) init.headers = { "X-Keycheck-Server": token };
+  return init;
+}
+
+/** 모든 백엔드 호출이 거치는 함수. path는 /api부터 */
+function apiFetch(path: string, signal?: AbortSignal, timeoutMs?: number): Promise<Response> {
+  const init = apiRequestInit(typeof window === "undefined", process.env.KEYCHECK_SERVER_TOKEN, signal, timeoutMs);
+  return fetch(`${API_BASE_URL}${path}`, init);
+}
+
 /** cursor 없이 부르면 첫 묶음. sub는 category와 맞는 값만 넘긴다(아니면 400). 서버와 브라우저 모두에서 부른다. */
 export async function getPosts(
   board: BoardFilter,
@@ -195,21 +227,24 @@ export async function getPosts(
   const query = new URLSearchParams({ board, category, sort });
   if (sub) query.set("sub", sub);
   if (cursor) query.set("cursor", cursor);
-  const res = await fetch(`${API_BASE_URL}/api/posts?${query}`);
+  const res = await apiFetch(`/api/posts?${query}`);
   if (!res.ok) throw new Error(`목록 조회 실패: ${res.status}`);
   return res.json();
 }
 
-/** 메인 하이라이트. 서버에서 부르고, 한 렌더 안에서 여러 번 불러도 요청은 한 번이다. */
-export async function getHighlights(): Promise<Highlights> {
-  const res = await fetch(`${API_BASE_URL}/api/posts/highlights`);
+/**
+ * 메인 하이라이트. 서버에서 부르고, 한 렌더 안에서 여러 번 불러도 요청은 한 번이다.
+ * signal을 넘긴 fetch는 Next가 같은 요청을 합치지 않으므로 cache로 묶는다.
+ */
+export const getHighlights = cache(async (): Promise<Highlights> => {
+  const res = await apiFetch("/api/posts/highlights");
   if (!res.ok) throw new Error(`하이라이트 조회 실패: ${res.status}`);
   return res.json();
-}
+});
 
 /** 없거나 숨김인 글이면 null. 서버에서 부르고, 상세 화면의 요약 대기 중에는 브라우저에서도 부른다. */
 export async function getPost(id: number, signal?: AbortSignal): Promise<PostDetail | null> {
-  const res = await fetch(`${API_BASE_URL}/api/posts/${id}`, { signal });
+  const res = await apiFetch(`/api/posts/${id}`, signal, POST_TIMEOUT_MS);
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`상세 조회 실패: ${res.status}`);
   return res.json();
@@ -217,7 +252,7 @@ export async function getPost(id: number, signal?: AbortSignal): Promise<PostDet
 
 /** 조회수·댓글 수. 확인한 지 오래됐으면 백엔드가 geekhack에서 다시 읽는다(설계 4.3). 브라우저에서 호출한다. */
 export async function getStats(id: number, signal?: AbortSignal): Promise<PostStats> {
-  const res = await fetch(`${API_BASE_URL}/api/posts/${id}/stats`, { signal });
+  const res = await apiFetch(`/api/posts/${id}/stats`, signal);
   if (!res.ok) throw new Error(`조회수 갱신 실패: ${res.status}`);
   return res.json();
 }
@@ -226,7 +261,7 @@ export async function getStats(id: number, signal?: AbortSignal): Promise<PostSt
 export async function getNeighbors(id: number, query: ListQuery, size: number): Promise<PostNeighbors> {
   const search = new URLSearchParams({ board: query.board, category: query.category, sort: query.sort, size: String(size) });
   if (query.sub) search.set("sub", query.sub);
-  const res = await fetch(`${API_BASE_URL}/api/posts/${id}/neighbors?${search}`);
+  const res = await apiFetch(`/api/posts/${id}/neighbors?${search}`);
   if (!res.ok) throw new Error(`주변 글 조회 실패: ${res.status}`);
   return res.json();
 }

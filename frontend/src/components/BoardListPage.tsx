@@ -1,8 +1,10 @@
+import { unstable_rethrow } from "next/navigation";
 import { Suspense } from "react";
-import { getPosts, type BoardFilter } from "@/lib/api";
+import { getPosts, type BoardFilter, type PostBatch } from "@/lib/api";
 import { BOARD_INFO } from "@/lib/format";
 import { listHref, parseListQuery } from "@/lib/query";
 import FilterBar from "./FilterBar";
+import LoadFailed from "./LoadFailed";
 import PostFeed from "./PostFeed";
 import styles from "./BoardListPage.module.css";
 
@@ -27,7 +29,22 @@ export default function BoardListPage({ board, searchParams }: { board: BoardFil
 
 async function PostList({ board, searchParams }: { board: BoardFilter; searchParams: SearchParams }) {
   const query = parseListQuery(board, await searchParams);
-  const first = await getPosts(query.board, query.category, query.sort, null, query.sub);
+  let first: PostBatch;
+  try {
+    first = await getPosts(query.board, query.category, query.sort, null, query.sub);
+  } catch (err) {
+    unstable_rethrow(err);
+    // 백엔드가 멈췄거나 느리면(시간 제한) 제목·설명은 두고 목록 자리에 안내를 띄운다
+    console.error(err);
+    return (
+      <LoadFailed>
+        {/* 같은 목록 주소를 새로 열어 다시 불러온다 */}
+        <a href={listHref(query)} className="outline-button">
+          다시 시도
+        </a>
+      </LoadFailed>
+    );
+  }
   const renderedAt = new Date().toISOString();
 
   return (
