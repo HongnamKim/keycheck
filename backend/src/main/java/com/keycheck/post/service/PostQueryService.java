@@ -15,6 +15,7 @@ import com.keycheck.post.dto.PostCardResponse;
 import com.keycheck.post.dto.PostDetailResponse;
 import com.keycheck.post.dto.PostListResponse;
 import com.keycheck.post.dto.PostNeighborsResponse;
+import com.keycheck.post.dto.PostSitemapItemResponse;
 import com.keycheck.post.dto.PostSort;
 import com.keycheck.post.dto.PostedAtAnchor;
 import com.keycheck.post.repository.PostImageRepository;
@@ -279,20 +280,29 @@ public class PostQueryService {
   /**
    * 틀 글이면 geekhack 글 첫 페이지를 읽어 채운 뒤 돌려준다. 읽지 못하면 틀 그대로 돌려준다. 미리 읽기가 채운 글이면 미리 읽기 표시를
    * 지워, 요약이 아직이면 미리 읽기로 채운 다른 글보다 먼저 요약되게 한다.
+   *
+   * @param fill false면 채우지 않고 미리 읽기 표시도 그대로 둔다(검색·미리보기 봇이 원문 읽기·요약을 늘리지 않게)
    */
-  public PostDetailResponse getPost(Long id) {
+  public PostDetailResponse getPost(Long id, boolean fill) {
     Post post = visible(postRepository.findWithImagesById(id));
-    if (!post.isDetailLoaded()) {
+    if (fill && !post.isDetailLoaded()) {
       crawlService.fillSkeleton(post, FILL_WAIT);
       post = visible(postRepository.findWithImagesById(id));
     }
-    if (post.isPrefetched()) {
+    if (fill && post.isPrefetched()) {
       postRepository.clearPrefetched(post.getId());
     }
     PostImage representative =
         representativeImages(List.of(post)).get(post.getRepresentativeImageId());
     return PostDetailResponse.from(
         post, representative, estimatedPostedAts(List.of(post)).get(post.getId()), thumbUrls);
+  }
+
+  /** 사이트맵에 넣을 글(PostRepository.findSitemapIds), 글 번호 내림차순. geekhack을 호출하지 않는다. */
+  public List<PostSitemapItemResponse> getSitemap() {
+    return postRepository.findSitemapIds(collectProperties.getSinceTopicId()).stream()
+        .map(PostSitemapItemResponse::new)
+        .toList();
   }
 
   /**

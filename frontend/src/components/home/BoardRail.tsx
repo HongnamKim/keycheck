@@ -1,6 +1,7 @@
 import { Suspense } from "react";
-import { unstable_rethrow } from "next/navigation";
-import { getPosts, type BoardFilter, type PostBatch } from "@/lib/api";
+import { connection } from "next/server";
+import type { BoardFilter } from "@/lib/api";
+import { getFirstBatch } from "@/lib/cachedApi";
 import { kstDateKey } from "@/lib/format";
 import { listHref } from "@/lib/query";
 import FreshListLink from "../FreshListLink";
@@ -65,20 +66,19 @@ export default function BoardRail({ board }: { board: BoardFilter }) {
 }
 
 async function RecentPosts({ board, name }: { board: BoardFilter; name: string }) {
-  let first: PostBatch;
-  try {
-    first = await getPosts(board, "all", "recent");
-  } catch (err) {
-    unstable_rethrow(err);
+  // 목록 페이지(/ic, /gb) 기본 목록과 같은 캐시를 쓴다
+  const first = await getFirstBatch(board, "all", "recent", null);
+  if (!first) {
+    // 오류 안내는 요청 때만 그려 정적 셸·재생성 결과·브라우저 캐시에 남지 않게 한다
+    await connection();
     // 한 게시판이 실패해도 메인의 다른 줄은 그대로 둔다
-    console.error(err);
     return <p className={styles.message}>글을 불러오지 못했어요</p>;
   }
-  const posts = first.items.slice(0, RECENT_COUNT);
+  const posts = first.batch.items.slice(0, RECENT_COUNT);
   if (posts.length === 0) return <p className={styles.message}>아직 수집된 글이 없어요</p>;
 
-  // 공동구매 칩의 오늘. 목록을 받은 뒤 서버에서 구해 문자열로 넘긴다(브라우저에서 날짜를 읽지 않는다)
-  const today = kstDateKey(new Date());
+  // 공동구매 칩의 오늘. 목록을 받은 시각으로 서버에서 구해 문자열로 넘긴다(브라우저에서 날짜를 읽지 않는다)
+  const today = kstDateKey(new Date(first.fetchedAt));
   return (
     <RailTrack board={board} name={name}>
       {posts.map((post) => (

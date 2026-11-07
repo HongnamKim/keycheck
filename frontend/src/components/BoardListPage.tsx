@@ -1,6 +1,7 @@
-import { unstable_rethrow } from "next/navigation";
+import { connection } from "next/server";
 import { Suspense } from "react";
-import { getPosts, type BoardFilter, type PostBatch } from "@/lib/api";
+import type { BoardFilter } from "@/lib/api";
+import { getFirstBatch } from "@/lib/cachedApi";
 import { BOARD_INFO } from "@/lib/format";
 import { listHref, parseListQuery } from "@/lib/query";
 import FilterBar from "./FilterBar";
@@ -29,13 +30,11 @@ export default function BoardListPage({ board, searchParams }: { board: BoardFil
 
 async function PostList({ board, searchParams }: { board: BoardFilter; searchParams: SearchParams }) {
   const query = parseListQuery(board, await searchParams);
-  let first: PostBatch;
-  try {
-    first = await getPosts(query.board, query.category, query.sort, null, query.sub);
-  } catch (err) {
-    unstable_rethrow(err);
+  const first = await getFirstBatch(query.board, query.category, query.sort, query.sub ?? null);
+  if (!first) {
+    // 오류 안내는 요청 때만 그려 정적 셸·재생성 결과·브라우저 캐시에 남지 않게 한다
+    await connection();
     // 백엔드가 멈췄거나 느리면(시간 제한) 제목·설명은 두고 목록 자리에 안내를 띄운다
-    console.error(err);
     return (
       <LoadFailed>
         {/* 같은 목록 주소를 새로 열어 다시 불러온다 */}
@@ -45,13 +44,11 @@ async function PostList({ board, searchParams }: { board: BoardFilter; searchPar
       </LoadFailed>
     );
   }
-  const renderedAt = new Date().toISOString();
-
   return (
     <div className={styles.feed}>
       <FilterBar query={query} />
       {/* 필터·정렬이 바뀌면(다른 주소) 목록을 새로 시작한다 */}
-      <PostFeed key={listHref(query)} query={query} initial={first} renderedAt={renderedAt} />
+      <PostFeed key={listHref(query)} query={query} initial={first.batch} renderedAt={first.fetchedAt} />
     </div>
   );
 }

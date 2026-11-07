@@ -45,7 +45,7 @@ class OpsConfigTest {
   @Test
   @DisplayName("비용·악용 상한은 application.yml의 기본값으로 묶인다(키가 빠지면 0이 되어 조용히 멈추지 않게)")
   void limitDefaultsAreBound() {
-    assertThat(summaryProperties.getDailyLimit()).isEqualTo(300);
+    assertThat(summaryProperties.getDailyLimit()).isEqualTo(2000);
     assertThat(fillProperties.getMaxConcurrent()).isEqualTo(3);
     assertThat(fillProperties.getFailureCooldown()).isEqualTo(Duration.ofMinutes(10));
     assertThat(statsProperties.getHourlyBudget()).isEqualTo(60);

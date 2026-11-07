@@ -199,6 +199,20 @@ public interface PostRepository extends JpaRepository<Post, Long> {
               + "  where p.posted_at is not null order by p.topic_id desc limit 1)")
   List<PostedAtAnchor> findPostedAtAnchors(Collection<Long> topicIds);
 
+  /**
+   * 사이트맵에 넣을 글 ID, 글 번호 내림차순. 숨기지 않았고 수집 기간 안(글 번호가 sinceTopicId 이상)이며 본문을 읽었고 요약이 끝났고
+   * 요약 줄이 하나 이상인 글. 화면이 상세를 검색에 노출하는 조건과 같다. 요약 줄(JSONB 배열)의 길이를 보려고 네이티브 쿼리로 쓴다.
+   */
+  @Query(
+      nativeQuery = true,
+      value =
+          "select p.id from post p where p.hidden = false and p.topic_id >= :sinceTopicId"
+              + " and p.detail_fetched_at is not null and p.summary_status = 'DONE'"
+              // jsonb_array_length는 배열이 아닌 값에서 오류를 내고 AND는 앞에서 끊긴다는 보장이 없어, 오류를 낼 수 없는 식으로 본다
+              + " and jsonb_typeof(p.summary_lines) = 'array' and p.summary_lines <> '[]'::jsonb"
+              + " order by p.topic_id desc")
+  List<Long> findSitemapIds(long sinceTopicId);
+
   /** 상세용. 이미지까지 함께 읽어 트랜잭션 밖에서도 쓸 수 있다. */
   @EntityGraph(attributePaths = "images")
   Optional<Post> findWithImagesById(Long id);
