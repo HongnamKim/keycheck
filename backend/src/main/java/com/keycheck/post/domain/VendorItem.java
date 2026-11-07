@@ -3,6 +3,7 @@ package com.keycheck.post.domain;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Optional;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
@@ -29,9 +30,19 @@ public class VendorItem {
     this.url = url;
   }
 
-  /** 한국 벤더(region이 "KR")인지. jsonb에는 저장하지 않는다. */
+  /**
+   * 한국 벤더인지. 지역이 KR이거나, 지역을 달리 적었어도(원문 표기 SK 등) 이름이 알려진 한국 벤더면 그렇다. 이름이 낯설면 지역 표기가 없을
+   * 때만 판매 사이트 주소로 본다(요약기가 다른 지역 벤더에 한국 벤더 링크를 잘못 짝지은 경우를 한국 벤더로 보지 않게). jsonb에는 저장하지
+   * 않는다.
+   */
   @JsonIgnore
   public boolean isKorean() {
-    return "KR".equals(region);
+    return "KR".equals(region) || knownKorean().isPresent();
+  }
+
+  /** 알려진 한국 벤더면 그 벤더. 이름으로 먼저 찾고, 지역 표기가 없을 때만 판매 링크 주소로 찾는다 */
+  public Optional<KoreanVendor> knownKorean() {
+    return KoreanVendor.byName(name)
+        .or(() -> region == null ? KoreanVendor.byUrl(url) : Optional.empty());
   }
 }

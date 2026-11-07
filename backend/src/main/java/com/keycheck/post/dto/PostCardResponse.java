@@ -41,7 +41,7 @@ public class PostCardResponse {
 
   private final SummaryStatus summaryStatus;
 
-  /** 요약기가 뽑은 벤더 중 지역이 KR인 벤더가 있으면 true. 벤더가 없거나 아직 뽑지 않았으면 false. */
+  /** 요약기가 뽑은 벤더 중 한국 벤더(지역 KR, 또는 이름으로 알아본 알려진 한국 벤더)가 있으면 true. 요약 전이거나 벤더를 모르면 false */
   private final boolean hasKoreanVendor;
 
   /** summaryStatus가 DONE일 때만 값이 있다 */

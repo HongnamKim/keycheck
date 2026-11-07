@@ -73,6 +73,11 @@ class PostVendorApiTest {
         "update post set vendors = ?::jsonb where id = ?", vendorsJson, post.getId());
   }
 
+  private void setBodyLinks(Post post, String linksJson) {
+    jdbcTemplate.update(
+        "update post set body_links = ?::jsonb where id = ?", linksJson, post.getId());
+  }
+
   @Test
   @DisplayName("목록 카드는 지역이 KR인 벤더가 있으면 hasKoreanVendor가 true, KR이 없거나 벤더가 없으면 false")
   void cardHasKoreanVendor() throws Exception {
@@ -128,6 +133,58 @@ class PostVendorApiTest {
         .andExpect(jsonPath("$.vendors[4].url").value(nullValue()))
         // 본문 링크는 내보내지 않는다
         .andExpect(jsonPath("$.bodyLinks").doesNotExist());
+  }
+
+  @Test
+  @DisplayName("지역을 KR로 적지 않은 알려진 한국 벤더도 카드 배지를 달고, 상세에서는 지역 KR로 앞에 둔다")
+  void knownKoreanVendorWithOtherRegion() throws Exception {
+    Post post = save(1);
+    // 본문에 같은 벤더의 다른 주소가 있어도 요약기가 짝지은 링크를 그대로 쓴다
+    setBodyLinks(post, "[{\"text\": \"GEON\", \"url\": \"https://geon.works/products/other\"}]");
+    // 원문이 South Korea를 SK로 적어 요약기가 SK로 옮긴 경우
+    setVendors(
+        post,
+        "[{\"name\": \"NovelKeys\", \"region\": \"US\", \"url\": null},"
+            + " {\"name\": \"Geon\", \"region\": \"SK\", \"url\": \"https://geon.works/\"}]");
+
+    mockMvc
+        .perform(get("/api/posts?board=gb"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.items[0].hasKoreanVendor").value(true));
+    mockMvc
+        .perform(get("/api/posts/" + post.getId()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.vendors[*].name", contains("Geon", "NovelKeys")))
+        .andExpect(jsonPath("$.vendors[*].region", contains("KR", "US")))
+        .andExpect(jsonPath("$.vendors[0].url").value("https://geon.works/"));
+  }
+
+  @Test
+  @DisplayName("판매 링크가 없는 알려진 한국 벤더는 본문 링크 중 그 벤더 사이트의 첫 주소를 쓰고, 없으면 그대로 둔다")
+  void knownKoreanVendorLinkFromBody() throws Exception {
+    Post post = save(1);
+    setBodyLinks(
+        post,
+        "[{\"text\": \"NovelKeys\", \"url\": \"https://novelkeys.com/products/x\"},"
+            + " {\"text\": \"GEON\", \"url\": \"https://geon.works/products/gb-x\"},"
+            + " {\"text\": \"home\", \"url\": \"https://geon.works/\"}]");
+    setVendors(
+        post,
+        "[{\"name\": \"Geonworks\", \"region\": \"KR\", \"url\": null},"
+            + " {\"name\": \"Swagkeys\", \"region\": \"KR\", \"url\": null},"
+            + " {\"name\": \"Unknown KR Shop\", \"region\": \"KR\", \"url\": null},"
+            + " {\"name\": \"NovelKeys\", \"region\": \"US\", \"url\": null}]");
+
+    mockMvc
+        .perform(get("/api/posts/" + post.getId()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.vendors[*].name", contains("Geonworks", "Swagkeys", "Unknown KR Shop", "NovelKeys")))
+        .andExpect(jsonPath("$.vendors[0].url").value("https://geon.works/products/gb-x"))
+        // 본문에 그 벤더 사이트 링크가 없거나, 알려진 한국 벤더가 아니면 링크를 만들지 않는다
+        .andExpect(jsonPath("$.vendors[1].url").value(nullValue()))
+        .andExpect(jsonPath("$.vendors[2].url").value(nullValue()))
+        // 한국 벤더가 아니면 본문 링크로 채우지 않는다
+        .andExpect(jsonPath("$.vendors[3].url").value(nullValue()));
   }
 
   @Test
