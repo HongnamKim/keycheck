@@ -80,6 +80,11 @@ public class Post {
   @Column(columnDefinition = "text")
   private String bodyText;
 
+  /** 첫 글 본문의 링크(글자·주소). 요약기가 벤더 판매 링크를 고를 때 쓴다. API로 노출하지 않는다. 틀 글이면 null. */
+  @Setter
+  @JdbcTypeCode(SqlTypes.JSON)
+  private List<BodyLink> bodyLinks;
+
   /** 글 첫 페이지를 읽어 본문·이미지를 채운 시각. null이면 틀 글(게시판 목록에서만 읽은 글). */
   private Instant detailFetchedAt;
 
@@ -125,6 +130,10 @@ public class Post {
   /** 상품·프로젝트 이름(예: "SWG Nightshift"). 요약기가 원문 표기 그대로 뽑는다. 모르거나 아직 뽑지 않았으면 null. */
   @Column(length = 200)
   private String productName;
+
+  /** 요약기가 첫 글 본문에서 뽑은 벤더(이름·지역·판매 링크), 본문 순서. 아직 뽑지 않았으면 null, 가짜 요약이면 빈 목록. */
+  @JdbcTypeCode(SqlTypes.JSON)
+  private List<VendorItem> vendors;
 
   /** 대표 이미지(post_image.id). 순환 참조를 피하려고 연관관계 대신 ID만 둔다. */
   @Setter private Long representativeImageId;

@@ -10,6 +10,7 @@ import com.keycheck.crawl.dto.TopicPage;
 import com.keycheck.image.domain.ImageSource;
 import com.keycheck.image.dto.Selection;
 import com.keycheck.post.domain.Board;
+import com.keycheck.post.domain.BodyLink;
 import com.keycheck.post.domain.Category;
 import com.keycheck.post.domain.Post;
 import com.keycheck.post.domain.SummaryStatus;
@@ -60,8 +61,12 @@ class CrawlStoreTest {
                 "https://geekhack.test/index.php?topic=2000.0"));
   }
 
-  /** 이미지 2개(둘째가 대표), 키캡 분류 */
+  /** 이미지 2개(둘째가 대표), 키캡 분류, 링크 없음 */
   private TopicContent content() {
+    return content(List.of());
+  }
+
+  private TopicContent content(List<BodyLink> links) {
     TopicPage page =
         new TopicPage(
             "본문",
@@ -69,7 +74,8 @@ class CrawlStoreTest {
                 new RawImage("https://geekhack.test/Smileys/a.gif", ImageSource.EXTERNAL, 0),
                 new RawImage("https://i.imgur.com/b.jpg", ImageSource.EXTERNAL, 1)),
             512,
-            Instant.parse("2026-10-13T13:29:35Z"));
+            Instant.parse("2026-10-13T13:29:35Z"),
+            links);
     return new TopicContent(
         page,
         Category.KEYCAP,
@@ -100,6 +106,20 @@ class CrawlStoreTest {
         .hasValueSatisfying(
             image -> assertThat(image.getUrl()).isEqualTo("https://i.imgur.com/b.jpg"));
     assertThat(imageCount()).isEqualTo(2);
+  }
+
+  @Test
+  @DisplayName("틀 글을 채울 때 첫 글의 링크도 저장한다")
+  void storesBodyLinks() {
+    List<BodyLink> links =
+        List.of(
+            new BodyLink("Swagkeys (KR)", "https://swagkeys.com/products/x"),
+            new BodyLink("NovelKeys", "https://novelkeys.com/x"));
+
+    store.fillSkeleton(skeleton.getId(), content(links), NOW, false);
+
+    assertThat(postRepository.findById(skeleton.getId()).orElseThrow().getBodyLinks())
+        .containsExactlyElementsOf(links);
   }
 
   @Test

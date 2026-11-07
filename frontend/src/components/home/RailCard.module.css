@@ -69,7 +69,7 @@
   text-align: center;
 }
 
-/* 사진 위 칩: 분류(위 왼쪽), 공동구매 기간(아래 왼쪽), D-day(아래 오른쪽) */
+/* 사진 위 칩: 분류와 한국 벤더(위 왼쪽 줄), 공동구매 기간(아래 왼쪽), D-day(아래 오른쪽) */
 .chip {
   position: absolute;
   top: 10px;
@@ -107,6 +107,34 @@
   background: var(--color-accent);
   color: #ffffff;
   font-family: var(--font-code);
+}
+
+/* 위 왼쪽 칩 줄. 좁은 카드에서는 줄을 바꾼다 */
+.chips {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chips .chip {
+  position: static;
+}
+
+/* 한국 벤더: KoreanVendorBadge의 기본 모양을 칩 모양으로 덮고, 흰 바탕에 강조색 테두리와 글자 */
+.chips .korean {
+  display: inline-flex;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 6px;
+  background: #ffffff;
+  box-shadow: inset 0 0 0 1px var(--color-accent);
+  color: var(--color-accent);
+  font-size: 11px;
+  line-height: 1;
 }
 
 .title {
@@ -173,7 +201,8 @@
   }
 
   /* 손에 든 화면에서 읽히는 크기: 보조 글자 12px, 요약 14px */
-  .chip {
+  .chip,
+  .chips .korean {
     font-size: 12px;
   }
 

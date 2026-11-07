@@ -5,6 +5,7 @@ import { gbPeriodChip } from "@/lib/gbPeriod";
 import { bentoImage, slotKicker } from "@/lib/highlight";
 import { postHref } from "@/lib/query";
 import BoardBadge from "../BoardBadge";
+import KoreanVendorBadge from "../KoreanVendorBadge";
 import RemoteImage from "../RemoteImage";
 import PeriodRange from "./PeriodRange";
 import Segs from "./Segs";
@@ -47,7 +48,10 @@ function replies(post: PostCard): string {
   return `댓글${NBSP}${post.replies}`;
 }
 
-/** 출처 배지와(큰 칸·세로 칸·마감 띠만) 분류 태그. onAccent면 주황 바탕 위라 흰 공동구매 배지 */
+/**
+ * 출처 배지와(큰 칸·세로 칸·마감 띠만) 분류 태그, 한국 벤더가 있으면 한국 벤더 배지.
+ * onAccent면 주황 바탕 위라 흰 공동구매 배지와 흰 테두리 한국 벤더 배지
+ */
 function Badges({ post, withTag, onAccent = false }: { post: PostCard; withTag: boolean; onAccent?: boolean }) {
   const tag = withTag ? photoChipLabel(post.category, post.subcategory) : null;
   const boardStyle = post.board === "GB" ? (onAccent ? styles.gbOn : styles.gb) : styles.ic;
@@ -55,6 +59,9 @@ function Badges({ post, withTag, onAccent = false }: { post: PostCard; withTag: 
     <span className={styles.badges}>
       <BoardBadge board={post.board} className={classes(styles.badge, boardStyle)} />
       {tag && <span className={classes(styles.badge, styles.tag)}>{tag}</span>}
+      {post.hasKoreanVendor && (
+        <KoreanVendorBadge className={classes(styles.badge, onAccent ? styles.koreanOn : styles.korean)} />
+      )}
     </span>
   );
 }

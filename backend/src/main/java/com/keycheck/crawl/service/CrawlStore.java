@@ -104,10 +104,11 @@ public class CrawlStore {
   }
 
   /**
-   * 영속 상태인 post에 이미지(제외 사유 포함)를 넣고, 이미지를 저장한 뒤 대표 이미지를 정한다. 요약 상태는 PENDING(기본값)
-   * 그대로 두어 SummaryWorker가 요약하게 한다.
+   * 영속 상태인 post에 첫 글 링크와 이미지(제외 사유 포함)를 넣고, 이미지를 저장한 뒤 대표 이미지를 정한다. 요약 상태는
+   * PENDING(기본값) 그대로 두어 SummaryWorker가 요약하게 한다.
    */
   private void writeContent(Post post, TopicContent content) {
+    post.setBodyLinks(content.getPage().getLinks());
     List<RawImage> images = content.getPage().getImages();
     Selection selection = content.getSelection();
     List<PostImage> added = new ArrayList<>();

@@ -3,6 +3,7 @@ package com.keycheck.summary.dto;
 import com.keycheck.post.domain.Category;
 import com.keycheck.post.domain.SpecItem;
 import com.keycheck.post.domain.Subcategory;
+import com.keycheck.post.domain.VendorItem;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.Getter;
@@ -34,4 +35,7 @@ public class SummaryResult {
 
   /** 상품·프로젝트 이름(예: "SWG Nightshift"), 원문 표기. 모르거나 뽑지 않으면 null (가짜 요약기) */
   private final String productName;
+
+  /** 본문에 적힌 벤더(이름·지역·판매 링크), 본문 순서. 없거나 뽑지 않으면 빈 목록 (가짜 요약기). null이 아니다. */
+  private final List<VendorItem> vendors;
 }

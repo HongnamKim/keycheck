@@ -9,9 +9,11 @@ import com.anthropic.models.beta.AnthropicBeta;
 import com.anthropic.models.beta.messages.BetaOutputConfig;
 import com.anthropic.models.beta.messages.MessageCreateParams;
 import com.keycheck.post.domain.Board;
+import com.keycheck.post.domain.BodyLink;
 import com.keycheck.post.domain.Category;
 import com.keycheck.post.domain.SpecItem;
 import com.keycheck.post.domain.Subcategory;
+import com.keycheck.post.domain.VendorItem;
 import com.keycheck.summary.FakeAnthropicServer;
 import com.keycheck.summary.config.ClaudeProperties;
 import com.keycheck.summary.dto.PostSource;
@@ -19,6 +21,7 @@ import com.keycheck.summary.dto.SummaryResult;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.stream.IntStream;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.AfterEach;
@@ -34,11 +37,19 @@ class ClaudeSummarizerTest {
 
   private static final PostSource SOURCE =
       new PostSource(
-          Board.IC, "[IC] Test Board", "A 65% gasket mount board. Aluminum case.", POSTED_AT);
+          Board.IC,
+          "[IC] Test Board",
+          "A 65% gasket mount board. Aluminum case.",
+          POSTED_AT,
+          List.of());
 
   private static final PostSource GB_SOURCE =
       new PostSource(
-          Board.GB, "[GB] Test Keycaps", "Group buy runs Oct 30 - Nov 13. MOQ 100.", POSTED_AT);
+          Board.GB,
+          "[GB] Test Keycaps",
+          "Group buy runs Oct 30 - Nov 13. MOQ 100.",
+          POSTED_AT,
+          List.of());
 
   private FakeAnthropicServer server;
   private AnthropicClient client;
@@ -99,6 +110,35 @@ class ClaudeSummarizerTest {
         + " \"productName\": "
         + JsonMapper.shared().writeValueAsString(productName)
         + "}";
+  }
+
+  private static final List<BodyLink> LINKS =
+      List.of(new BodyLink("Swagkeys", "https://swagkeys.com/p"));
+
+  /** 링크를 함께 넘기는 글 */
+  private static PostSource linked(Board board, List<BodyLink> links) {
+    return new PostSource(
+        board, "[GB] Test Keycaps", "Vendors: Swagkeys (KR), NovelKeys (US)", POSTED_AT, links);
+  }
+
+  /** 벤더 키를 더한 응답 본문. vendors는 JSON 그대로 넣는다. */
+  private static String vendorsJson(String vendors) {
+    return "{\"category\": \"KEYCAP\", \"subcategory\": \"KC_GMK\","
+        + " \"summaryLines\": [\"GMK 키캡 공동구매예요.\"], \"specs\": [],"
+        + " \"gbStartDate\": null, \"gbEndDate\": null, \"productName\": null,"
+        + " \"vendors\": "
+        + vendors
+        + "}";
+  }
+
+  /** 마지막 요청의 사용자 메시지(JSON 문자열 표기, 줄바꿈은 \n) */
+  private String sentMessage() {
+    return JsonMapper.shared()
+        .readTree(server.requestBody)
+        .get("messages")
+        .get(0)
+        .get("content")
+        .toString();
   }
 
   @Test
@@ -227,7 +267,8 @@ class ClaudeSummarizerTest {
                 Board.GB,
                 "[GB] Test Board",
                 "Group buy runs Nov 1 - Nov 30. MOQ 100.",
-                POSTED_AT));
+                POSTED_AT,
+                List.of()));
 
     JsonNode message = JsonMapper.shared().readTree(server.requestBody).get("messages").get(0);
     assertThat(message.get("content").toString())
@@ -442,6 +483,243 @@ class ClaudeSummarizerTest {
         .contains("원문 표기", "[IC]", "[GB]", "날짜", "Live", "Extended", "Cancelled", "Round 3")
         .contains("홍보 문구", "60자", "대표 이름 하나")
         .contains("이름을 알 수 없으면 null", "번역하지 않는다");
+  }
+
+  @Test
+  @DisplayName("응답의 벤더를 이름·지역·판매 링크로 바꾸고 지역은 대문자로 쓰며, IC·GB 글 모두 쓴다")
+  void mapsVendors() {
+    server.responseBody =
+        response(
+            "end_turn",
+            vendorsJson(
+                "[{\"name\": \"Swagkeys\", \"region\": \"kr\", \"url\": \"https://swagkeys.com/p\"},"
+                    + " {\"name\": \"NovelKeys\", \"region\": \"US\", \"url\": null}]"));
+
+    for (Board board : new Board[] {Board.GB, Board.IC}) {
+      SummaryResult result = summarizer(true).summarize(linked(board, LINKS));
+
+      assertThat(result.getVendors())
+          .containsExactly(
+              new VendorItem("Swagkeys", "KR", "https://swagkeys.com/p"),
+              new VendorItem("NovelKeys", "US", null));
+      assertThat(result.getVendors()).extracting(VendorItem::isKorean).containsExactly(true, false);
+    }
+  }
+
+  @Test
+  @DisplayName("벤더 주소가 넘긴 링크(앞의 150개)에 없으면 주소만 버리고(null) 이름·지역은 그대로 쓴다")
+  void dropsUnknownVendorUrl() {
+    server.responseBody =
+        response(
+            "end_turn",
+            vendorsJson(
+                "[{\"name\": \"Swagkeys\", \"region\": \"KR\", \"url\": \"https://evil.example\"}]"));
+
+    assertThat(summarizer(true).summarize(linked(Board.GB, LINKS)).getVendors())
+        .containsExactly(new VendorItem("Swagkeys", "KR", null));
+
+    // 링크가 없는 글이면 어떤 주소도 쓰지 않는다
+    server.responseBody =
+        response(
+            "end_turn",
+            vendorsJson(
+                "[{\"name\": \"Swagkeys\", \"region\": \"KR\", \"url\": \"https://swagkeys.com/p\"}]"));
+
+    assertThat(summarizer(true).summarize(linked(Board.GB, List.of())).getVendors())
+        .containsExactly(new VendorItem("Swagkeys", "KR", null));
+
+    // 151번째 링크는 넘기지 않았으므로 쓰지 않는다
+    List<BodyLink> many =
+        IntStream.range(0, 151)
+            .mapToObj(i -> new BodyLink("Shop" + i, "https://shop.example/" + i))
+            .toList();
+    server.responseBody =
+        response(
+            "end_turn",
+            vendorsJson(
+                "[{\"name\": \"Shop149\", \"region\": \"US\", \"url\": \"https://shop.example/149\"},"
+                    + " {\"name\": \"Shop150\", \"region\": \"US\", \"url\": \"https://shop.example/150\"}]"));
+
+    assertThat(summarizer(true).summarize(linked(Board.GB, many)).getVendors())
+        .containsExactly(
+            new VendorItem("Shop149", "US", "https://shop.example/149"),
+            new VendorItem("Shop150", "US", null));
+  }
+
+  @Test
+  @DisplayName("이름이 없거나 비었거나 공백뿐인 벤더는 버리고, 남은 벤더가 30개보다 많으면 앞의 30개만 쓴다")
+  void dropsBlankVendorAndCaps() {
+    server.responseBody =
+        response(
+            "end_turn",
+            vendorsJson(
+                "[{\"name\": \"\", \"region\": \"KR\", \"url\": null},"
+                    + " {\"name\": \" \\n \", \"region\": \"KR\", \"url\": null},"
+                    + " {\"name\": null, \"region\": \"KR\", \"url\": null},"
+                    + " {\"name\": \"NovelKeys\", \"region\": \"US\", \"url\": null}]"));
+
+    assertThat(summarizer(true).summarize(linked(Board.GB, LINKS)).getVendors())
+        .containsExactly(new VendorItem("NovelKeys", "US", null));
+
+    String vendors =
+        IntStream.range(0, 31)
+            .mapToObj(i -> "{\"name\": \"Vendor" + i + "\", \"region\": null, \"url\": null}")
+            .collect(Collectors.joining(",", "[{\"name\": \"\", \"region\": null, \"url\": null},", "]"));
+    server.responseBody = response("end_turn", vendorsJson(vendors));
+
+    List<VendorItem> capped = summarizer(true).summarize(linked(Board.GB, LINKS)).getVendors();
+
+    assertThat(capped).hasSize(30);
+    assertThat(capped.get(0)).isEqualTo(new VendorItem("Vendor0", null, null));
+    assertThat(capped.get(29)).isEqualTo(new VendorItem("Vendor29", null, null));
+  }
+
+  @Test
+  @DisplayName("벤더 이름·지역의 앞뒤 공백을 지우고, 지역이 비었거나 공백뿐이면 null")
+  void normalizesVendorNameAndRegion() {
+    server.responseBody =
+        response(
+            "end_turn",
+            vendorsJson(
+                "[{\"name\": \" Swagkeys \\n\", \"region\": \" kr \", \"url\": null},"
+                    + " {\"name\": \"NovelKeys\", \"region\": \"\", \"url\": null},"
+                    + " {\"name\": \"Cannonkeys\", \"region\": \"  \", \"url\": null}]"));
+
+    assertThat(summarizer(true).summarize(linked(Board.GB, LINKS)).getVendors())
+        .containsExactly(
+            new VendorItem("Swagkeys", "KR", null),
+            new VendorItem("NovelKeys", null, null),
+            new VendorItem("Cannonkeys", null, null));
+  }
+
+  @Test
+  @DisplayName("지역이 여럿이거나 한국을 다르게 적어도(KR/CN, Korea, South Korea, 한국, 🇰🇷) 한국이 있으면 KR로 쓰고, 한국이 없으면 대문자로만 바꾼다")
+  void koreanRegionVariantsAreKr() {
+    String vendors =
+        List.of(
+                "KR/CN", "cn, kr", "Korea", "South Korea", "한국", "🇰🇷", "(KR)", "US KR", "CN/SG",
+                "eu")
+            .stream()
+            .map(
+                region ->
+                    "{\"name\": \"V\", \"region\": "
+                        + JsonMapper.shared().writeValueAsString(region)
+                        + ", \"url\": null}")
+            .collect(Collectors.joining(",", "[", "]"));
+    server.responseBody = response("end_turn", vendorsJson(vendors));
+
+    assertThat(summarizer(true).summarize(linked(Board.GB, LINKS)).getVendors())
+        .extracting(VendorItem::getRegion)
+        .containsExactly("KR", "KR", "KR", "KR", "KR", "KR", "KR", "KR", "CN/SG", "EU");
+  }
+
+  @Test
+  @DisplayName("벤더 주소가 넘긴 링크와 앞뒤 공백·끝 슬래시만 다르면 넘긴 링크의 주소를 쓴다")
+  void matchesVendorUrlIgnoringTrailingSlash() {
+    List<BodyLink> links =
+        List.of(
+            new BodyLink("Swagkeys", "https://swagkeys.com/p"),
+            new BodyLink("NovelKeys", "https://novelkeys.com/x/"));
+    server.responseBody =
+        response(
+            "end_turn",
+            vendorsJson(
+                "[{\"name\": \"Swagkeys\", \"region\": \"KR\", \"url\": \"https://swagkeys.com/p/\"},"
+                    + " {\"name\": \"NovelKeys\", \"region\": \"US\", \"url\": \" https://novelkeys.com/x \"},"
+                    + " {\"name\": \"Other\", \"region\": \"US\", \"url\": \"https://swagkeys.com/p/q\"}]"));
+
+    assertThat(summarizer(true).summarize(linked(Board.GB, links)).getVendors())
+        .containsExactly(
+            new VendorItem("Swagkeys", "KR", "https://swagkeys.com/p"),
+            new VendorItem("NovelKeys", "US", "https://novelkeys.com/x/"),
+            new VendorItem("Other", "US", null));
+  }
+
+  @Test
+  @DisplayName("응답에 벤더 키가 없거나 null이면 빈 목록")
+  void missingVendorsIsEmpty() {
+    server.responseBody = response("end_turn", SUMMARY_JSON);
+
+    assertThat(summarizer(true).summarize(linked(Board.GB, LINKS)).getVendors())
+        .isNotNull()
+        .isEmpty();
+
+    server.responseBody = response("end_turn", vendorsJson("null"));
+
+    assertThat(summarizer(true).summarize(linked(Board.GB, LINKS)).getVendors())
+        .isNotNull()
+        .isEmpty();
+  }
+
+  @Test
+  @DisplayName("링크가 있으면 사용자 메시지의 본문 다음에 <links> 구역을 넣어 한 줄에 '글자 | 주소'로 앞의 150개만 쓰고, 없으면 넣지 않는다")
+  void sendsLinks() {
+    server.responseBody = response("end_turn", SUMMARY_JSON);
+
+    summarizer(true).summarize(linked(Board.GB, LINKS));
+
+    assertThat(sentMessage())
+        .contains("\\n</body>\\n<links>\\nSwagkeys | https://swagkeys.com/p\\n</links>");
+
+    List<BodyLink> many =
+        IntStream.range(0, 151)
+            .mapToObj(i -> new BodyLink("Shop" + i, "https://shop.example/" + i))
+            .toList();
+    summarizer(true).summarize(linked(Board.GB, many));
+
+    assertThat(sentMessage())
+        .contains("<links>\\nShop0 | https://shop.example/0\\nShop1 | https://shop.example/1\\n")
+        .contains("\\nShop149 | https://shop.example/149\\n</links>")
+        .doesNotContain("Shop150");
+
+    summarizer(true).summarize(linked(Board.GB, List.of()));
+
+    assertThat(sentMessage()).doesNotContain("<links>").endsWith("\\n</body>\"");
+
+    // 링크를 저장하기 전에 읽은 글(null)도 같다
+    summarizer(true).summarize(linked(Board.GB, null));
+
+    assertThat(sentMessage()).doesNotContain("<links>").endsWith("\\n</body>\"");
+  }
+
+  @Test
+  @DisplayName("응답 형식은 벤더를 이름(문자열)·지역·주소(문자열 또는 null) 객체 배열로 받고 필수로 둔다")
+  void schemaRequiresVendors() {
+    server.responseBody = response("end_turn", SUMMARY_JSON);
+
+    summarizer(true).summarize(SOURCE);
+
+    JsonNode schema =
+        JsonMapper.shared()
+            .readTree(server.requestBody)
+            .get("output_config")
+            .get("format")
+            .get("schema");
+    JsonNode vendors = schema.get("properties").get("vendors");
+    assertThat(vendors.get("type").asString()).isEqualTo("array");
+    JsonNode item = vendors.get("items");
+    assertThat(item.get("type").asString()).isEqualTo("object");
+    assertThat(item.get("properties").get("name").get("type").asString()).isEqualTo("string");
+    for (String key : new String[] {"region", "url"}) {
+      JsonNode anyOf = item.get("properties").get(key).get("anyOf");
+      assertThat(anyOf).hasSize(2);
+      assertThat(anyOf.get(0).get("type").asString()).isEqualTo("string");
+      assertThat(anyOf.get(1).get("type").asString()).isEqualTo("null");
+    }
+    assertThat(item.get("required"))
+        .extracting(JsonNode::asString)
+        .containsExactly("name", "region", "url");
+    assertThat(item.get("additionalProperties").asBoolean()).isFalse();
+    assertThat(schema.get("required")).extracting(JsonNode::asString).contains("vendors");
+  }
+
+  @Test
+  @DisplayName("지시문은 벤더를 뽑는 규칙(<links>, 원문 지역 표기만 근거로 한 대문자 코드, 여러 지역이면 KR 우선, 링크 목록에 있는 주소만, 없으면 빈 배열)을 설명한다")
+  void systemPromptDescribesVendors() {
+    assertThat(ClaudeSummarizer.SYSTEM_PROMPT)
+        .contains("vendors", "KR", "<links>", "링크 목록에 있는 주소만")
+        .contains("Korea", "한국", "South Korea", "Swagkeys (KR/CN)")
+        .contains("상점 이름만 보고 KR로 정하지 않는다", "지어내지 않는다", "빈 배열", "계획된 벤더");
   }
 
   @Test

@@ -3,10 +3,16 @@ package com.keycheck.crawl.parser;
 import com.keycheck.crawl.dto.RawImage;
 import com.keycheck.crawl.dto.TopicPage;
 import com.keycheck.crawl.dto.TopicStats;
+import com.keycheck.image.client.ImageDownloader;
 import com.keycheck.image.domain.ImageSource;
+import com.keycheck.post.domain.BodyLink;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +27,9 @@ public class TopicParser {
   private static final Pattern REPLY_NUMBER = Pattern.compile("Reply #(\\d+)");
   private static final Pattern POSTED_AT = Pattern.compile("on:\\s*(.+?)\\s*»");
   private static final String ATTACHMENT_MARK = "action=dlattach";
+  private static final int MAX_LINKS = 200;
+  private static final int MAX_LINK_TEXT_LENGTH = 200;
+  private static final int MAX_LINK_URL_LENGTH = 2000;
 
   private final GeekhackTimeParser timeParser;
 
@@ -35,7 +44,11 @@ public class TopicParser {
       throw new IllegalStateException("첫 글을 찾지 못했다");
     }
     return new TopicPage(
-        body.text(), parseImages(firstPost, body), parseViews(forumPosts), parsePostedAt(firstPost));
+        body.text(),
+        parseImages(firstPost, body),
+        parseViews(forumPosts),
+        parsePostedAt(firstPost),
+        parseLinks(body));
   }
 
   /**
@@ -101,6 +114,52 @@ public class TopicParser {
               images.size()));
     }
     return images;
+  }
+
+  /**
+   * 본문의 http·https 링크를 본문 순서대로, 같은 주소는 처음 것만 MAX_LINKS개까지 모은다. 첨부(action=dlattach), geekhack
+   * 주소, 호스트가 없는 주소는 판매처 링크가 아니라서 뺀다. 글자가 없으면(이미지 링크 등) 주소를 글자로 쓰고, 같은 주소가 뒤에 글자와 함께
+   * 다시 나오면 처음 자리에 그 글자를 쓴다(벤더 로고 링크 뒤에 벤더 이름 링크가 오는 경우).
+   */
+  private List<BodyLink> parseLinks(Element body) {
+    // 주소 → 링크. 다시 넣어도 처음 자리(본문 순서)는 그대로다
+    Map<String, BodyLink> links = new LinkedHashMap<>();
+    for (Element link : body.select("a[href]")) {
+      String url = link.attr("href").strip();
+      if (!isSaleLink(url)) {
+        continue;
+      }
+      String text = link.text().strip();
+      // 글자 단위로 잘라 이모지(서로게이트 쌍)를 반으로 가르지 않는다. 반쪽 문자는 jsonb에 저장되지 않는다.
+      if (text.codePointCount(0, text.length()) > MAX_LINK_TEXT_LENGTH) {
+        text = text.substring(0, text.offsetByCodePoints(0, MAX_LINK_TEXT_LENGTH));
+      }
+      BodyLink seen = links.get(url);
+      if (seen == null) {
+        if (links.size() < MAX_LINKS) {
+          links.put(url, new BodyLink(text.isEmpty() ? url : text, url));
+        }
+      } else if (seen.getText().equals(url) && !text.isEmpty()) {
+        links.put(url, new BodyLink(text, url));
+      }
+    }
+    return new ArrayList<>(links.values());
+  }
+
+  private boolean isSaleLink(String url) {
+    if (url.length() > MAX_LINK_URL_LENGTH || url.contains(ATTACHMENT_MARK)) {
+      return false;
+    }
+    URI uri;
+    try {
+      uri = new URI(url);
+    } catch (URISyntaxException e) {
+      return false;
+    }
+    String scheme = uri.getScheme();
+    boolean http = "http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme);
+    // 호스트가 없는 주소(https:foo, http:///x, 밑줄이 든 호스트 등)는 판매 페이지가 아니고 geekhack 검사도 빠져나간다
+    return http && uri.getHost() != null && !ImageDownloader.isGeekhack(uri);
   }
 
   private String removeSessionId(String url) {

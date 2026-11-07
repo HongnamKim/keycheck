@@ -3,9 +3,11 @@ package com.keycheck.summary.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.keycheck.post.domain.Board;
+import com.keycheck.post.domain.BodyLink;
 import com.keycheck.summary.dto.PostSource;
 import com.keycheck.summary.dto.SummaryResult;
 import java.time.Instant;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,7 +21,7 @@ class FakeSummarizerTest {
   void summarizesWithTitleAndBodyPreview() {
     SummaryResult result =
         summarizer.summarize(
-            new PostSource(Board.IC, "[IC] Example", "가".repeat(150), POSTED_AT));
+            new PostSource(Board.IC, "[IC] Example", "가".repeat(150), POSTED_AT, List.of()));
 
     assertThat(result.getLines()).containsExactly("[가짜 요약] [IC] Example", "가".repeat(100));
     assertThat(result.getSpecs()).isEmpty();
@@ -31,7 +33,7 @@ class FakeSummarizerTest {
   @DisplayName("본문이 짧으면 본문 전체를 쓴다")
   void shortBodyIsUsedWhole() {
     SummaryResult result =
-        summarizer.summarize(new PostSource(Board.IC, "제목", "짧은 본문", POSTED_AT));
+        summarizer.summarize(new PostSource(Board.IC, "제목", "짧은 본문", POSTED_AT, List.of()));
 
     assertThat(result.getLines().get(1)).isEqualTo("짧은 본문");
   }
@@ -41,7 +43,8 @@ class FakeSummarizerTest {
   void doesNotExtractGbPeriod() {
     SummaryResult result =
         summarizer.summarize(
-            new PostSource(Board.GB, "[GB] Example", "Group buy runs Oct 30 - Nov 13.", POSTED_AT));
+            new PostSource(
+                Board.GB, "[GB] Example", "Group buy runs Oct 30 - Nov 13.", POSTED_AT, List.of()));
 
     assertThat(result.getGbStartDate()).isNull();
     assertThat(result.getGbEndDate()).isNull();
@@ -52,8 +55,28 @@ class FakeSummarizerTest {
   void doesNotExtractProductName() {
     SummaryResult result =
         summarizer.summarize(
-            new PostSource(Board.GB, "[GB] SWG Nightshift | Oct 30th -> Nov 13th", "본문", POSTED_AT));
+            new PostSource(
+                Board.GB,
+                "[GB] SWG Nightshift | Oct 30th -> Nov 13th",
+                "본문",
+                POSTED_AT,
+                List.of()));
 
     assertThat(result.getProductName()).isNull();
+  }
+
+  @Test
+  @DisplayName("링크가 있어도 벤더를 뽑지 않는다(빈 목록)")
+  void doesNotExtractVendors() {
+    SummaryResult result =
+        summarizer.summarize(
+            new PostSource(
+                Board.GB,
+                "[GB] Example",
+                "Vendors: Swagkeys (KR)",
+                POSTED_AT,
+                List.of(new BodyLink("Swagkeys", "https://swagkeys.com/p"))));
+
+    assertThat(result.getVendors()).isNotNull().isEmpty();
   }
 }

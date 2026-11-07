@@ -23,6 +23,7 @@ function card(id: number): PostCard {
     representativeThumbUrl: null,
     representativeLargeUrl: null,
     summaryStatus: "PENDING",
+    hasKoreanVendor: false,
     summaryFirstLine: null,
     views: 10,
     replies: 1,

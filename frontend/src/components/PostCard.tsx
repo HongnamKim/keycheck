@@ -3,6 +3,7 @@ import type { PostCard as PostCardData } from "@/lib/api";
 import { formatCheckedAt, formatViews, postCategoryLabel } from "@/lib/format";
 import { imageSources } from "@/lib/image";
 import BoardBadge from "./BoardBadge";
+import KoreanVendorBadge from "./KoreanVendorBadge";
 import PostDates from "./PostDates";
 import RemoteImage from "./RemoteImage";
 import styles from "./PostCard.module.css";
@@ -50,6 +51,7 @@ export default function PostCard({
       <div className={styles.body}>
         <span className={styles.category}>
           <BoardBadge board={post.board} />
+          {post.hasKoreanVendor && <KoreanVendorBadge />}
           <span>{postCategoryLabel(post.category, post.subcategory)}</span>
         </span>
         <h2 className={styles.title}>{post.title}</h2>

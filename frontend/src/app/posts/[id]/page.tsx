@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Suspense } from "react";
+import { Fragment, Suspense } from "react";
 import BoardBadge from "@/components/BoardBadge";
 import Gallery from "@/components/Gallery";
 import NeighborList from "@/components/NeighborList";
@@ -12,6 +12,7 @@ import { getPost } from "@/lib/api";
 import { postCategoryLabel } from "@/lib/format";
 import { imageSources } from "@/lib/image";
 import { backHref, parseDetailQuery, parsePostId, postHref } from "@/lib/query";
+import { vendorLine, vendorSpecRows } from "@/lib/vendor";
 import styles from "./page.module.css";
 
 export default function PostPage({ params, searchParams }: PageProps<"/posts/[id]">) {
@@ -37,6 +38,32 @@ async function PostDetail({ params, searchParams }: PageProps<"/posts/[id]">) {
   const image = post.representativeImageUrl
     ? imageSources(post.representativeLargeUrl, post.representativeImageUrl)
     : null;
+  // 요약기가 뽑은 벤더 목록이 있으면 AI 스펙표의 벤더 줄을 빼고, 그 자리(없으면 끝)에 한국 벤더를 앞세운 벤더 줄을 새로 그린다
+  // 프론트가 백엔드보다 먼저 배포되면 응답에 vendors가 없다. 그때는 벤더가 없는 글처럼 그린다
+  const postVendors = post.vendors ?? [];
+  const vendors = postVendors.length > 0 ? vendorLine(postVendors) : null;
+  const { specs, vendorRowAt } = vendorSpecRows(post.specs, postVendors);
+  const vendorRow = vendors && (
+    <div className={styles.specRow}>
+      <dt>벤더</dt>
+      <dd>
+        {vendors.korean.map((vendor, i) => (
+          <Fragment key={i}>
+            {i > 0 && ", "}
+            {vendor.href ? (
+              <a href={vendor.href} target="_blank" rel="noopener noreferrer">
+                <strong>{vendor.name}</strong>
+              </a>
+            ) : (
+              <strong>{vendor.name}</strong>
+            )}
+          </Fragment>
+        ))}
+        {vendors.korean.length > 0 && vendors.others && ", "}
+        {vendors.others}
+      </dd>
+    </div>
+  );
 
   return (
     <div className={styles.detail}>
@@ -118,16 +145,20 @@ async function PostDetail({ params, searchParams }: PageProps<"/posts/[id]">) {
                 </div>
               </section>
 
-              {post.specs.length > 0 && (
+              {(specs.length > 0 || vendorRow) && (
                 <section className={styles.section}>
                   <h3 className={styles.sectionTitle}>{post.board === "GB" ? "공동구매 정보" : "스펙과 일정"}</h3>
                   <dl className={styles.specs}>
-                    {post.specs.map((spec, i) => (
-                      <div key={i} className={styles.specRow}>
-                        <dt>{spec.label}</dt>
-                        <dd>{spec.value}</dd>
-                      </div>
+                    {specs.map((spec, i) => (
+                      <Fragment key={i}>
+                        {i === vendorRowAt && vendorRow}
+                        <div className={styles.specRow}>
+                          <dt>{spec.label}</dt>
+                          <dd>{spec.value}</dd>
+                        </div>
+                      </Fragment>
                     ))}
+                    {vendorRowAt === specs.length && vendorRow}
                   </dl>
                 </section>
               )}

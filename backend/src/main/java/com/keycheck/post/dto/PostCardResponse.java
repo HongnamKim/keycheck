@@ -7,6 +7,7 @@ import com.keycheck.post.domain.Post;
 import com.keycheck.post.domain.PostImage;
 import com.keycheck.post.domain.Subcategory;
 import com.keycheck.post.domain.SummaryStatus;
+import com.keycheck.post.domain.VendorItem;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -40,6 +41,9 @@ public class PostCardResponse {
 
   private final SummaryStatus summaryStatus;
 
+  /** 요약기가 뽑은 벤더 중 지역이 KR인 벤더가 있으면 true. 벤더가 없거나 아직 뽑지 않았으면 false. */
+  private final boolean hasKoreanVendor;
+
   /** summaryStatus가 DONE일 때만 값이 있다 */
   private final String summaryFirstLine;
 
@@ -71,6 +75,7 @@ public class PostCardResponse {
         post.getSummaryStatus() == SummaryStatus.DONE && lines != null && !lines.isEmpty();
     // GB에서 IC로 옮겨진 글은 DB에 예전 기간이 남아 있으므로 게시판으로 거른다
     boolean gb = post.getBoard() == Board.GB;
+    List<VendorItem> vendors = post.getVendors();
     return new PostCardResponse(
         post.getId(),
         post.getTitle(),
@@ -82,6 +87,7 @@ public class PostCardResponse {
         representative != null ? urls.url(representative.getThumbKey()) : null,
         representative != null ? urls.url(representative.getThumbLargeKey()) : null,
         post.getSummaryStatus(),
+        vendors != null && vendors.stream().anyMatch(VendorItem::isKorean),
         hasFirstLine ? lines.get(0) : null,
         post.getViews(),
         post.getReplies(),

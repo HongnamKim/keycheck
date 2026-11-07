@@ -10,11 +10,13 @@ import com.anthropic.errors.UnauthorizedException;
 import com.keycheck.TestcontainersConfiguration;
 import com.keycheck.crawl.config.CollectProperties;
 import com.keycheck.post.domain.Board;
+import com.keycheck.post.domain.BodyLink;
 import com.keycheck.post.domain.Category;
 import com.keycheck.post.domain.Post;
 import com.keycheck.post.domain.SpecItem;
 import com.keycheck.post.domain.Subcategory;
 import com.keycheck.post.domain.SummaryStatus;
+import com.keycheck.post.domain.VendorItem;
 import com.keycheck.post.repository.PostRepository;
 import com.keycheck.summary.config.SummaryProperties;
 import com.keycheck.summary.dto.PostSource;
@@ -118,7 +120,8 @@ class SummaryWorkerTest {
             "claude-opus-5-5",
             null,
             null,
-            null);
+            null,
+            List.of());
 
     assertThat(worker(false).summarizeNext()).isTrue();
 
@@ -167,13 +170,61 @@ class SummaryWorkerTest {
             "claude-opus-5-5",
             null,
             null,
-            null);
+            null,
+            List.of());
 
     worker(false).summarizeNext();
 
     Post saved = reload(post);
     assertThat(saved.getCategory()).isEqualTo(Category.OTHER);
     assertThat(saved.getSubcategory()).isNull();
+  }
+
+  @Test
+  @DisplayName("저장된 본문 링크를 요약기에 넘기고 결과의 벤더를 저장하며, 가짜 요약이면 빈 목록을 저장한다")
+  void savesVendorsAndPassesLinks() {
+    Post linked = saveLoaded(2000);
+    jdbcTemplate.update(
+        "update post set body_links = '[{\"text\": \"Swagkeys\", \"url\": \"https://swagkeys.com/p\"}]'::jsonb"
+            + " where id = ?",
+        linked.getId());
+    summarizer.result =
+        new SummaryResult(
+            List.of("GMK 키캡 공동구매예요."),
+            List.of(),
+            Category.KEYCAP,
+            Subcategory.KC_GMK,
+            "claude-opus-5-5",
+            null,
+            null,
+            "GMK Test",
+            List.of(
+                new VendorItem("Swagkeys", "KR", "https://swagkeys.com/p"),
+                new VendorItem("NovelKeys", "US", null)));
+
+    worker(false).summarizeNext();
+
+    assertThat(summarizer.sources.get(0).getLinks())
+        .containsExactly(new BodyLink("Swagkeys", "https://swagkeys.com/p"));
+    assertThat(reload(linked).getVendors())
+        .containsExactly(
+            new VendorItem("Swagkeys", "KR", "https://swagkeys.com/p"),
+            new VendorItem("NovelKeys", "US", null));
+    // jsonb에는 {name, region, url}만 저장한다
+    assertThat(
+            jdbcTemplate.queryForObject(
+                "select vendors::text from post where id = ?", String.class, linked.getId()))
+        .contains("\"name\"", "\"region\"", "\"url\"")
+        .doesNotContain("korean");
+
+    // 링크를 저장하지 않은 글(null)을 가짜 요약기로 요약
+    Post unlinked = saveLoaded(1000);
+    summarizer.result = null;
+
+    worker(false).summarizeNext();
+
+    assertThat(summarizer.sources.get(1).getLinks()).isEmpty();
+    assertThat(reload(unlinked).getVendors()).isNotNull().isEmpty();
   }
 
   private void markDetailFetchedAt(Post post, Instant fetchedAt) {
@@ -244,7 +295,8 @@ class SummaryWorkerTest {
             "claude-opus-5-5",
             null,
             null,
-            null);
+            null,
+            List.of());
 
     SummaryWorker worker = worker(true, true);
     while (worker.summarizeNext()) {
@@ -368,7 +420,8 @@ class SummaryWorkerTest {
             "claude-opus-5-5",
             null,
             null,
-            null);
+            null,
+            List.of());
 
     assertThat(worker(true).summarizeNext()).isTrue();
     assertThat(worker(true).summarizeNext()).isFalse();
@@ -417,7 +470,8 @@ class SummaryWorkerTest {
             "claude-opus-5-5",
             null,
             null,
-            null);
+            null,
+            List.of());
 
     SummaryWorker worker = worker(false, true);
     while (worker.summarizeNext()) {
@@ -462,7 +516,8 @@ class SummaryWorkerTest {
             "claude-opus-5-5",
             null,
             null,
-            null);
+            null,
+            List.of());
     SummaryWorker worker = worker(false, true);
 
     assertThat(worker.summarizeNext()).isTrue();
@@ -486,7 +541,8 @@ class SummaryWorkerTest {
             "claude-opus-5-5",
             null,
             null,
-            null);
+            null,
+            List.of());
     SummaryWorker worker = worker(false, true);
 
     assertThat(worker.summarizeNext()).isTrue();
@@ -523,7 +579,8 @@ class SummaryWorkerTest {
         "claude-opus-5-5",
         null,
         null,
-        productName);
+        productName,
+        List.of());
   }
 
   /** Claude로 요약했지만 상품 이름은 없는 글(이름을 뽑기 전의 요약). 세부 분류는 있어 다른 다시 요약 대상이 아니다. */
@@ -718,7 +775,8 @@ class SummaryWorkerTest {
         "claude-opus-5-5",
         gbStartDate,
         gbEndDate,
-        null);
+        null,
+        List.of());
   }
 
   @Test

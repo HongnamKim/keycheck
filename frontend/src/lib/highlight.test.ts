@@ -18,6 +18,7 @@ function card(board: Board, images: Partial<PostCard> = {}): PostCard {
     representativeThumbUrl: THUMB,
     representativeLargeUrl: LARGE,
     summaryStatus: "DONE",
+    hasKoreanVendor: false,
     summaryFirstLine: "요약 첫 줄",
     views: 100,
     replies: 1,

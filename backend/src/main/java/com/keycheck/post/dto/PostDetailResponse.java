@@ -8,7 +8,9 @@ import com.keycheck.post.domain.PostImage;
 import com.keycheck.post.domain.SpecItem;
 import com.keycheck.post.domain.Subcategory;
 import com.keycheck.post.domain.SummaryStatus;
+import com.keycheck.post.domain.VendorItem;
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -51,6 +53,10 @@ public class PostDetailResponse {
   private final List<String> summaryLines;
 
   private final List<SpecItem> specs;
+
+  /** 요약기가 뽑은 벤더. 한국 벤더(region "KR")를 앞에 두고, 한국 벤더끼리와 나머지끼리는 본문 순서. 없거나 아직 뽑지 않았으면 빈 목록. */
+  private final List<VendorResponse> vendors;
+
   private final String originalUrl;
   private final int views;
   private final int replies;
@@ -90,6 +96,7 @@ public class PostDetailResponse {
         post.getSummaryStatus(),
         done && post.getSummaryLines() != null ? post.getSummaryLines() : List.of(),
         post.getSpecs() != null ? post.getSpecs() : List.of(),
+        koreanFirst(post.getVendors()),
         post.getOriginalUrl(),
         post.getViews(),
         post.getReplies(),
@@ -98,5 +105,16 @@ public class PostDetailResponse {
         estimatedPostedAt,
         post.getLastPostAt(),
         post.isDetailLoaded());
+  }
+
+  /** 한국 벤더를 앞으로. 정렬이 안정적이라 각 무리 안은 저장 순서 그대로다. null이면 빈 목록. */
+  private static List<VendorResponse> koreanFirst(List<VendorItem> vendors) {
+    if (vendors == null) {
+      return List.of();
+    }
+    return vendors.stream()
+        .sorted(Comparator.comparing(VendorItem::isKorean).reversed())
+        .map(vendor -> new VendorResponse(vendor.getName(), vendor.getRegion(), vendor.getUrl()))
+        .toList();
   }
 }

@@ -1,5 +1,6 @@
 package com.keycheck.crawl.dto;
 
+import com.keycheck.post.domain.BodyLink;
 import java.time.Instant;
 import java.util.List;
 import lombok.Getter;
@@ -13,4 +14,7 @@ public class TopicPage {
   private final List<RawImage> images;
   private final int views;
   private final Instant postedAt;
+
+  /** 첫 글 본문의 http·https 링크. 첨부·geekhack 주소는 빠져 있다. */
+  private final List<BodyLink> links;
 }

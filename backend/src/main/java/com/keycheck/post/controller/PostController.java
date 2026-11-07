@@ -59,6 +59,7 @@ public class PostController {
               + " 기타·미분류 글이나 아직 정하지 않았으면 null."
               + " 공동구매 글은 요약기가 뽑은 기간(gbStartDate·gbEndDate, YYYY-MM-DD, 모르면 null)을 준다."
               + " productName: 요약기가 뽑은 상품·프로젝트 이름(예: SWG Nightshift). 모르거나 아직 뽑지 않았으면 null."
+              + " hasKoreanVendor: 요약기가 뽑은 벤더 중 지역이 KR인 벤더가 있으면 true, 없거나 아직 뽑지 않았으면 false."
               + DATES_DESCRIPTION)
   @ApiResponse(responseCode = "200", description = "성공")
   @ApiResponse(
@@ -135,6 +136,8 @@ public class PostController {
           "요약, 스펙표, 대표 이미지, 원문 링크를 돌려준다. 틀 글이면 geekhack 글 첫 페이지를 읽어 본문·이미지를 채운 뒤"
               + " 돌려준다. 읽지 못하면(요청 간격 대기 초과, 요청·해석 실패) 틀 그대로 detailLoaded=false로 돌려준다."
               + " 요약은 백그라운드에서 만들므로 막 채운 글은 summaryStatus=PENDING이다."
+              + " vendors: 요약기가 뽑은 벤더(name, region: 대문자 지역 코드 또는 null, url: 첫 글 본문에 있던 판매 페이지 주소 또는"
+              + " null). 한국 벤더(KR)를 앞에 두고 각 무리 안은 본문 순서, 없거나 아직 뽑지 않았으면 빈 배열."
               + DATES_DESCRIPTION)
   @ApiResponse(responseCode = "200", description = "성공")
   @ApiResponse(responseCode = "404", description = "없거나 숨김 처리되었거나 수집 기간(2020년) 이전의 글")

@@ -88,7 +88,11 @@ public class SummaryWorker {
     try {
       result = summarizer.summarize(
               new PostSource(
-                  post.getBoard(), post.getTitle(), post.getBodyText(), post.getPostedAt()));
+                  post.getBoard(),
+                  post.getTitle(),
+                  post.getBodyText(),
+                  post.getPostedAt(),
+                  post.getBodyLinks()));
     } catch (RuntimeException e) {
       if (isApiUnavailable(e)) {
         log.error("요약 API를 쓸 수 없어 {} 쉰다: topic={}", ERROR_PAUSE, post.getTopicId(), e);
@@ -117,7 +121,8 @@ public class SummaryWorker {
         result.getGbEndDate(),
         result.getProductName(),
         claude && post.getBoard() == Board.GB,
-        post.getTitle());
+        post.getTitle(),
+        result.getVendors());
     redone.add(post.getId());
     return true;
   }

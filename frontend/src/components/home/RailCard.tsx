@@ -4,6 +4,7 @@ import { displayTitle, formatShortPostedDate, formatViews, photoChipLabel } from
 import { gbPeriodChip } from "@/lib/gbPeriod";
 import { imageSources } from "@/lib/image";
 import { postHref } from "@/lib/query";
+import KoreanVendorBadge from "../KoreanVendorBadge";
 import RemoteImage from "../RemoteImage";
 import PeriodRange from "./PeriodRange";
 import Segs from "./Segs";
@@ -19,7 +20,7 @@ const SIZES: Record<BoardFilter, string> = {
 };
 
 /**
- * 메인 가로 줄의 카드 한 장(li). 사진(IC 4:5, 공동구매 3:2) 위에 분류 칩, 공동구매는 기간 칩과 D-day 칩(지났으면 끝남 칩).
+ * 메인 가로 줄의 카드 한 장(li). 사진(IC 4:5, 공동구매 3:2) 위에 분류 칩과 한국 벤더 칩, 공동구매는 기간 칩과 D-day 칩(지났으면 끝남 칩).
  * today는 서버가 구한 한국 시간 오늘. 메인에서 연 상세는 "메인으로" 돌아온다(쿼리 없는 상세 주소).
  */
 export default function RailCard({ post, board, today }: { post: PostCard; board: BoardFilter; today: string }) {
@@ -46,7 +47,12 @@ export default function RailCard({ post, board, today }: { post: PostCard; board
           ) : (
             <span className={styles.noImage}>{post.detailLoaded ? "이미지 없음" : "열면 불러와요"}</span>
           )}
-          {chip && <span className={styles.chip}>{chip}</span>}
+          {(chip || post.hasKoreanVendor) && (
+            <span className={styles.chips}>
+              {chip && <span className={styles.chip}>{chip}</span>}
+              {post.hasKoreanVendor && <KoreanVendorBadge className={`${styles.chip} ${styles.korean}`} />}
+            </span>
+          )}
           {period && (
             <span className={period.ended ? `${styles.chip} ${styles.date} ${styles.ended}` : `${styles.chip} ${styles.date}`}>
               <PeriodRange range={period.range} />

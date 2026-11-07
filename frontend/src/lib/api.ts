@@ -48,6 +48,8 @@ export interface PostCard {
   /** 대표 이미지 큰 축소본(가로 최대 1280px) 주소. 메인 하이라이트 큰 칸에 쓴다. 대표 이미지나 큰 축소본이 없으면 null */
   representativeLargeUrl: string | null;
   summaryStatus: SummaryStatus;
+  /** 요약기가 뽑은 벤더 중 지역이 한국(KR)인 벤더가 있으면 true. 요약 전이거나 벤더를 모르면 false */
+  hasKoreanVendor: boolean;
   summaryFirstLine: string | null;
   views: number;
   replies: number;
@@ -83,6 +85,16 @@ export interface SpecItem {
   value: string;
 }
 
+/** 요약기가 원문에서 뽑은 판매처(벤더) */
+export interface Vendor {
+  /** 원문 표기 그대로 */
+  name: string;
+  /** 대문자 지역 코드(KR, US, EU 등). 한국은 "KR". 모르면 null */
+  region: string | null;
+  /** 원문 첫 글 링크 중 그 벤더의 판매 페이지. 없으면 null. 화면은 lib/vendor의 vendorLink로 걸러 쓴다 */
+  url: string | null;
+}
+
 /** 상세 갤러리 이미지 한 장 */
 export interface PostImage {
   /** 원본 주소. 확대 보기와 원본 열기에 쓴다 */
@@ -110,6 +122,8 @@ export interface PostDetail {
   summaryStatus: SummaryStatus;
   summaryLines: string[];
   specs: SpecItem[];
+  /** 한국 벤더가 앞, 그 안과 나머지는 원문 순서. 요약 전이거나 벤더를 모르면 빈 배열 */
+  vendors: Vendor[];
   originalUrl: string;
   views: number;
   replies: number;

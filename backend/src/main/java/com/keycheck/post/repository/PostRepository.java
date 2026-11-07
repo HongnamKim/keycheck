@@ -6,6 +6,7 @@ import com.keycheck.post.domain.Post;
 import com.keycheck.post.domain.SpecItem;
 import com.keycheck.post.domain.Subcategory;
 import com.keycheck.post.domain.SummaryStatus;
+import com.keycheck.post.domain.VendorItem;
 import com.keycheck.post.dto.PostedAtAnchor;
 import jakarta.persistence.LockModeType;
 import java.time.Instant;
@@ -253,7 +254,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
   /**
    * 요약을 넣고 DONE으로 바꾼다. category가 null이면(가짜 요약기) 분류와 세부 분류를 그대로 두고, 아니면 둘 다 결과로 바꾼다(세부 분류가
-   * 없으면 null). 공동구매 기간, 상품 이름, 기간을 뽑아 본 요약인지, 요약기에 넘긴 제목도 결과로 바꾼다. 다른 컬럼은 건드리지 않는다.
+   * 없으면 null). 공동구매 기간, 상품 이름, 기간을 뽑아 본 요약인지, 요약기에 넘긴 제목, 벤더 목록도 결과로 바꾼다. 다른 컬럼은 건드리지 않는다.
    */
   @Transactional
   @Modifying
@@ -263,7 +264,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
           + " p.subcategory = case when :category is null then p.subcategory else :subcategory end,"
           + " p.category = coalesce(:category, p.category),"
           + " p.gbStartDate = :gbStartDate, p.gbEndDate = :gbEndDate, p.productName = :productName,"
-          + " p.gbDatesExtracted = :gbDatesExtracted, p.summarizedTitle = :summarizedTitle"
+          + " p.gbDatesExtracted = :gbDatesExtracted, p.summarizedTitle = :summarizedTitle,"
+          + " p.vendors = :vendors"
           + " where p.id = :id")
   void saveSummary(
       Long id,
@@ -276,7 +278,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
       LocalDate gbEndDate,
       String productName,
       boolean gbDatesExtracted,
-      String summarizedTitle);
+      String summarizedTitle,
+      List<VendorItem> vendors);
 
   @Transactional
   @Modifying
