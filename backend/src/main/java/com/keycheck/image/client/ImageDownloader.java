@@ -44,6 +44,10 @@ import org.apache.hc.core5.util.Timeout;
  *   <li>Referer를 보내지 않는다.
  * </ul>
  *
+ * <p>응답 압축은 풀지 않는다. 이미지는 풀 필요가 없고, geekhack 첨부는 비표준 "Content-Encoding: none"을 보내 풀려고 하면
+ * HttpClient가 거절한다. 미리 gzip으로 압축해 둔 이미지(Content-Encoding: gzip)는 압축된 바이트를 그대로 받으므로 읽을 수 없는
+ * 이미지로 센다.
+ *
  * <p>한 이미지 받기 전체의 시간 제한은 요청 밖에서 지킨다. 1xx 응답만 계속 오거나 한 번 읽기 안에서 조금씩 오면 사이사이 검사가 돌지
  * 않으므로, 마감에 다른 스레드가 요청을 취소해 연결을 끊는다. 다만 연결 중에 끊으면 HttpClient가 호스트의 남은 주소로 연결을 이어
  * 시도하므로, 연결할 주소를 MAX_ADDRESSES개로 줄여 둔다. 그래서 많아야 연결 시간 제한 한 번만큼 더 걸린 뒤 실패한다.
@@ -115,6 +119,8 @@ public class ImageDownloader implements AutoCloseable {
             .disableRedirectHandling()
             // 서버가 보낸 Retry-After만큼 기다렸다 다시 보내지 않는다. 실패는 작업이 다음 차례에 다시 고른다.
             .disableAutomaticRetries()
+            // Accept-Encoding을 보내지 않고 응답을 풀지 않는다(이유는 클래스 주석)
+            .disableContentCompression()
             .build();
   }
 

@@ -17,6 +17,8 @@ import com.keycheck.summary.config.ClaudeProperties;
 import com.keycheck.summary.dto.PostSource;
 import com.keycheck.summary.dto.SummaryResult;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.stream.IntStream;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.AfterEach;
@@ -28,8 +30,15 @@ import tools.jackson.databind.json.JsonMapper;
 
 /** 실제 Anthropic API 대신 FakeAnthropicServer(127.0.0.1)에 요청한다 */
 class ClaudeSummarizerTest {
+  private static final Instant POSTED_AT = Instant.parse("2026-10-13T00:00:00Z");
+
   private static final PostSource SOURCE =
-      new PostSource(Board.IC, "[IC] Test Board", "A 65% gasket mount board. Aluminum case.");
+      new PostSource(
+          Board.IC, "[IC] Test Board", "A 65% gasket mount board. Aluminum case.", POSTED_AT);
+
+  private static final PostSource GB_SOURCE =
+      new PostSource(
+          Board.GB, "[GB] Test Keycaps", "Group buy runs Oct 30 - Nov 13. MOQ 100.", POSTED_AT);
 
   private FakeAnthropicServer server;
   private AnthropicClient client;
@@ -70,6 +79,17 @@ class ClaudeSummarizerTest {
        "summaryLines": ["65% 가스켓 마운트 키보드다.", "알루미늄 케이스다.", "IC 단계다."],
        "specs": [{"label": "배열", "value": "65%"}, {"label": "마운트", "value": "가스켓"}]}
       """;
+
+  /** 공동구매 기간 두 키를 더한 응답 본문. null이면 JSON null로 넣는다. */
+  private static String gbJson(String start, String end) {
+    return "{\"category\": \"KEYCAP\", \"subcategory\": \"KC_GMK\","
+        + " \"summaryLines\": [\"GMK 키캡 공동구매예요.\"], \"specs\": [],"
+        + " \"gbStartDate\": "
+        + (start == null ? "null" : "\"" + start + "\"")
+        + ", \"gbEndDate\": "
+        + (end == null ? "null" : "\"" + end + "\"")
+        + "}";
+  }
 
   @Test
   @DisplayName("요청에 모델·max_tokens·effort·JSON 스키마를 넣고 thinking·샘플링 파라미터·prefill은 넣지 않는다")
@@ -193,7 +213,11 @@ class ClaudeSummarizerTest {
 
     summarizer(true)
         .summarize(
-            new PostSource(Board.GB, "[GB] Test Board", "Group buy runs Nov 1 - Nov 30. MOQ 100."));
+            new PostSource(
+                Board.GB,
+                "[GB] Test Board",
+                "Group buy runs Nov 1 - Nov 30. MOQ 100.",
+                POSTED_AT));
 
     JsonNode message = JsonMapper.shared().readTree(server.requestBody).get("messages").get(0);
     assertThat(message.get("content").toString())
@@ -208,6 +232,132 @@ class ClaudeSummarizerTest {
         .contains("<board>", "Interest Checks", "Group Buys and Preorders")
         .contains("공동구매 기간", "벤더", "가격", "MOQ")
         .contains("해요체");
+  }
+
+  @Test
+  @DisplayName("GB 글이면 응답의 공동구매 시작일·마감일을 날짜로 바꾼다")
+  void extractsGbPeriod() {
+    server.responseBody = response("end_turn", gbJson("2026-10-30", "2026-11-13"));
+
+    SummaryResult result = summarizer(true).summarize(GB_SOURCE);
+
+    assertThat(result.getGbStartDate()).isEqualTo(LocalDate.of(2026, 10, 30));
+    assertThat(result.getGbEndDate()).isEqualTo(LocalDate.of(2026, 11, 13));
+
+    server.responseBody = response("end_turn", gbJson(null, "2026-11-13"));
+
+    SummaryResult endOnly = summarizer(true).summarize(GB_SOURCE);
+
+    assertThat(endOnly.getGbStartDate()).isNull();
+    assertThat(endOnly.getGbEndDate()).isEqualTo(LocalDate.of(2026, 11, 13));
+  }
+
+  @Test
+  @DisplayName("공동구매 날짜 형식이 틀리면 시작일·마감일을 둘 다 버리고 요약은 그대로 쓴다")
+  void invalidGbDateDropsBoth() {
+    server.responseBody = response("end_turn", gbJson("2026-13-01", "2026-11-13"));
+
+    SummaryResult invalidMonth = summarizer(true).summarize(GB_SOURCE);
+
+    assertThat(invalidMonth.getGbStartDate()).isNull();
+    assertThat(invalidMonth.getGbEndDate()).isNull();
+    assertThat(invalidMonth.getLines()).containsExactly("GMK 키캡 공동구매예요.");
+    assertThat(invalidMonth.getCategory()).isEqualTo(Category.KEYCAP);
+
+    server.responseBody = response("end_turn", gbJson("2026-10-30", "Nov 10"));
+
+    SummaryResult notIso = summarizer(true).summarize(GB_SOURCE);
+
+    assertThat(notIso.getGbStartDate()).isNull();
+    assertThat(notIso.getGbEndDate()).isNull();
+    assertThat(notIso.getLines()).containsExactly("GMK 키캡 공동구매예요.");
+  }
+
+  @Test
+  @DisplayName("마감일이 시작일보다 앞이면 둘 다 버리고, 같은 날이면 그대로 쓴다")
+  void endBeforeStartDropsBoth() {
+    server.responseBody = response("end_turn", gbJson("2026-11-13", "2026-10-30"));
+
+    SummaryResult reversed = summarizer(true).summarize(GB_SOURCE);
+
+    assertThat(reversed.getGbStartDate()).isNull();
+    assertThat(reversed.getGbEndDate()).isNull();
+
+    server.responseBody = response("end_turn", gbJson("2026-11-13", "2026-11-13"));
+
+    SummaryResult sameDay = summarizer(true).summarize(GB_SOURCE);
+
+    assertThat(sameDay.getGbStartDate()).isEqualTo(LocalDate.of(2026, 11, 13));
+    assertThat(sameDay.getGbEndDate()).isEqualTo(LocalDate.of(2026, 11, 13));
+  }
+
+  @Test
+  @DisplayName("IC 글이면 응답에 날짜가 있어도 공동구매 기간은 null")
+  void icNeverHasGbPeriod() {
+    server.responseBody = response("end_turn", gbJson("2026-10-30", "2026-11-13"));
+
+    SummaryResult result = summarizer(true).summarize(SOURCE);
+
+    assertThat(result.getGbStartDate()).isNull();
+    assertThat(result.getGbEndDate()).isNull();
+  }
+
+  @Test
+  @DisplayName("응답에 공동구매 기간 키가 없으면 둘 다 null")
+  void missingGbKeysAreNull() {
+    server.responseBody = response("end_turn", SUMMARY_JSON);
+
+    SummaryResult result = summarizer(true).summarize(GB_SOURCE);
+
+    assertThat(result.getGbStartDate()).isNull();
+    assertThat(result.getGbEndDate()).isNull();
+  }
+
+  @Test
+  @DisplayName("응답 형식은 공동구매 시작일·마감일을 날짜 문자열 또는 null로 받고 두 키를 필수로 둔다")
+  void schemaRequiresGbPeriod() {
+    server.responseBody = response("end_turn", SUMMARY_JSON);
+
+    summarizer(true).summarize(GB_SOURCE);
+
+    JsonNode schema =
+        JsonMapper.shared()
+            .readTree(server.requestBody)
+            .get("output_config")
+            .get("format")
+            .get("schema");
+    for (String key : new String[] {"gbStartDate", "gbEndDate"}) {
+      JsonNode anyOf = schema.get("properties").get(key).get("anyOf");
+      assertThat(anyOf.get(0).get("type").asString()).isEqualTo("string");
+      assertThat(anyOf.get(0).get("format").asString()).isEqualTo("date");
+      assertThat(anyOf.get(1).get("type").asString()).isEqualTo("null");
+    }
+    assertThat(schema.get("required"))
+        .extracting(JsonNode::asString)
+        .contains("gbStartDate", "gbEndDate");
+  }
+
+  @Test
+  @DisplayName("사용자 메시지에 글 작성 시각을 넣는다")
+  void sendsPostedAt() {
+    server.responseBody = response("end_turn", SUMMARY_JSON);
+
+    summarizer(true).summarize(GB_SOURCE);
+
+    JsonNode message = JsonMapper.shared().readTree(server.requestBody).get("messages").get(0);
+    assertThat(message.get("content").toString())
+        .contains("</board>\\n<posted_at>\\n2026-10-13T00:00:00Z\\n</posted_at>\\n<title>");
+  }
+
+  @Test
+  @DisplayName("지시문은 공동구매 기간을 뽑는 규칙(작성 시각 기준·해 넘김, 제목 우선, 취소·연기·연장, 끝난 공동구매, 확신이 없으면 null)을 설명한다")
+  void systemPromptDescribesGbPeriod() {
+    assertThat(ClaudeSummarizer.SYSTEM_PROMPT)
+        .contains("gbStartDate", "gbEndDate", "posted_at")
+        .contains("취소", "제목", "끝난", "확신")
+        .contains("제목을 따른다", "연도")
+        // 연도 없는 마감일은 작성일 뒤로(해 넘김), 새 마감일 없는 연장은 옛 마감일 대신 null
+        .contains("그 뒤인 가장 가까운 날짜", "연장", "옛 마감일을 쓰지 않는다");
   }
 
   @Test

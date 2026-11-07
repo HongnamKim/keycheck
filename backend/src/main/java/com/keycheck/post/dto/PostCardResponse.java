@@ -8,6 +8,7 @@ import com.keycheck.post.domain.PostImage;
 import com.keycheck.post.domain.Subcategory;
 import com.keycheck.post.domain.SummaryStatus;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,9 @@ public class PostCardResponse {
   /** 대표 이미지 축소본(가로 최대 640px) 공개 주소. 대표 이미지나 축소본이 없으면 null이고 화면은 원본을 쓴다. */
   private final String representativeThumbUrl;
 
+  /** 대표 이미지 큰 축소본(가로 최대 1280px) 공개 주소. 메인 하이라이트 큰 칸에 쓴다. 대표 이미지나 큰 축소본이 없으면 null. */
+  private final String representativeLargeUrl;
+
   private final SummaryStatus summaryStatus;
 
   /** summaryStatus가 DONE일 때만 값이 있다 */
@@ -47,6 +51,12 @@ public class PostCardResponse {
   /** 게시판 목록에서 읽은 마지막 게시물(댓글) 시각. 아직 읽지 못했으면 null. */
   private final Instant lastPostAt;
 
+  /** 공동구매 시작일. 요약기가 GB 글에서 뽑는다. IC 글이거나 모르면 null. */
+  private final LocalDate gbStartDate;
+
+  /** 공동구매 마감일. 요약기가 GB 글에서 뽑는다. IC 글이거나 모르거나 취소·연기됐으면 null. */
+  private final LocalDate gbEndDate;
+
   /** false면 틀 글: 본문·이미지를 아직 읽지 않았다(대표 이미지·작성일 없음). */
   private final boolean detailLoaded;
 
@@ -56,6 +66,8 @@ public class PostCardResponse {
     List<String> lines = post.getSummaryLines();
     boolean hasFirstLine =
         post.getSummaryStatus() == SummaryStatus.DONE && lines != null && !lines.isEmpty();
+    // GB에서 IC로 옮겨진 글은 DB에 예전 기간이 남아 있으므로 게시판으로 거른다
+    boolean gb = post.getBoard() == Board.GB;
     return new PostCardResponse(
         post.getId(),
         post.getTitle(),
@@ -64,6 +76,7 @@ public class PostCardResponse {
         post.getSubcategory(),
         representative != null ? representative.getUrl() : null,
         representative != null ? urls.url(representative.getThumbKey()) : null,
+        representative != null ? urls.url(representative.getThumbLargeKey()) : null,
         post.getSummaryStatus(),
         hasFirstLine ? lines.get(0) : null,
         post.getViews(),
@@ -72,6 +85,8 @@ public class PostCardResponse {
         post.getPostedAt(),
         estimatedPostedAt,
         post.getLastPostAt(),
+        gb ? post.getGbStartDate() : null,
+        gb ? post.getGbEndDate() : null,
         post.isDetailLoaded());
   }
 }

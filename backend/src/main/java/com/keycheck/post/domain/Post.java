@@ -13,6 +13,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AccessLevel;
@@ -107,6 +108,19 @@ public class Post {
   /** 요약을 만든 요약기 ('fake' 또는 Claude 모델 ID). 요약이 없으면 null. */
   @Column(length = 100)
   private String summarizedBy;
+
+  /** 공동구매 시작일. 요약기가 GB 글의 제목·본문에서 뽑는다. IC 글이거나 모르면 null. */
+  private LocalDate gbStartDate;
+
+  /** 공동구매 마감일. 요약기가 GB 글의 제목·본문에서 뽑는다. IC 글이거나 모르거나 취소·연기됐으면 null. */
+  private LocalDate gbEndDate;
+
+  /** GB 글로서 기간을 뽑아 본 요약인지. Claude가 GB 글을 요약했을 때만 true이고, 뽑았는데 null이어도 true다. */
+  private boolean gbDatesExtracted;
+
+  /** 요약할 때 요약기에 넘긴 제목. GB 글의 제목이 이것과 달라지면 다시 요약한다. 요약이 없으면 null. */
+  @Column(length = 500)
+  private String summarizedTitle;
 
   /** 대표 이미지(post_image.id). 순환 참조를 피하려고 연관관계 대신 ID만 둔다. */
   @Setter private Long representativeImageId;

@@ -2,11 +2,13 @@ package com.keycheck.post.controller;
 
 import com.keycheck.post.dto.BoardFilter;
 import com.keycheck.post.dto.CategoryFilter;
+import com.keycheck.post.dto.HighlightResponse;
 import com.keycheck.post.dto.PostDetailResponse;
 import com.keycheck.post.dto.PostListResponse;
 import com.keycheck.post.dto.PostNeighborsResponse;
 import com.keycheck.post.dto.PostSort;
 import com.keycheck.post.dto.PostStatsResponse;
+import com.keycheck.post.service.PostHighlightService;
 import com.keycheck.post.service.PostQueryService;
 import com.keycheck.post.service.PostStatsService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -34,6 +36,7 @@ public class PostController {
 
   private final PostQueryService postQueryService;
   private final PostStatsService postStatsService;
+  private final PostHighlightService postHighlightService;
 
   @Operation(
       summary = "글 목록",
@@ -54,6 +57,7 @@ public class PostController {
               + " subcategory: 세부 분류 코드. KEYBOARD는 배열(KB_100, KB_96, KB_80, KB_75, KB_65, KB_60,"
               + " KB_40, KB_ERGO, KB_ETC), KEYCAP은 제조사(KC_GMK, KC_SP, KC_MW, KC_KKB, KC_PBTFANS, KC_ETC)."
               + " 기타·미분류 글이나 아직 정하지 않았으면 null."
+              + " 공동구매 글은 요약기가 뽑은 기간(gbStartDate·gbEndDate, YYYY-MM-DD, 모르면 null)을 준다."
               + DATES_DESCRIPTION)
   @ApiResponse(responseCode = "200", description = "성공")
   @ApiResponse(
@@ -96,6 +100,32 @@ public class PostController {
     CategoryFilter filter = CategoryFilter.from(category);
     return postQueryService.getPosts(
         BoardFilter.from(board), filter, filter.subcategory(sub), PostSort.from(sort), cursor);
+  }
+
+  @Operation(
+      summary = "메인 하이라이트",
+      description =
+          "메인 하이라이트 칸과 날짜 줄 숫자를 한 번에 돌려준다. 요청마다 계산하고 geekhack을 호출하지 않는다."
+              + " 후보는 숨기지 않았고 수집 기간(2020년) 이후이며 본문을 읽었고 대표 이미지가 있는 글이다."
+              + " 최근 N일은 작성일(postedAt)이 지금에서 N일 전 이후인 글이다."
+              + " slots는 이 순서로 고르고, 앞 칸에 들어간 글은 뒤 칸에서 건너뛴다."
+              + " FEATURE: 최근 7일 공동구매 조회수 1위. TALL: 최근 14일 IC 조회수 1위."
+              + " DEADLINE: today나 그 뒤에 마감하는 공동구매 중 마감이 가장 가까운 글(deadline=true)."
+              + " 없으면 최근 14일 공동구매 조회수 1위를 사진 칸으로 준다(deadline=false)."
+              + " IC_REPLIES: 최근 14일 IC 댓글 1위. IC_VIEWS: 최근 14일 IC 조회수 1위."
+              + " GB_VIEWS: 최근 30일 공동구매 조회수 1위."
+              + " 창 안에 후보가 없으면 30일 → 90일 → 전체로 넓히고, 그래도 없으면 그 칸을 slots에서 뺀다."
+              + " windowDays: 고른 창(일). 전체로 넓혔거나 마감 띠면 null."
+              + " rank: 그 창의 정렬 순위(1부터, 앞 칸에 들어간 글도 센다). 마감 띠면 null."
+              + " today: 한국 날짜(YYYY-MM-DD). newIcCount·newGbCount: 최근 7일에 작성된 IC·공동구매 글 수."
+              + " endingSoonGbCount: today부터 14일 뒤까지(양끝 포함) 마감하는 공동구매 글 수."
+              + " 세 숫자 모두 숨김 글과 수집 기간 이전 글을 빼고 센다(본문·대표 이미지는 묻지 않는다)."
+              + " 카드 형식은 목록과 같다."
+              + DATES_DESCRIPTION)
+  @ApiResponse(responseCode = "200", description = "성공")
+  @GetMapping("/highlights")
+  public HighlightResponse getHighlights() {
+    return postHighlightService.getHighlights();
   }
 
   @Operation(

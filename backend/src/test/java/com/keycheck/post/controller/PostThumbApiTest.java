@@ -107,6 +107,31 @@ class PostThumbApiTest {
   }
 
   @Test
+  @DisplayName("목록·하단 목록 카드는 대표 이미지 1280 축소본 주소를 주고, 없으면 null")
+  void cardHasLargeThumb() throws Exception {
+    mockMvc
+        .perform(get("/api/posts"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.items[*].title", contains("글 2", "글 1")))
+        .andExpect(
+            jsonPath("$.items[0].representativeLargeUrl")
+                .value("https://img.test/thumbs/5-1280.webp"))
+        .andExpect(jsonPath("$.items[1].representativeLargeUrl").value(nullValue()));
+    mockMvc
+        .perform(get("/api/posts/" + withoutThumbs.getId() + "/neighbors?board=ic&size=5"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.before[*].title", contains("글 2")))
+        .andExpect(
+            jsonPath("$.before[0].representativeLargeUrl")
+                .value("https://img.test/thumbs/5-1280.webp"));
+    mockMvc
+        .perform(get("/api/posts/" + withThumbs.getId() + "/neighbors?board=ic&size=5"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.after[*].title", contains("글 1")))
+        .andExpect(jsonPath("$.after[0].representativeLargeUrl").value(nullValue()));
+  }
+
+  @Test
   @DisplayName("상세는 대표 이미지의 640·1280 축소본 주소와, 갤러리 이미지마다 원본·축소본 주소를 준다")
   void detailHasThumbUrls() throws Exception {
     mockMvc

@@ -262,7 +262,7 @@ public class PostQueryService {
     return new ResponseStatusException(HttpStatus.BAD_REQUEST, "허용되지 않는 cursor: " + cursor);
   }
 
-  private List<PostCardResponse> cards(List<Post> posts) {
+  List<PostCardResponse> cards(List<Post> posts) {
     Map<Long, PostImage> images = representativeImages(posts);
     Map<Long, Instant> estimates = estimatedPostedAts(posts);
     return posts.stream()

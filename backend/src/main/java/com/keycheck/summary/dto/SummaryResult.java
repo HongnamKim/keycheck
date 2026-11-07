@@ -3,6 +3,7 @@ package com.keycheck.summary.dto;
 import com.keycheck.post.domain.Category;
 import com.keycheck.post.domain.SpecItem;
 import com.keycheck.post.domain.Subcategory;
+import java.time.LocalDate;
 import java.util.List;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -24,4 +25,10 @@ public class SummaryResult {
 
   /** 요약을 만든 요약기 ('fake' 또는 응답한 Claude 모델 ID) */
   private final String summarizedBy;
+
+  /** 공동구매 시작일. GB 글에서만 뽑는다. IC 글이거나 모르거나 뽑지 않으면 null (가짜 요약기) */
+  private final LocalDate gbStartDate;
+
+  /** 공동구매 마감일. GB 글에서만 뽑는다. IC 글이거나 모르거나 뽑지 않으면 null (가짜 요약기) */
+  private final LocalDate gbEndDate;
 }

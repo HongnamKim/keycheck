@@ -1,0 +1,202 @@
+.card {
+  flex: none;
+  display: flex;
+  scroll-snap-align: start;
+}
+
+/*
+ * 카드 폭. 데스크톱은 IC 4장·공동구매 3장이 본문에 들어가고, 태블릿·모바일은 다음 카드 끝이 보이게 줄인다.
+ * 100cqi는 섹션(BoardRail .sec)의 안쪽 폭이다. 시안 공식(틀 폭 기준)에서 좌우 여백(태블릿 48px, 모바일 32px)을 뺐다
+ */
+.ic {
+  width: 236px;
+}
+
+.gb {
+  width: 320px;
+}
+
+.link {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  color: inherit;
+  text-decoration: none;
+}
+
+.link:hover {
+  color: inherit;
+}
+
+/* 사진 자리. 사진이 없으면 점 무늬가 보인다 */
+.media {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: 12px;
+  background-color: var(--color-divider);
+  background-image: conic-gradient(from 90deg at 3px 3px, rgba(22, 24, 26, 0.05) 90deg, transparent 0);
+  background-size: 22px 22px;
+}
+
+.ic .media {
+  aspect-ratio: 4 / 5;
+}
+
+.gb .media {
+  aspect-ratio: 3 / 2;
+}
+
+.img {
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.link:hover .img {
+  transform: scale(1.05);
+}
+
+.noImage {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  color: var(--color-muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+/* 사진 위 칩: 분류(위 왼쪽), 공동구매 기간(아래 왼쪽), D-day(아래 오른쪽) */
+.chip {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--color-text);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.date {
+  top: auto;
+  bottom: 10px;
+  background: rgba(22, 24, 26, 0.84);
+  color: #ffffff;
+  font-family: var(--font-code);
+  font-weight: 500;
+}
+
+.ended {
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--color-muted);
+}
+
+.dday {
+  top: auto;
+  left: auto;
+  right: 10px;
+  bottom: 10px;
+  background: var(--color-accent);
+  color: #ffffff;
+  font-family: var(--font-code);
+}
+
+.title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 15px;
+  line-height: 1.38;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.link:hover .title {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* 한국어 요약 첫 줄을 두 줄까지 */
+.sum {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-top: -2px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--color-text-body);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  font-family: var(--font-code);
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+/* 자리 표시의 글 높이(제목 두 줄 + 요약 두 줄 + 메타) */
+.pendingText {
+  height: 112px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .img {
+    transition: none;
+  }
+}
+
+/* 태블릿: IC 3장, 공동구매 2장 + 다음 카드 끝 */
+@media (max-width: 1023px) {
+  .ic {
+    width: calc((100cqi - 68px) / 3);
+  }
+
+  .gb {
+    width: calc((100cqi - 98px) / 2);
+  }
+
+  .meta {
+    word-break: keep-all;
+  }
+
+  /* 손에 든 화면에서 읽히는 크기: 보조 글자 12px, 요약 14px */
+  .chip {
+    font-size: 12px;
+  }
+
+  .sum {
+    font-size: 14px;
+  }
+}
+
+/* 모바일: IC 2장, 공동구매 1장 + 다음 카드 끝 */
+@media (max-width: 599px) {
+  .ic {
+    width: calc((100cqi - 36px) / 2);
+  }
+
+  .gb {
+    width: calc(100cqi - 56px);
+  }
+
+  .link {
+    gap: 6px;
+  }
+
+  .sum {
+    line-height: 1.5;
+  }
+}

@@ -53,6 +53,8 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+    // 배포 서버(UTC)처럼 돌려, 한국 시간 대신 시스템 시간대를 쓰는 실수를 한국 시간 개발 PC에서도 잡는다
+    jvmArgs '-Duser.timezone=UTC'
     // backend/.env에 무엇이 있어도 테스트는 실제 Claude API를 부르지 않는다. 요약 작업은 테스트가 직접 실행한다.
     systemProperty 'keycheck.summarizer', 'fake'
     systemProperty 'keycheck.summary.enabled', 'false'

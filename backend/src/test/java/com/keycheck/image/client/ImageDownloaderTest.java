@@ -179,6 +179,24 @@ class ImageDownloaderTest {
   }
 
   @Test
+  @DisplayName("Content-Encoding: none(geekhack 첨부가 보내는 비표준 값)이어도 원본 바이트를 그대로 받는다")
+  void acceptsContentEncodingNone() throws IOException {
+    handle(
+        "/attach",
+        exchange -> {
+          exchange.getResponseHeaders().add("Content-Encoding", "none");
+          exchange.sendResponseHeaders(200, IMAGE.length);
+          try (OutputStream out = exchange.getResponseBody()) {
+            out.write(IMAGE);
+          }
+        });
+
+    try (ImageDownloader downloader = downloader()) {
+      assertThat(downloader.download(base + "/attach")).isEqualTo(IMAGE);
+    }
+  }
+
+  @Test
   @DisplayName("호스트는 한 번만 풀고 그때 검사한 주소로 연결한다(다시 풀 때 바뀐 주소를 쓰지 않는다)")
   void resolvesOnceAndConnectsToCheckedAddress() throws IOException {
     InetAddress[] first = {serverAddress};

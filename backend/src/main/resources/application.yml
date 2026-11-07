@@ -40,7 +40,8 @@ keycheck:
     # 요약 대기(PENDING) 글을 하나씩 요약하는 작업
     enabled: true
     interval: 5s
-    # true면 가짜 요약기로 만든 요약(summarized_by = 'fake')도 다시 요약한다
+    # true면 가짜 요약기로 만든 요약(summarized_by = 'fake')도 다시 요약한다.
+    # GB 글은 이 값과 상관없이 Claude 요약기면 공동구매 기간을 뽑으려고 다시 요약한다(기간을 뽑아 본 적 없거나 제목이 바뀐 글, 글당 약 1.1센트)
     redo-fake: false
     # true면 세부 분류가 없는 키보드·키캡 요약(Claude 요약 포함)도 다시 요약한다. 실행마다 글당 한 번. 가짜 요약기에서는 무시
     redo-missing-subcategory: false

@@ -23,6 +23,7 @@ import java.sql.Timestamp;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -109,7 +110,9 @@ class SummaryWorkerTest {
             List.of(new SpecItem("배열", "65%")),
             Category.KEYCAP,
             Subcategory.KC_GMK,
-            "claude-opus-5-5");
+            "claude-opus-5-5",
+            null,
+            null);
 
     assertThat(worker(false).summarizeNext()).isTrue();
 
@@ -121,8 +124,14 @@ class SummaryWorkerTest {
     assertThat(saved.getCategory()).isEqualTo(Category.KEYCAP);
     assertThat(saved.getSubcategory()).isEqualTo(Subcategory.KC_GMK);
     assertThat(summarizer.sources)
-        .extracting(PostSource::getBoard, PostSource::getTitle, PostSource::getBodyText)
-        .containsExactly(tuple(Board.IC, "[IC] 글 2000", "본문 2000"));
+        .extracting(
+            PostSource::getBoard,
+            PostSource::getTitle,
+            PostSource::getBodyText,
+            PostSource::getPostedAt)
+        .containsExactly(
+            tuple(
+                Board.IC, "[IC] 글 2000", "본문 2000", Instant.parse("2026-10-13T00:00:00Z")));
   }
 
   @Test
@@ -145,7 +154,7 @@ class SummaryWorkerTest {
     Post post = saveLoaded(2000, p -> p.setSubcategory(Subcategory.KB_75));
     summarizer.result =
         new SummaryResult(
-            List.of("데스크매트예요."), List.of(), Category.OTHER, null, "claude-opus-5-5");
+            List.of("데스크매트예요."), List.of(), Category.OTHER, null, "claude-opus-5-5", null, null);
 
     worker(false).summarizeNext();
 
@@ -219,7 +228,9 @@ class SummaryWorkerTest {
             List.of(),
             Category.KEYBOARD,
             Subcategory.KB_65,
-            "claude-opus-5-5");
+            "claude-opus-5-5",
+            null,
+            null);
 
     SummaryWorker worker = worker(true, true);
     while (worker.summarizeNext()) {
@@ -336,7 +347,7 @@ class SummaryWorkerTest {
     markSummarizedBy(saveLoaded(3000), "claude-opus-5-5");
     summarizer.result =
         new SummaryResult(
-            List.of("다시 쓴 요약"), List.of(), Category.OTHER, null, "claude-opus-5-5");
+            List.of("다시 쓴 요약"), List.of(), Category.OTHER, null, "claude-opus-5-5", null, null);
 
     assertThat(worker(true).summarizeNext()).isTrue();
     assertThat(worker(true).summarizeNext()).isFalse();
@@ -382,7 +393,9 @@ class SummaryWorkerTest {
             List.of(),
             Category.KEYBOARD,
             Subcategory.KB_65,
-            "claude-opus-5-5");
+            "claude-opus-5-5",
+            null,
+            null);
 
     SummaryWorker worker = worker(false, true);
     while (worker.summarizeNext()) {
@@ -420,7 +433,7 @@ class SummaryWorkerTest {
     Post post = saveMissingSubcategory(2000, Category.KEYBOARD);
     summarizer.result =
         new SummaryResult(
-            List.of("다시 쓴 요약"), List.of(), Category.KEYBOARD, null, "claude-opus-5-5");
+            List.of("다시 쓴 요약"), List.of(), Category.KEYBOARD, null, "claude-opus-5-5", null, null);
     SummaryWorker worker = worker(false, true);
 
     assertThat(worker.summarizeNext()).isTrue();
@@ -437,7 +450,7 @@ class SummaryWorkerTest {
     saveMissingSubcategory(2000, Category.KEYCAP);
     summarizer.result =
         new SummaryResult(
-            List.of("다시 쓴 요약"), List.of(), Category.KEYBOARD, null, "claude-opus-5-5");
+            List.of("다시 쓴 요약"), List.of(), Category.KEYBOARD, null, "claude-opus-5-5", null, null);
     SummaryWorker worker = worker(false, true);
 
     assertThat(worker.summarizeNext()).isTrue();
@@ -462,6 +475,344 @@ class SummaryWorkerTest {
     assertThat(saved.getSummaryStatus()).isEqualTo(SummaryStatus.DONE);
     assertThat(saved.getViews()).isEqualTo(999);
     assertThat(saved.isHidden()).isTrue();
+  }
+
+  /** 본문까지 읽은 GB 글 */
+  private Post saveLoadedGb(long topicId) {
+    return saveLoaded(
+        topicId,
+        post -> {
+          post.setBoard(Board.GB);
+          post.setTitle("[GB] 글 " + topicId);
+        });
+  }
+
+  /** Claude로 요약했지만 GB로 기간을 뽑아 본 적은 없는 GB 글(기간을 뽑기 전의 요약, IC에서 옮겨진 글) */
+  private Post saveSummarizedGb(long topicId) {
+    Post post = saveLoadedGb(topicId);
+    markSummarizedBy(post, "claude-opus-5-5");
+    jdbcTemplate.update(
+        "update post set summary_lines = '[\"기존 요약\"]'::jsonb where id = ?", post.getId());
+    return post;
+  }
+
+  /** '옛 제목'으로 요약해 기간(10/30~11/13)을 뽑았고, 그 뒤 수집이 제목을 '새 제목'으로 바꾼 GB 글 */
+  private Post saveRenamedGb(long topicId) {
+    Post post = saveSummarizedGb(topicId);
+    jdbcTemplate.update(
+        "update post set gb_start_date = '2026-10-30', gb_end_date = '2026-11-13',"
+            + " gb_dates_extracted = true, summarized_title = '옛 제목', title = '새 제목'"
+            + " where id = ?",
+        post.getId());
+    return post;
+  }
+
+  /** Claude가 IC 글로 요약한 뒤(요약기에 넘긴 제목이 지금 제목과 같다) 운영자가 GB로 옮긴 글 */
+  private Post saveMovedFromIc(long topicId) {
+    Post post = saveLoaded(topicId);
+    markSummarizedBy(post, "claude-opus-5-5");
+    jdbcTemplate.update(
+        "update post set summary_lines = '[\"기존 요약\"]'::jsonb, summarized_title = title,"
+            + " board = 'GB' where id = ?",
+        post.getId());
+    return post;
+  }
+
+  /** Claude가 요약한 결과 */
+  private static SummaryResult claudeResult(LocalDate gbStartDate, LocalDate gbEndDate) {
+    return new SummaryResult(
+        List.of("Claude 요약"),
+        List.of(),
+        Category.KEYBOARD,
+        Subcategory.KB_65,
+        "claude-opus-5-5",
+        gbStartDate,
+        gbEndDate);
+  }
+
+  @Test
+  @DisplayName("GB 글을 요약하면 기간을 저장하고, 기간을 뽑아 본 글로 요약기에 넘긴 제목과 함께 표시한다")
+  void savesGbPeriodAndMarks() {
+    Post post = saveLoadedGb(2000);
+    summarizer.result = claudeResult(LocalDate.of(2026, 10, 30), LocalDate.of(2026, 11, 13));
+
+    assertThat(worker(false).summarizeNext()).isTrue();
+
+    Post saved = reload(post);
+    assertThat(saved.getSummaryStatus()).isEqualTo(SummaryStatus.DONE);
+    assertThat(saved.getGbStartDate()).isEqualTo(LocalDate.of(2026, 10, 30));
+    assertThat(saved.getGbEndDate()).isEqualTo(LocalDate.of(2026, 11, 13));
+    assertThat(saved.isGbDatesExtracted()).isTrue();
+    assertThat(saved.getSummarizedTitle()).isEqualTo("[GB] 글 2000");
+  }
+
+  @Test
+  @DisplayName("IC 글을 요약하면 요약기에 넘긴 제목만 남기고 기간을 뽑아 본 글로 표시하지 않는다")
+  void icSummaryDoesNotMarkGb() {
+    Post post = saveLoaded(2000);
+    summarizer.result = claudeResult(null, null);
+
+    assertThat(worker(false).summarizeNext()).isTrue();
+
+    Post saved = reload(post);
+    assertThat(saved.isGbDatesExtracted()).isFalse();
+    assertThat(saved.getSummarizedTitle()).isEqualTo("[IC] 글 2000");
+  }
+
+  @Test
+  @DisplayName("GB로 기간을 뽑아 본 적 없는 요약 완료 GB 글은 요약 대기 글 다음에 다시 요약하고, IC 글은 다시 요약하지 않는다")
+  void redoesGbNeverExtracted() {
+    Post gb = saveSummarizedGb(2000);
+    markSummarizedBy(saveLoaded(3000), "claude-opus-5-5");
+    saveLoaded(1000);
+    summarizer.result = claudeResult(LocalDate.of(2026, 10, 30), LocalDate.of(2026, 11, 13));
+
+    SummaryWorker worker = worker(false);
+    // 같은 글을 끝없이 다시 고르면 테스트가 멈추지 않고 실패하도록 횟수를 묶는다
+    for (int i = 0; i < 5 && worker.summarizeNext(); i++) {
+      // 대상이 없을 때까지
+    }
+    assertThat(worker.summarizeNext()).isFalse();
+
+    assertThat(summarizer.titles()).containsExactly("[IC] 글 1000", "[GB] 글 2000");
+    Post saved = reload(gb);
+    assertThat(saved.getSummaryLines()).containsExactly("Claude 요약");
+    assertThat(saved.getGbStartDate()).isEqualTo(LocalDate.of(2026, 10, 30));
+    assertThat(saved.getGbEndDate()).isEqualTo(LocalDate.of(2026, 11, 13));
+    assertThat(saved.isGbDatesExtracted()).isTrue();
+  }
+
+  @Test
+  @DisplayName("요약한 뒤 제목이 바뀐 GB 글은 새 제목으로 다시 요약하고, 그 제목으로는 한 번만 요약한다")
+  void redoesGbWhenTitleChanged() {
+    Post post = saveRenamedGb(2000);
+    summarizer.result = claudeResult(LocalDate.of(2026, 10, 30), LocalDate.of(2026, 12, 10));
+    SummaryWorker worker = worker(false);
+
+    assertThat(worker.summarizeNext()).isTrue();
+
+    assertThat(summarizer.titles()).containsExactly("새 제목");
+    Post saved = reload(post);
+    assertThat(saved.getSummarizedTitle()).isEqualTo("새 제목");
+    assertThat(saved.getGbEndDate()).isEqualTo(LocalDate.of(2026, 12, 10));
+    assertThat(worker.summarizeNext()).isFalse();
+  }
+
+  @Test
+  @DisplayName("제목이 바뀐 GB 글을 다시 요약해 기간이 없다고 나오면(취소 등) 저장해 둔 기간을 지운다")
+  void redoWithoutPeriodClearsSavedPeriod() {
+    Post post = saveRenamedGb(2000);
+    summarizer.result = claudeResult(null, null);
+
+    assertThat(worker(false).summarizeNext()).isTrue();
+
+    Post saved = reload(post);
+    assertThat(saved.getSummaryLines()).containsExactly("Claude 요약");
+    assertThat(saved.getGbStartDate()).isNull();
+    assertThat(saved.getGbEndDate()).isNull();
+    assertThat(saved.isGbDatesExtracted()).isTrue();
+    assertThat(saved.getSummarizedTitle()).isEqualTo("새 제목");
+  }
+
+  @Test
+  @DisplayName("IC 글은 요약한 뒤 제목이 바뀌어도 다시 요약하지 않는다")
+  void icTitleChangeIsNotRedone() {
+    Post post = saveLoaded(2000);
+    markSummarizedBy(post, "claude-opus-5-5");
+    jdbcTemplate.update(
+        "update post set summarized_title = '옛 제목', title = '새 제목' where id = ?", post.getId());
+
+    assertThat(worker(false).summarizeNext()).isFalse();
+  }
+
+  @Test
+  @DisplayName("가짜 요약기는 GB 글을 기간을 뽑아 본 글로 표시하지 않고, GB 글을 다시 요약하지도 않는다")
+  void fakeSummarizerSkipsGbRedo() {
+    Post pending = saveLoadedGb(4000);
+    saveSummarizedGb(3000);
+    saveRenamedGb(2000);
+    SummaryWorker worker =
+        new SummaryWorker(
+            postRepository,
+            new FakeSummarizer(),
+            new SummaryProperties(false, false),
+            new CollectProperties(0),
+            clock);
+
+    assertThat(worker.summarizeNext()).isTrue();
+    assertThat(worker.summarizeNext()).isFalse();
+
+    Post saved = reload(pending);
+    assertThat(saved.getSummarizedBy()).isEqualTo(FakeSummarizer.ID);
+    assertThat(saved.isGbDatesExtracted()).isFalse();
+  }
+
+  @Test
+  @DisplayName("가짜 요약기에서 redo-fake가 켜져 있으면 가짜 요약한 GB 글은 GB 다시 요약으로 보지 않고 한 실행에서 한 번만 다시 요약한다")
+  void fakeSummarizerRedoesFakeGbOnce() {
+    Post post = saveLoadedGb(2000);
+    markSummarizedBy(post, FakeSummarizer.ID);
+    SummaryWorker worker =
+        new SummaryWorker(
+            postRepository,
+            new FakeSummarizer(),
+            new SummaryProperties(true, false),
+            new CollectProperties(0),
+            clock);
+
+    assertThat(worker.summarizeNext()).isTrue();
+    assertThat(worker.summarizeNext()).isFalse();
+
+    assertThat(reload(post).isGbDatesExtracted()).isFalse();
+  }
+
+  @Test
+  @DisplayName("다시 요약하는 동안 제목이 또 바뀌면 같은 실행에서 바뀐 제목으로 한 번 더 요약한다")
+  void titleChangedDuringSummaryIsRedoneAgain() {
+    Post post = saveRenamedGb(2000);
+    summarizer.result = claudeResult(null, null);
+    summarizer.onSummarize =
+        () -> {
+          if (summarizer.sources.size() == 1) {
+            jdbcTemplate.update("update post set title = '더 새 제목' where id = ?", post.getId());
+          }
+        };
+    SummaryWorker worker = worker(false);
+
+    assertThat(worker.summarizeNext()).isTrue();
+    assertThat(reload(post).getSummarizedTitle()).isEqualTo("새 제목");
+
+    assertThat(worker.summarizeNext()).isTrue();
+    assertThat(worker.summarizeNext()).isFalse();
+
+    assertThat(summarizer.titles()).containsExactly("새 제목", "더 새 제목");
+    assertThat(reload(post).getSummarizedTitle()).isEqualTo("더 새 제목");
+  }
+
+  @Test
+  @DisplayName("GB 글을 다시 요약하다 글 때문에 실패하면 요약은 두고 기간만 비우며, 재시작해도 그 제목으로는 다시 요약하지 않는다")
+  void failedGbRedoKeepsSummary() {
+    Post post = saveRenamedGb(2000);
+    Post pending = saveLoadedGb(3000);
+    summarizer.fail = true;
+    SummaryWorker worker = worker(false);
+
+    assertThat(worker.summarizeNext()).isTrue();
+    assertThat(worker.summarizeNext()).isTrue();
+
+    assertThat(summarizer.titles()).containsExactly("[GB] 글 3000", "새 제목");
+    assertThat(reload(pending).getSummaryStatus()).isEqualTo(SummaryStatus.FAILED);
+    Post saved = reload(post);
+    assertThat(saved.getSummaryStatus()).isEqualTo(SummaryStatus.DONE);
+    assertThat(saved.getSummaryLines()).containsExactly("기존 요약");
+    assertThat(saved.getGbStartDate()).isNull();
+    assertThat(saved.getGbEndDate()).isNull();
+    assertThat(saved.isGbDatesExtracted()).isTrue();
+    assertThat(saved.getSummarizedTitle()).isEqualTo("새 제목");
+    assertThat(worker(false).summarizeNext()).isFalse();
+  }
+
+  @Test
+  @DisplayName("기간을 뽑아 본 적 없는 GB 글을 다시 요약하다 글 때문에 실패해도 요약은 두고, 같은 실행에서도 재시작해도 다시 요약하지 않는다")
+  void failedNeverExtractedGbRedoIsNotRetried() {
+    Post post = saveSummarizedGb(2000);
+    summarizer.fail = true;
+    SummaryWorker worker = worker(false);
+
+    assertThat(worker.summarizeNext()).isTrue();
+
+    Post saved = reload(post);
+    assertThat(saved.getSummaryStatus()).isEqualTo(SummaryStatus.DONE);
+    assertThat(saved.getSummaryLines()).containsExactly("기존 요약");
+    assertThat(saved.isGbDatesExtracted()).isTrue();
+    assertThat(saved.getSummarizedTitle()).isEqualTo("[GB] 글 2000");
+    assertThat(worker.summarizeNext()).isFalse();
+    assertThat(worker(false).summarizeNext()).isFalse();
+    assertThat(summarizer.sources).hasSize(1);
+  }
+
+  @Test
+  @DisplayName("IC로 요약한 뒤 GB로 옮겨진 글은 제목이 그대로여도 다시 요약해 기간을 뽑는다")
+  void redoesGbMovedFromIc() {
+    Post post = saveMovedFromIc(2000);
+    summarizer.result = claudeResult(LocalDate.of(2026, 10, 30), LocalDate.of(2026, 11, 13));
+    SummaryWorker worker = worker(false);
+
+    assertThat(worker.summarizeNext()).isTrue();
+    assertThat(worker.summarizeNext()).isFalse();
+
+    assertThat(summarizer.sources).extracting(PostSource::getBoard).containsExactly(Board.GB);
+    Post saved = reload(post);
+    assertThat(saved.getSummaryLines()).containsExactly("Claude 요약");
+    assertThat(saved.getGbEndDate()).isEqualTo(LocalDate.of(2026, 11, 13));
+    assertThat(saved.isGbDatesExtracted()).isTrue();
+  }
+
+  @Test
+  @DisplayName("IC로 요약한 뒤 GB로 옮겨진 글을 다시 요약하다 글 때문에 실패해도 요약은 두고, 재시작해도 다시 요약하지 않는다")
+  void failedGbRedoMovedFromIcKeepsSummary() {
+    Post post = saveMovedFromIc(2000);
+    summarizer.fail = true;
+
+    assertThat(worker(false).summarizeNext()).isTrue();
+
+    Post saved = reload(post);
+    assertThat(saved.getSummaryStatus()).isEqualTo(SummaryStatus.DONE);
+    assertThat(saved.getSummaryLines()).containsExactly("기존 요약");
+    assertThat(saved.isGbDatesExtracted()).isTrue();
+    assertThat(worker(false).summarizeNext()).isFalse();
+    assertThat(summarizer.sources).hasSize(1);
+  }
+
+  @Test
+  @DisplayName("세부 분류도 없는 GB 글의 다시 요약이 글 때문에 실패하면, 같은 실행에서 세부 분류를 채우려고 다시 고르지 않아 요약이 남는다")
+  void failedGbRedoIsNotRetriedAsMissingSubcategory() {
+    Post post = saveSummarizedGb(2000);
+    summarizer.fail = true;
+    SummaryWorker worker = worker(false, true);
+
+    assertThat(worker.summarizeNext()).isTrue();
+    assertThat(worker.summarizeNext()).isFalse();
+
+    assertThat(summarizer.sources).hasSize(1);
+    Post saved = reload(post);
+    assertThat(saved.getSummaryStatus()).isEqualTo(SummaryStatus.DONE);
+    assertThat(saved.getSummaryLines()).containsExactly("기존 요약");
+  }
+
+  @Test
+  @DisplayName("세부 분류를 채우려고 다시 요약하다 글 때문에 실패하면 지금처럼 FAILED로 바꾼다")
+  void failedOtherRedoStillFails() {
+    Post post = saveMissingSubcategory(2000, Category.KEYBOARD);
+    summarizer.fail = true;
+
+    assertThat(worker(false, true).summarizeNext()).isTrue();
+
+    assertThat(reload(post).getSummaryStatus()).isEqualTo(SummaryStatus.FAILED);
+  }
+
+  @Test
+  @DisplayName("GB 글을 다시 요약하다 API를 쓸 수 없으면 기간과 표시를 그대로 두고 잠시 쉬었다가 다시 시도한다")
+  void apiUnavailableDuringGbRedoChangesNothing() {
+    Post post = saveRenamedGb(2000);
+    summarizer.error = new AnthropicIoException("연결 실패");
+    SummaryWorker worker = worker(false);
+
+    assertThat(worker.summarizeNext()).isTrue();
+
+    Post saved = reload(post);
+    assertThat(saved.getSummaryStatus()).isEqualTo(SummaryStatus.DONE);
+    assertThat(saved.getSummaryLines()).containsExactly("기존 요약");
+    assertThat(saved.getGbStartDate()).isEqualTo(LocalDate.of(2026, 10, 30));
+    assertThat(saved.getGbEndDate()).isEqualTo(LocalDate.of(2026, 11, 13));
+    assertThat(saved.isGbDatesExtracted()).isTrue();
+    assertThat(saved.getSummarizedTitle()).isEqualTo("옛 제목");
+    assertThat(worker.summarizeNext()).isFalse();
+
+    summarizer.error = null;
+    clock.advance(SummaryWorker.ERROR_PAUSE);
+    assertThat(worker.summarizeNext()).isTrue();
+    assertThat(summarizer.titles()).containsExactly("새 제목", "새 제목");
   }
 
   /** 받은 입력을 기록한다. result가 없으면 가짜 요약기 결과를 돌려준다. */
