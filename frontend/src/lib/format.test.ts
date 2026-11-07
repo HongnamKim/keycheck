@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   boardLabel,
   categoryLabel,
+  displayTitle,
   formatAgo,
   formatCheckedAt,
   formatDateline,
@@ -165,6 +166,48 @@ describe("photoChipLabel", () => {
 
   it("미분류면 칩을 그리지 않는다", () => {
     expect(photoChipLabel("UNCLASSIFIED", null)).toBeNull();
+  });
+});
+
+describe("displayTitle", () => {
+  it("상품 이름이 있으면 그것을 앞뒤 공백 없이", () => {
+    expect(displayTitle("SWG Nightshift", "[GB] SWG Nightshift | Oct 30th -> Nov 13th")).toBe("SWG Nightshift");
+    expect(displayTitle("  SWG Nightshift ", "[GB] X")).toBe("SWG Nightshift");
+  });
+
+  it("상품 이름이 없거나 비면 게시판 표시를 떼고 첫 | 앞까지만", () => {
+    expect(displayTitle(null, "[GB] SWG Nightshift | Oct 30th -> Nov 13th")).toBe("SWG Nightshift");
+    expect(displayTitle(undefined, "[ic] Lune | 65% | Updated")).toBe("Lune");
+    expect(displayTitle("  ", "[GB] X")).toBe("X");
+    expect(displayTitle(null, "[GB] SWG Nightshift  | Oct 30th")).toBe("SWG Nightshift");
+  });
+
+  it("대괄호·소괄호 게시판 표시는 대소문자와 뒤 공백 없이도 뗀다", () => {
+    expect(displayTitle(null, "(GB) KŌBŌ ISSHI — Exploring Stone")).toBe("KŌBŌ ISSHI — Exploring Stone");
+    expect(displayTitle(null, "[GB]Space66% Spaceforge")).toBe("Space66% Spaceforge");
+    expect(displayTitle(null, "(ic) Mode Sonnet")).toBe("Mode Sonnet");
+    expect(displayTitle(null, "[Interest Check] GMK Botanical")).toBe("GMK Botanical");
+    expect(displayTitle(null, "[group buy] KAT Milkshake")).toBe("KAT Milkshake");
+  });
+
+  it("앞에 게시판 표시가 여럿이면 모두 뗀다", () => {
+    expect(displayTitle(null, "[GB][IC] Foo")).toBe("Foo");
+    expect(displayTitle(null, "[GB] (IC) Foo")).toBe("Foo");
+  });
+
+  it("하이픈과 공백 없는 세로줄은 이름의 일부일 수 있어 자르지 않는다", () => {
+    expect(displayTitle(null, "[IC] SA Paperwork - 40% Monokit")).toBe("SA Paperwork - 40% Monokit");
+    expect(displayTitle(null, "[IC] A|B Board")).toBe("A|B Board");
+  });
+
+  it("앞이 아닌 괄호와 게시판 표시가 아닌 괄호는 그대로", () => {
+    expect(displayTitle(null, "GMK Olivia [GB]")).toBe("GMK Olivia [GB]");
+    expect(displayTitle(null, "[Extras] GMK Olivia")).toBe("[Extras] GMK Olivia");
+  });
+
+  it("다듬은 결과가 비면 원래 제목", () => {
+    expect(displayTitle(null, "[GB] | 날짜만")).toBe("[GB] | 날짜만");
+    expect(displayTitle(null, "[IC]")).toBe("[IC]");
   });
 });
 

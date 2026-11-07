@@ -45,6 +45,9 @@ keycheck:
     redo-fake: false
     # true면 세부 분류가 없는 키보드·키캡 요약(Claude 요약 포함)도 다시 요약한다. 실행마다 글당 한 번. 가짜 요약기에서는 무시
     redo-missing-subcategory: false
+    # 켜면 이름이 없는 요약 완료 글을 다시 요약한다. 글당 약 1.1센트, 켜기 전 확인.
+    # 실행마다 글당 한 번(AI가 이름을 모르는 글과 다시 요약에 실패한 글은 재시작할 때마다 다시 요약한다. 실패해도 요약은 그대로). 가짜 요약기에서는 무시
+    redo-missing-product-name: false
   crawl:
     # 켜면 기동 직후와 이후 interval마다 실제 geekhack에 요청한다
     enabled: ${CRAWL_ENABLED:false}

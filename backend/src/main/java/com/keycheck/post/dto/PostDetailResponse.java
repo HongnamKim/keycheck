@@ -20,6 +20,10 @@ import lombok.RequiredArgsConstructor;
 public class PostDetailResponse {
   private final Long id;
   private final String title;
+
+  /** 상품·프로젝트 이름(예: "SWG Nightshift"). 요약기가 뽑는다. 모르거나 아직 뽑지 않았으면 null. */
+  private final String productName;
+
   private final String author;
 
   /** 글을 읽어 온 geekhack 게시판 (IC, GB) */
@@ -70,6 +74,7 @@ public class PostDetailResponse {
     return new PostDetailResponse(
         post.getId(),
         post.getTitle(),
+        post.getProductName(),
         post.getAuthor(),
         post.getBoard(),
         post.getCategory(),

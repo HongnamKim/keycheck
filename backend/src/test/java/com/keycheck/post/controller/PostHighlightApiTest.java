@@ -270,6 +270,33 @@ class PostHighlightApiTest {
   }
 
   @Test
+  @DisplayName("마감 띠는 오늘부터 30일 뒤까지(양끝 포함) 마감하는 공동구매만 쓰고, 그보다 먼 마감만 있으면 사진 칸으로 바꾼다")
+  void deadlineWithin30Days() throws Exception {
+    // 큰 칸(7일 공동구매 조회 1위). 마감이 없어 마감 띠 후보가 아니다
+    save(Board.GB, 1, 3, 900, 0);
+    Post post = save(Board.GB, 2, 3, 100, 0);
+    setGbEndDate(post, TODAY.plusDays(30));
+
+    mockMvc
+        .perform(get(URL))
+        .andExpect(jsonPath("$.slots[*].slot", contains("FEATURE", "DEADLINE")))
+        .andExpect(jsonPath("$.slots[1].post.title").value("글 2"))
+        .andExpect(jsonPath("$.slots[1].deadline").value(true))
+        .andExpect(jsonPath("$.slots[1].post.gbEndDate").value("2026-12-13"));
+
+    setGbEndDate(post, TODAY.plusDays(31));
+
+    mockMvc
+        .perform(get(URL))
+        .andExpect(jsonPath("$.slots[*].slot", contains("FEATURE", "DEADLINE")))
+        // 14일 공동구매 조회 1위는 큰 칸 글이므로 2위를 사진 칸으로 쓴다
+        .andExpect(jsonPath("$.slots[1].post.title").value("글 2"))
+        .andExpect(jsonPath("$.slots[1].deadline").value(false))
+        .andExpect(jsonPath("$.slots[1].windowDays").value(14))
+        .andExpect(jsonPath("$.slots[1].rank").value(2));
+  }
+
+  @Test
   @DisplayName("마감 띠는 한국 날짜로 오늘 마감까지 넣고, 한국 자정(UTC 15:00)이 지나면 빼고 today도 다음 날이 된다")
   void deadlineIncludesToday() throws Exception {
     clock.set(Instant.parse("2026-11-13T14:59:59Z"));

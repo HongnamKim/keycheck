@@ -58,6 +58,7 @@ public class PostController {
               + " KB_40, KB_ERGO, KB_ETC), KEYCAP은 제조사(KC_GMK, KC_SP, KC_MW, KC_KKB, KC_PBTFANS, KC_ETC)."
               + " 기타·미분류 글이나 아직 정하지 않았으면 null."
               + " 공동구매 글은 요약기가 뽑은 기간(gbStartDate·gbEndDate, YYYY-MM-DD, 모르면 null)을 준다."
+              + " productName: 요약기가 뽑은 상품·프로젝트 이름(예: SWG Nightshift). 모르거나 아직 뽑지 않았으면 null."
               + DATES_DESCRIPTION)
   @ApiResponse(responseCode = "200", description = "성공")
   @ApiResponse(
@@ -110,7 +111,7 @@ public class PostController {
               + " 최근 N일은 작성일(postedAt)이 지금에서 N일 전 이후인 글이다."
               + " slots는 이 순서로 고르고, 앞 칸에 들어간 글은 뒤 칸에서 건너뛴다."
               + " FEATURE: 최근 7일 공동구매 조회수 1위. TALL: 최근 14일 IC 조회수 1위."
-              + " DEADLINE: today나 그 뒤에 마감하는 공동구매 중 마감이 가장 가까운 글(deadline=true)."
+              + " DEADLINE: today부터 30일 뒤까지(양끝 포함) 마감하는 공동구매 중 마감이 가장 가까운 글(deadline=true)."
               + " 없으면 최근 14일 공동구매 조회수 1위를 사진 칸으로 준다(deadline=false)."
               + " IC_REPLIES: 최근 14일 IC 댓글 1위. IC_VIEWS: 최근 14일 IC 조회수 1위."
               + " GB_VIEWS: 최근 30일 공동구매 조회수 1위."

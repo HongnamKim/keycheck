@@ -19,6 +19,9 @@ public class PostCardResponse {
   private final Long id;
   private final String title;
 
+  /** 상품·프로젝트 이름(예: "SWG Nightshift"). 요약기가 뽑는다. 모르거나 아직 뽑지 않았으면 null이고 화면은 제목을 다듬어 쓴다. */
+  private final String productName;
+
   /** 글을 읽어 온 geekhack 게시판 (IC, GB) */
   private final Board board;
 
@@ -71,6 +74,7 @@ public class PostCardResponse {
     return new PostCardResponse(
         post.getId(),
         post.getTitle(),
+        post.getProductName(),
         post.getBoard(),
         post.getCategory(),
         post.getSubcategory(),

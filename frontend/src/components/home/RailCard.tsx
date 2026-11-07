@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { BoardFilter, PostCard } from "@/lib/api";
-import { formatShortPostedDate, formatViews, photoChipLabel } from "@/lib/format";
+import { displayTitle, formatShortPostedDate, formatViews, photoChipLabel } from "@/lib/format";
 import { gbPeriodChip } from "@/lib/gbPeriod";
 import { imageSources } from "@/lib/image";
 import { postHref } from "@/lib/query";
@@ -54,7 +54,9 @@ export default function RailCard({ post, board, today }: { post: PostCard; board
           )}
           {period?.dday && <span className={`${styles.chip} ${styles.dday}`}>{period.dday}</span>}
         </span>
-        <span className={styles.title}>{post.title}</span>
+        <span className={styles.title} title={post.title}>
+          {displayTitle(post.productName, post.title)}
+        </span>
         {summary && <span className={styles.sum}>{summary}</span>}
         <Segs
           className={styles.meta}

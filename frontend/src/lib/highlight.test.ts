@@ -11,6 +11,7 @@ function card(board: Board, images: Partial<PostCard> = {}): PostCard {
     id: 5,
     board,
     title: "글",
+    productName: null,
     category: "KEYBOARD",
     subcategory: null,
     representativeImageUrl: ORIGINAL,

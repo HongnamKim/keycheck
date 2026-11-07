@@ -20,6 +20,13 @@ public class FakeSummarizer implements Summarizer {
     String body = source.getBodyText();
     String preview = body.substring(0, Math.min(body.length(), BODY_PREVIEW_LENGTH));
     return new SummaryResult(
-        List.of("[가짜 요약] " + source.getTitle(), preview), List.of(), null, null, ID, null, null);
+        List.of("[가짜 요약] " + source.getTitle(), preview),
+        List.of(),
+        null,
+        null,
+        ID,
+        null,
+        null,
+        null);
   }
 }

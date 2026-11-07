@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { HighlightSlot, PostCard } from "@/lib/api";
-import { formatMonthDay, formatShortDate, formatViews, photoChipLabel } from "@/lib/format";
+import { displayTitle, formatMonthDay, formatShortDate, formatViews, photoChipLabel } from "@/lib/format";
 import { gbPeriodChip } from "@/lib/gbPeriod";
 import { bentoImage, slotKicker } from "@/lib/highlight";
 import { postHref } from "@/lib/query";
@@ -129,7 +129,9 @@ function PhotoCell({
       <Badges post={post} withTag={feature || slot.slot === "TALL" || slot.slot === "DEADLINE"} />
       <span className={styles.body}>
         <Segs className={styles.kicker} items={slotKicker(slot)} />
-        <span className={styles.title}>{post.title}</span>
+        <span className={styles.title} title={post.title}>
+          {displayTitle(post.productName, post.title)}
+        </span>
         {feature && !compact ? (
           <>
             {summary && <span className={styles.sum}>{summary}</span>}
@@ -200,7 +202,9 @@ function DeadlineCell({
       <Badges post={post} withTag onAccent />
       <span className={styles.dropText}>
         <Segs className={styles.kicker} items={slotKicker(slot)} />
-        <span className={styles.dropTitle}>{post.title}</span>
+        <span className={styles.dropTitle} title={post.title}>
+          {displayTitle(post.productName, post.title)}
+        </span>
         <Segs
           className={styles.meta}
           items={[period && <PeriodRange range={period.range} />, views(post), replies(post)]}

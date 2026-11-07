@@ -16,6 +16,7 @@ function card(id: number): PostCard {
     id,
     board: "IC",
     title: `글 ${id}`,
+    productName: null,
     category: "KEYBOARD",
     subcategory: null,
     representativeImageUrl: null,

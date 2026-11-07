@@ -15,4 +15,10 @@ public class SummaryProperties {
    * true면 세부 분류가 없는 키보드·키캡 요약(Claude 요약 포함)도 다시 요약한다. 한 번 실행하는 동안 글마다 한 번만 다시 요약한다.
    */
   private final boolean redoMissingSubcategory;
+
+  /**
+   * true면 상품 이름이 없는 요약 완료 글(Claude 요약 포함)도 다시 요약한다. 한 번 실행하는 동안 글마다 한 번만 다시 요약한다. 글당 약
+   * 1.1센트이므로 켜기 전에 확인한다.
+   */
+  private final boolean redoMissingProductName;
 }

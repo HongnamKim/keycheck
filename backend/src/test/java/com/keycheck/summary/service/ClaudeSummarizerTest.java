@@ -91,6 +91,16 @@ class ClaudeSummarizerTest {
         + "}";
   }
 
+  /** 상품 이름 키를 더한 응답 본문. null이면 JSON null로 넣는다. */
+  private static String productJson(String productName) {
+    return "{\"category\": \"KEYCAP\", \"subcategory\": \"KC_GMK\","
+        + " \"summaryLines\": [\"GMK 키캡이에요.\"], \"specs\": [],"
+        + " \"gbStartDate\": null, \"gbEndDate\": null,"
+        + " \"productName\": "
+        + JsonMapper.shared().writeValueAsString(productName)
+        + "}";
+  }
+
   @Test
   @DisplayName("요청에 모델·max_tokens·effort·JSON 스키마를 넣고 thinking·샘플링 파라미터·prefill은 넣지 않는다")
   void buildsParams() {
@@ -358,6 +368,80 @@ class ClaudeSummarizerTest {
         .contains("제목을 따른다", "연도")
         // 연도 없는 마감일은 작성일 뒤로(해 넘김), 새 마감일 없는 연장은 옛 마감일 대신 null
         .contains("그 뒤인 가장 가까운 날짜", "연장", "옛 마감일을 쓰지 않는다");
+  }
+
+  @Test
+  @DisplayName("응답의 상품 이름을 앞뒤 공백을 지워 쓰고, IC·GB 글 모두 쓴다")
+  void mapsProductName() {
+    server.responseBody = response("end_turn", productJson("SWG Nightshift"));
+
+    assertThat(summarizer(true).summarize(GB_SOURCE).getProductName())
+        .isEqualTo("SWG Nightshift");
+
+    server.responseBody = response("end_turn", productJson("  GMK CYL nuSignal \n"));
+
+    assertThat(summarizer(true).summarize(SOURCE).getProductName())
+        .isEqualTo("GMK CYL nuSignal");
+  }
+
+  @Test
+  @DisplayName("상품 이름이 null이거나 비었거나 공백뿐이거나 키가 없으면 null")
+  void blankProductNameIsNull() {
+    for (String blank : new String[] {null, "", "   ", "\n\t"}) {
+      server.responseBody = response("end_turn", productJson(blank));
+
+      assertThat(summarizer(true).summarize(SOURCE).getProductName()).isNull();
+    }
+
+    server.responseBody = response("end_turn", SUMMARY_JSON);
+
+    assertThat(summarizer(true).summarize(SOURCE).getProductName()).isNull();
+  }
+
+  @Test
+  @DisplayName("상품 이름이 앞뒤 공백을 지우고 80자를 넘으면 버리고(null) 요약은 그대로 쓰며, 80자면 그대로 쓴다")
+  void tooLongProductNameIsNull() {
+    server.responseBody = response("end_turn", productJson("A".repeat(81)));
+
+    SummaryResult tooLong = summarizer(true).summarize(SOURCE);
+
+    assertThat(tooLong.getProductName()).isNull();
+    assertThat(tooLong.getLines()).containsExactly("GMK 키캡이에요.");
+    assertThat(tooLong.getCategory()).isEqualTo(Category.KEYCAP);
+
+    server.responseBody = response("end_turn", productJson(" " + "A".repeat(80) + " "));
+
+    assertThat(summarizer(true).summarize(SOURCE).getProductName()).isEqualTo("A".repeat(80));
+  }
+
+  @Test
+  @DisplayName("응답 형식은 상품 이름을 문자열 또는 null로 받고 필수로 둔다")
+  void schemaRequiresProductName() {
+    server.responseBody = response("end_turn", SUMMARY_JSON);
+
+    summarizer(true).summarize(SOURCE);
+
+    JsonNode schema =
+        JsonMapper.shared()
+            .readTree(server.requestBody)
+            .get("output_config")
+            .get("format")
+            .get("schema");
+    JsonNode anyOf = schema.get("properties").get("productName").get("anyOf");
+    assertThat(anyOf).hasSize(2);
+    assertThat(anyOf.get(0).get("type").asString()).isEqualTo("string");
+    assertThat(anyOf.get(1).get("type").asString()).isEqualTo("null");
+    assertThat(schema.get("required")).extracting(JsonNode::asString).contains("productName");
+  }
+
+  @Test
+  @DisplayName("지시문은 상품 이름을 뽑는 규칙(원문 표기, 게시판 표시·날짜·진행 상태·홍보 문구 빼기, 60자, 대표 이름 하나, 모르면 null)을 설명한다")
+  void systemPromptDescribesProductName() {
+    assertThat(ClaudeSummarizer.SYSTEM_PROMPT)
+        .contains("productName", "SWG Nightshift", "Class 60 V2", "GMK CYL nuSignal")
+        .contains("원문 표기", "[IC]", "[GB]", "날짜", "Live", "Extended", "Cancelled", "Round 3")
+        .contains("홍보 문구", "60자", "대표 이름 하나")
+        .contains("이름을 알 수 없으면 null", "번역하지 않는다");
   }
 
   @Test

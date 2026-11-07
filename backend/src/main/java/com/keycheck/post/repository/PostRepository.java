@@ -141,17 +141,20 @@ public interface PostRepository extends JpaRepository<Post, Long> {
       long sinceTopicId, Board board, Instant postedFrom, Limit limit);
 
   /**
-   * 하이라이트 후보(findHighlightsByViews와 같다) 중 today나 그 뒤에 마감하는 공동구매 글을 마감이 가까운 순(같으면 조회수 내림차순, 글
-   * 번호 내림차순)으로. 작성일은 묻지 않는다.
+   * 하이라이트 후보(findHighlightsByViews와 같다) 중 today부터 until까지(양끝 포함) 마감하는 공동구매 글을 마감이 가까운 순(같으면
+   * 조회수 내림차순, 글 번호 내림차순)으로. 작성일은 묻지 않는다.
    *
    * @param today 한국 날짜
+   * @param until 이 날짜까지 마감하는 글만 (먼 마감 제외)
    */
   @Query(
       "select p from Post p where p.hidden = false and p.topicId >= :sinceTopicId"
           + " and p.detailFetchedAt is not null and p.representativeImageId is not null"
-          + " and p.board = com.keycheck.post.domain.Board.GB and p.gbEndDate >= :today"
+          + " and p.board = com.keycheck.post.domain.Board.GB"
+          + " and p.gbEndDate >= :today and p.gbEndDate <= :until"
           + " order by p.gbEndDate asc, p.views desc, p.topicId desc")
-  List<Post> findHighlightsByDeadline(long sinceTopicId, LocalDate today, Limit limit);
+  List<Post> findHighlightsByDeadline(
+      long sinceTopicId, LocalDate today, LocalDate until, Limit limit);
 
   /** 숨기지 않은 수집 기간 안의 글 중 한 게시판에서 postedFrom 이후에 작성된 글 수(날짜 줄). 본문·이미지는 묻지 않는다. */
   @Query(
@@ -215,9 +218,9 @@ public interface PostRepository extends JpaRepository<Post, Long> {
   /**
    * 요약 대상. 수집 기간 안(글 번호가 sinceTopicId 이상)의 본문까지 읽은 숨기지 않은 글 중 요약 대기(PENDING)인 글, redoFake면 가짜
    * 요약기('fake', FakeSummarizer.ID)로 요약한 글, redoMissingSubcategory면 세부 분류가 없는 키보드·키캡 요약, redoGb면 GB로
-   * 기간을 뽑아 본 적이 없거나(기간을 뽑기 전의 요약, IC에서 옮겨진 글) 요약한 뒤 제목이 바뀐 GB 요약까지. 요약 대기 글을
-   * 먼저, 그 안에서는 미리 읽기로 채우고 아직 아무도 열지 않은 글을 뒤로, 그다음 본문을 늦게 채운 글(방금 상세를 연 틀 글)부터, 같으면 글
-   * 번호가 큰 글부터. 사용자가 연 글보다 나중에 미리 읽은 글이 그 글의 요약을 늦추지 않게 한다.
+   * 기간을 뽑아 본 적이 없거나(기간을 뽑기 전의 요약, IC에서 옮겨진 글) 요약한 뒤 제목이 바뀐 GB 요약, redoMissingProductName이면
+   * 상품 이름이 없는 요약까지. 요약 대기 글을 먼저, 그 안에서는 미리 읽기로 채우고 아직 아무도 열지 않은 글을 뒤로, 그다음 본문을 늦게 채운
+   * 글(방금 상세를 연 틀 글)부터, 같으면 글 번호가 큰 글부터. 사용자가 연 글보다 나중에 미리 읽은 글이 그 글의 요약을 늦추지 않게 한다.
    */
   @Query(
       "select p from Post p where p.hidden = false and p.detailFetchedAt is not null"
@@ -233,7 +236,10 @@ public interface PostRepository extends JpaRepository<Post, Long> {
           + " or (:redoGb = true"
           + " and p.summaryStatus = com.keycheck.post.domain.SummaryStatus.DONE"
           + " and p.board = com.keycheck.post.domain.Board.GB"
-          + " and (p.gbDatesExtracted = false or p.summarizedTitle <> p.title)))"
+          + " and (p.gbDatesExtracted = false or p.summarizedTitle <> p.title))"
+          + " or (:redoMissingProductName = true"
+          + " and p.summaryStatus = com.keycheck.post.domain.SummaryStatus.DONE"
+          + " and p.productName is null))"
           + " order by case when p.summaryStatus = com.keycheck.post.domain.SummaryStatus.PENDING"
           + " then 0 else 1 end, case when p.prefetched = true then 1 else 0 end,"
           + " p.detailFetchedAt desc, p.topicId desc")
@@ -242,11 +248,12 @@ public interface PostRepository extends JpaRepository<Post, Long> {
       boolean redoFake,
       boolean redoMissingSubcategory,
       boolean redoGb,
+      boolean redoMissingProductName,
       Limit limit);
 
   /**
    * 요약을 넣고 DONE으로 바꾼다. category가 null이면(가짜 요약기) 분류와 세부 분류를 그대로 두고, 아니면 둘 다 결과로 바꾼다(세부 분류가
-   * 없으면 null). 공동구매 기간, 기간을 뽑아 본 요약인지, 요약기에 넘긴 제목도 결과로 바꾼다. 다른 컬럼은 건드리지 않는다.
+   * 없으면 null). 공동구매 기간, 상품 이름, 기간을 뽑아 본 요약인지, 요약기에 넘긴 제목도 결과로 바꾼다. 다른 컬럼은 건드리지 않는다.
    */
   @Transactional
   @Modifying
@@ -255,7 +262,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
           + " p.summaryLines = :lines, p.specs = :specs, p.summarizedBy = :summarizedBy,"
           + " p.subcategory = case when :category is null then p.subcategory else :subcategory end,"
           + " p.category = coalesce(:category, p.category),"
-          + " p.gbStartDate = :gbStartDate, p.gbEndDate = :gbEndDate,"
+          + " p.gbStartDate = :gbStartDate, p.gbEndDate = :gbEndDate, p.productName = :productName,"
           + " p.gbDatesExtracted = :gbDatesExtracted, p.summarizedTitle = :summarizedTitle"
           + " where p.id = :id")
   void saveSummary(
@@ -267,6 +274,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
       String summarizedBy,
       LocalDate gbStartDate,
       LocalDate gbEndDate,
+      String productName,
       boolean gbDatesExtracted,
       String summarizedTitle);
 

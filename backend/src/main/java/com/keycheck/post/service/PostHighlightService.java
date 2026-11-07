@@ -43,6 +43,9 @@ public class PostHighlightService {
   /** 날짜 줄의 마감 임박 범위: 오늘부터 이 날수 뒤까지(양끝 포함) */
   private static final int ENDING_SOON_DAYS = 14;
 
+  /** 마감 띠 후보 범위: 오늘부터 이 날수 뒤까지(양끝 포함) 마감하는 공동구매. 먼 마감(D-120 등)은 넣지 않는다 */
+  private static final int DEADLINE_DAYS = 30;
+
   private final PostRepository postRepository;
   private final PostQueryService postQueryService;
   private final CollectProperties collectProperties;
@@ -92,7 +95,9 @@ public class PostHighlightService {
       case TALL -> widening(slot, 14, icViews, now, used);
       case DEADLINE -> {
         Post post =
-            postRepository.findHighlightsByDeadline(since, today, limit).stream()
+            postRepository
+                .findHighlightsByDeadline(since, today, today.plusDays(DEADLINE_DAYS), limit)
+                .stream()
                 .filter(candidate -> !used.contains(candidate.getId()))
                 .findFirst()
                 .orElse(null);

@@ -38,6 +38,8 @@ export interface PostCard {
   id: number;
   board: Board;
   title: string;
+  /** 요약기가 뽑은 상품·프로젝트 이름(예: SWG Nightshift). 요약 전이거나 모르면 null. 메인은 lib/format의 displayTitle로 쓴다 */
+  productName: string | null;
   category: Category;
   subcategory: Subcategory | null;
   representativeImageUrl: string | null;
@@ -93,6 +95,8 @@ export interface PostDetail {
   id: number;
   board: Board;
   title: string;
+  /** 요약기가 뽑은 상품·프로젝트 이름. 요약 전이거나 모르면 null. 상세 화면은 원래 제목을 쓴다 */
+  productName: string | null;
   author: string;
   category: Category;
   subcategory: Subcategory | null;

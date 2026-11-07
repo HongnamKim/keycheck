@@ -122,6 +122,10 @@ public class Post {
   @Column(length = 500)
   private String summarizedTitle;
 
+  /** 상품·프로젝트 이름(예: "SWG Nightshift"). 요약기가 원문 표기 그대로 뽑는다. 모르거나 아직 뽑지 않았으면 null. */
+  @Column(length = 200)
+  private String productName;
+
   /** 대표 이미지(post_image.id). 순환 참조를 피하려고 연관관계 대신 ID만 둔다. */
   @Setter private Long representativeImageId;
 

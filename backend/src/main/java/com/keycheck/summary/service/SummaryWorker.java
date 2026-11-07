@@ -41,15 +41,16 @@ public class SummaryWorker {
   private Instant pausedUntil = Instant.MIN;
 
   /**
-   * 이번 실행에서 이미 다시 요약한(요약이 있던) 글 ID. 다시 요약해도 여전히 대상인 글(예: 세부 분류를 정하지 못한 글)을 계속 요약하지 않도록
-   * 건너뛴다. GB 다시 요약 대상(isGbRedo)은 건너뛰지 않는다.
+   * 이번 실행에서 이미 요약한 글 ID(요약 대기였던 글 포함). 요약해도 여전히 대상인 글(예: 세부 분류나 상품 이름을 정하지 못한 글)을 계속
+   * 요약하지 않도록 건너뛴다. GB 다시 요약 대상(isGbRedo)은 건너뛰지 않는다.
    */
   private final Set<Long> redone = new HashSet<>();
 
   /**
    * 요약 대상 중 맨 앞 글(요약 대기 글 중 본문을 가장 늦게 채운 글. 미리 읽기로 채우고 아무도 열지 않은 글은 뒤로) 하나를 요약한다. 글 때문에 요약할 수 없으면 FAILED로 두고 다시 시도하지 않는다. 단 GB
-   * 다시 요약이 실패하면 요약은 그대로 두고 기간만 비운 뒤 그 제목으로는 다시 요약하지 않는다. API를 쓸 수 없으면 상태를 그대로 두고
-   * ERROR_PAUSE 동안 쉰다. 요약이 있던 글은 한 실행에서 한 번만 다시 요약한다(GB 다시 요약은 제목이 바뀔 때마다 한 번).
+   * 다시 요약이 실패하면 요약은 그대로 두고 기간만 비운 뒤 그 제목으로는 다시 요약하지 않는다. 상품 이름을 채우려는 다시 요약이 실패해도 요약은
+   * 그대로 두고 그 실행에서는 다시 요약하지 않는다(재시작하면 다시 요약한다). API를 쓸 수 없으면 상태를 그대로 두고
+   * ERROR_PAUSE 동안 쉰다. 요약한 글은 한 실행에서 다시 요약하지 않는다(GB 다시 요약은 제목이 바뀔 때마다 한 번).
    *
    * @return 대상이 있었으면 true (쉬는 중이면 false)
    */
@@ -57,15 +58,17 @@ public class SummaryWorker {
     if (clock.instant().isBefore(pausedUntil)) {
       return false;
     }
-    // 가짜 요약기는 세부 분류·공동구매 기간을 정하지 않으므로, 다시 요약하면 Claude 요약만 가짜 요약으로 덮는다
+    // 가짜 요약기는 세부 분류·공동구매 기간·상품 이름을 정하지 않으므로, 다시 요약하면 Claude 요약만 가짜 요약으로 덮는다
     boolean claude = !(summarizer instanceof FakeSummarizer);
     boolean redoMissingSubcategory = properties.isRedoMissingSubcategory() && claude;
+    boolean redoMissingProductName = properties.isRedoMissingProductName() && claude;
     List<Post> targets =
         postRepository.findSummaryTargets(
             collectProperties.getSinceTopicId(),
             properties.isRedoFake(),
             redoMissingSubcategory,
             claude,
+            redoMissingProductName,
             Limit.of(redone.size() + 1));
     Post post =
         targets.stream()
@@ -76,6 +79,11 @@ public class SummaryWorker {
       return false;
     }
     boolean gbRedo = isGbRedo(post, claude);
+    // 상품 이름을 채우려는 다시 요약(다른 다시 요약 조건에도 걸려 있어도)
+    boolean productNameRedo =
+        redoMissingProductName
+            && post.getSummaryStatus() == SummaryStatus.DONE
+            && post.getProductName() == null;
     SummaryResult result;
     try {
       result = summarizer.summarize(
@@ -88,6 +96,9 @@ public class SummaryWorker {
       } else if (gbRedo) {
         log.warn("공동구매 기간을 다시 뽑지 못해 요약은 두고 기간만 비운다: topic={}", post.getTopicId(), e);
         postRepository.markGbRedoFailed(post.getId(), post.getTitle());
+        redone.add(post.getId());
+      } else if (productNameRedo) {
+        log.warn("상품 이름을 채우려던 다시 요약에 실패해 요약은 그대로 둔다: topic={}", post.getTopicId(), e);
         redone.add(post.getId());
       } else {
         log.warn("요약 실패: topic={}", post.getTopicId(), e);
@@ -104,11 +115,10 @@ public class SummaryWorker {
         result.getSummarizedBy(),
         result.getGbStartDate(),
         result.getGbEndDate(),
+        result.getProductName(),
         claude && post.getBoard() == Board.GB,
         post.getTitle());
-    if (post.getSummaryStatus() == SummaryStatus.DONE) {
-      redone.add(post.getId());
-    }
+    redone.add(post.getId());
     return true;
   }
 

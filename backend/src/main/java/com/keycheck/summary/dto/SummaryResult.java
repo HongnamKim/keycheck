@@ -31,4 +31,7 @@ public class SummaryResult {
 
   /** 공동구매 마감일. GB 글에서만 뽑는다. IC 글이거나 모르거나 뽑지 않으면 null (가짜 요약기) */
   private final LocalDate gbEndDate;
+
+  /** 상품·프로젝트 이름(예: "SWG Nightshift"), 원문 표기. 모르거나 뽑지 않으면 null (가짜 요약기) */
+  private final String productName;
 }

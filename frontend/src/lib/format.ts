@@ -150,6 +150,22 @@ export function photoChipLabel(category: Category, subcategory: Subcategory | nu
   return categoryLabel(category);
 }
 
+/** 제목 앞의 게시판 표시(예: [IC], (GB), [Interest Check])와 뒤 공백. "[GB][IC]"처럼 여럿이어도 모두 */
+const BOARD_MARK = /^\s*(?:[[(]\s*(?:IC|GB|Interest Check|Group Buy)\s*[\])]\s*)+/i;
+
+/**
+ * 메인(벤토·가로 줄)에 쓰는 짧은 제목. 요약기가 뽑은 상품 이름(productName)이 있으면 그것을,
+ * 없으면 원래 제목에서 첫 " | " 뒤(날짜 등)를 자르고 앞의 게시판 표시를 뗀다. " - "는 이름의 일부일 수 있어 두고,
+ * 다듬은 결과가 비면 원래 제목을 쓴다. 목록 페이지와 상세는 원래 제목 그대로다.
+ */
+export function displayTitle(productName: string | null | undefined, title: string): string {
+  const name = productName?.trim();
+  if (name) return name;
+  // 자른 뒤에 떼야 "[GB] | 날짜"처럼 표시만 남는 제목이 빈 결과가 된다
+  const trimmed = title.split(/\s\|\s/)[0].replace(BOARD_MARK, "").trim();
+  return trimmed || title;
+}
+
 /** 글마다 붙는 게시판 배지 글자 */
 export function boardLabel(board: Board): string {
   return board === "GB" ? "공동구매" : "IC";

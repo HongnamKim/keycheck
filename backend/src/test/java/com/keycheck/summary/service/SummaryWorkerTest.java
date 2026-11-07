@@ -58,10 +58,15 @@ class SummaryWorkerTest {
   }
 
   private SummaryWorker worker(boolean redoFake, boolean redoMissingSubcategory) {
+    return worker(redoFake, redoMissingSubcategory, false);
+  }
+
+  private SummaryWorker worker(
+      boolean redoFake, boolean redoMissingSubcategory, boolean redoMissingProductName) {
     return new SummaryWorker(
         postRepository,
         summarizer,
-        new SummaryProperties(redoFake, redoMissingSubcategory),
+        new SummaryProperties(redoFake, redoMissingSubcategory, redoMissingProductName),
         new CollectProperties(0),
         clock);
   }
@@ -112,6 +117,7 @@ class SummaryWorkerTest {
             Subcategory.KC_GMK,
             "claude-opus-5-5",
             null,
+            null,
             null);
 
     assertThat(worker(false).summarizeNext()).isTrue();
@@ -154,7 +160,14 @@ class SummaryWorkerTest {
     Post post = saveLoaded(2000, p -> p.setSubcategory(Subcategory.KB_75));
     summarizer.result =
         new SummaryResult(
-            List.of("데스크매트예요."), List.of(), Category.OTHER, null, "claude-opus-5-5", null, null);
+            List.of("데스크매트예요."),
+            List.of(),
+            Category.OTHER,
+            null,
+            "claude-opus-5-5",
+            null,
+            null,
+            null);
 
     worker(false).summarizeNext();
 
@@ -230,6 +243,7 @@ class SummaryWorkerTest {
             Subcategory.KB_65,
             "claude-opus-5-5",
             null,
+            null,
             null);
 
     SummaryWorker worker = worker(true, true);
@@ -266,7 +280,7 @@ class SummaryWorkerTest {
         new SummaryWorker(
             postRepository,
             summarizer,
-            new SummaryProperties(false, false),
+            new SummaryProperties(false, false, false),
             new CollectProperties(2500),
             clock);
 
@@ -347,7 +361,14 @@ class SummaryWorkerTest {
     markSummarizedBy(saveLoaded(3000), "claude-opus-5-5");
     summarizer.result =
         new SummaryResult(
-            List.of("다시 쓴 요약"), List.of(), Category.OTHER, null, "claude-opus-5-5", null, null);
+            List.of("다시 쓴 요약"),
+            List.of(),
+            Category.OTHER,
+            null,
+            "claude-opus-5-5",
+            null,
+            null,
+            null);
 
     assertThat(worker(true).summarizeNext()).isTrue();
     assertThat(worker(true).summarizeNext()).isFalse();
@@ -395,6 +416,7 @@ class SummaryWorkerTest {
             Subcategory.KB_65,
             "claude-opus-5-5",
             null,
+            null,
             null);
 
     SummaryWorker worker = worker(false, true);
@@ -416,7 +438,7 @@ class SummaryWorkerTest {
         new SummaryWorker(
             postRepository,
             new FakeSummarizer(),
-            new SummaryProperties(false, true),
+            new SummaryProperties(false, true, false),
             new CollectProperties(0),
             clock);
 
@@ -433,7 +455,14 @@ class SummaryWorkerTest {
     Post post = saveMissingSubcategory(2000, Category.KEYBOARD);
     summarizer.result =
         new SummaryResult(
-            List.of("다시 쓴 요약"), List.of(), Category.KEYBOARD, null, "claude-opus-5-5", null, null);
+            List.of("다시 쓴 요약"),
+            List.of(),
+            Category.KEYBOARD,
+            null,
+            "claude-opus-5-5",
+            null,
+            null,
+            null);
     SummaryWorker worker = worker(false, true);
 
     assertThat(worker.summarizeNext()).isTrue();
@@ -450,7 +479,14 @@ class SummaryWorkerTest {
     saveMissingSubcategory(2000, Category.KEYCAP);
     summarizer.result =
         new SummaryResult(
-            List.of("다시 쓴 요약"), List.of(), Category.KEYBOARD, null, "claude-opus-5-5", null, null);
+            List.of("다시 쓴 요약"),
+            List.of(),
+            Category.KEYBOARD,
+            null,
+            "claude-opus-5-5",
+            null,
+            null,
+            null);
     SummaryWorker worker = worker(false, true);
 
     assertThat(worker.summarizeNext()).isTrue();
@@ -475,6 +511,160 @@ class SummaryWorkerTest {
     assertThat(saved.getSummaryStatus()).isEqualTo(SummaryStatus.DONE);
     assertThat(saved.getViews()).isEqualTo(999);
     assertThat(saved.isHidden()).isTrue();
+  }
+
+  /** Claude가 요약한 결과(세부 분류 있음, 공동구매 기간 없음) */
+  private static SummaryResult namedResult(String productName) {
+    return new SummaryResult(
+        List.of("다시 쓴 요약"),
+        List.of(),
+        Category.KEYBOARD,
+        Subcategory.KB_60,
+        "claude-opus-5-5",
+        null,
+        null,
+        productName);
+  }
+
+  /** Claude로 요약했지만 상품 이름은 없는 글(이름을 뽑기 전의 요약). 세부 분류는 있어 다른 다시 요약 대상이 아니다. */
+  private Post saveMissingProductName(long topicId) {
+    Post post = saveLoaded(topicId, p -> p.setSubcategory(Subcategory.KB_60));
+    markSummarizedBy(post, "claude-opus-5-5");
+    jdbcTemplate.update(
+        "update post set summary_lines = '[\"기존 요약\"]'::jsonb where id = ?", post.getId());
+    return post;
+  }
+
+  @Test
+  @DisplayName("요약 결과의 상품 이름을 저장한다")
+  void savesProductName() {
+    Post post = saveLoaded(2000);
+    summarizer.result = namedResult("Class 60 V2");
+
+    assertThat(worker(false).summarizeNext()).isTrue();
+
+    assertThat(reload(post).getProductName()).isEqualTo("Class 60 V2");
+  }
+
+  @Test
+  @DisplayName("redo-missing-product-name이 꺼져 있으면 상품 이름이 없는 요약을 다시 요약하지 않는다")
+  void redoMissingProductNameOff() {
+    saveMissingProductName(2000);
+
+    assertThat(worker(false, false, false).summarizeNext()).isFalse();
+    assertThat(summarizer.sources).isEmpty();
+  }
+
+  @Test
+  @DisplayName("redo-missing-product-name이 켜져 있으면 상품 이름이 없는 요약 완료 글만 요약 대기 글 다음에 다시 요약해 이름을 채운다")
+  void redoMissingProductNameOn() {
+    Post missing = saveMissingProductName(2000);
+    jdbcTemplate.update(
+        "update post set product_name = 'Class 60' where id = ?",
+        saveMissingProductName(3000).getId());
+    jdbcTemplate.update(
+        "update post set hidden = true where id = ?", saveMissingProductName(4000).getId());
+    jdbcTemplate.update(
+        "update post set summary_status = 'FAILED' where id = ?",
+        saveMissingProductName(5000).getId());
+    saveLoaded(1000);
+    summarizer.result = namedResult("Class 60 V2");
+
+    SummaryWorker worker = worker(false, false, true);
+    // 같은 글을 끝없이 다시 고르면 테스트가 멈추지 않고 실패하도록 횟수를 묶는다
+    for (int i = 0; i < 5 && worker.summarizeNext(); i++) {
+      // 대상이 없을 때까지
+    }
+    assertThat(worker.summarizeNext()).isFalse();
+
+    assertThat(summarizer.titles()).containsExactly("[IC] 글 1000", "[IC] 글 2000");
+    Post saved = reload(missing);
+    assertThat(saved.getProductName()).isEqualTo("Class 60 V2");
+    assertThat(saved.getSummaryLines()).containsExactly("다시 쓴 요약");
+  }
+
+  @Test
+  @DisplayName("가짜 요약기에서는 redo-missing-product-name이 켜져 있어도 Claude 요약을 덮지 않는다")
+  void redoMissingProductNameIgnoredWithFakeSummarizer() {
+    Post post = saveMissingProductName(2000);
+    SummaryWorker worker =
+        new SummaryWorker(
+            postRepository,
+            new FakeSummarizer(),
+            new SummaryProperties(false, false, true),
+            new CollectProperties(0),
+            clock);
+
+    assertThat(worker.summarizeNext()).isFalse();
+
+    Post saved = reload(post);
+    assertThat(saved.getSummarizedBy()).isEqualTo("claude-opus-5-5");
+    assertThat(saved.getSummaryLines()).containsExactly("기존 요약");
+  }
+
+  @Test
+  @DisplayName("상품 이름을 채우려고 다시 요약한 글은 결과에 이름이 없어도 한 실행에서 다시 요약하지 않는다")
+  void redoesMissingProductNameOnce() {
+    Post post = saveMissingProductName(2000);
+    summarizer.result = namedResult(null);
+    SummaryWorker worker = worker(false, false, true);
+
+    assertThat(worker.summarizeNext()).isTrue();
+    assertThat(worker.summarizeNext()).isFalse();
+
+    assertThat(summarizer.sources).hasSize(1);
+    Post saved = reload(post);
+    assertThat(saved.getSummaryLines()).containsExactly("다시 쓴 요약");
+    assertThat(saved.getProductName()).isNull();
+  }
+
+  @Test
+  @DisplayName("상품 이름을 채우려고 다시 요약하다 글 때문에 실패하면 요약은 그대로 두고, 같은 실행에서 다시 요약하지 않는다")
+  void failedProductNameRedoKeepsSummary() {
+    Post post = saveMissingProductName(2000);
+    Post pending = saveLoaded(3000);
+    summarizer.fail = true;
+    SummaryWorker worker = worker(false, false, true);
+
+    assertThat(worker.summarizeNext()).isTrue();
+    assertThat(worker.summarizeNext()).isTrue();
+    assertThat(worker.summarizeNext()).isFalse();
+
+    assertThat(summarizer.titles()).containsExactly("[IC] 글 3000", "[IC] 글 2000");
+    assertThat(reload(pending).getSummaryStatus()).isEqualTo(SummaryStatus.FAILED);
+    Post saved = reload(post);
+    assertThat(saved.getSummaryStatus()).isEqualTo(SummaryStatus.DONE);
+    assertThat(saved.getSummaryLines()).containsExactly("기존 요약");
+    assertThat(saved.getProductName()).isNull();
+  }
+
+  @Test
+  @DisplayName("redo-missing-product-name이 켜져 있어도 요약 대기 글은 결과에 이름이 없으면 한 실행에서 한 번만 요약한다")
+  void pendingWithoutProductNameIsSummarizedOnce() {
+    Post post = saveLoaded(2000);
+    summarizer.result = namedResult(null);
+    SummaryWorker worker = worker(false, false, true);
+
+    assertThat(worker.summarizeNext()).isTrue();
+    assertThat(worker.summarizeNext()).isFalse();
+
+    assertThat(summarizer.sources).hasSize(1);
+    assertThat(reload(post).getProductName()).isNull();
+  }
+
+  @Test
+  @DisplayName("다시 요약한 결과에 상품 이름이 없으면 저장해 둔 이름을 null로 덮는다")
+  void redoOverwritesProductNameWithNull() {
+    Post post = saveRenamedGb(2000);
+    jdbcTemplate.update("update post set product_name = 'Old Name' where id = ?", post.getId());
+    summarizer.result = namedResult(null);
+
+    assertThat(worker(false).summarizeNext()).isTrue();
+
+    assertThat(summarizer.titles()).containsExactly("새 제목");
+    Post saved = reload(post);
+    assertThat(saved.getSummaryLines()).containsExactly("다시 쓴 요약");
+    assertThat(saved.getProductName()).isNull();
   }
 
   /** 본문까지 읽은 GB 글 */
@@ -527,7 +717,8 @@ class SummaryWorkerTest {
         Subcategory.KB_65,
         "claude-opus-5-5",
         gbStartDate,
-        gbEndDate);
+        gbEndDate,
+        null);
   }
 
   @Test
@@ -635,7 +826,7 @@ class SummaryWorkerTest {
         new SummaryWorker(
             postRepository,
             new FakeSummarizer(),
-            new SummaryProperties(false, false),
+            new SummaryProperties(false, false, false),
             new CollectProperties(0),
             clock);
 
@@ -656,7 +847,7 @@ class SummaryWorkerTest {
         new SummaryWorker(
             postRepository,
             new FakeSummarizer(),
-            new SummaryProperties(true, false),
+            new SummaryProperties(true, false, false),
             new CollectProperties(0),
             clock);
 

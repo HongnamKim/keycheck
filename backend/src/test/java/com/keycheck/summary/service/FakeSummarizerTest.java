@@ -46,4 +46,14 @@ class FakeSummarizerTest {
     assertThat(result.getGbStartDate()).isNull();
     assertThat(result.getGbEndDate()).isNull();
   }
+
+  @Test
+  @DisplayName("상품 이름을 뽑지 않는다")
+  void doesNotExtractProductName() {
+    SummaryResult result =
+        summarizer.summarize(
+            new PostSource(Board.GB, "[GB] SWG Nightshift | Oct 30th -> Nov 13th", "본문", POSTED_AT));
+
+    assertThat(result.getProductName()).isNull();
+  }
 }

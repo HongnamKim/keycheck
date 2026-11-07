@@ -33,7 +33,8 @@ import org.springframework.stereotype.Component;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * Claude로 분류·한국어 요약·스펙표(GB 글은 공동구매 기간도)를 한 번에 만든다. 응답은 structured outputs(JSON 스키마)로 강제한다.
+ * Claude로 분류·한국어 요약·스펙표·상품 이름(GB 글은 공동구매 기간도)을 한 번에 만든다. 응답은 structured outputs(JSON 스키마)로
+ * 강제한다.
  *
  * <p>Claude Opus 5.5 규칙: thinking은 끌 수 없어 보내지 않고(adaptive), 생각의 양은 effort로 정한다. 샘플링 파라미터와
  * prefill은 쓰지 않는다. 분류기 거절에 대비해 server-side fallbacks("default")를 켤 수 있다 (beta 엔드포인트).
@@ -44,6 +45,9 @@ import tools.jackson.databind.json.JsonMapper;
 @ConditionalOnProperty(name = "keycheck.summarizer", havingValue = "claude")
 public class ClaudeSummarizer implements Summarizer {
   static final int MAX_SPECS = 6;
+
+  /** 이보다 긴 상품 이름은 버린다. 지시문은 60자 이내를 요구하고, 조금 넘는 것은 받아 준다. */
+  static final int MAX_PRODUCT_NAME = 80;
 
   static final String SYSTEM_PROMPT =
       """
@@ -99,6 +103,13 @@ public class ClaudeSummarizer implements Summarizer {
       - 공동구매 자체가 취소되거나 연기됐다고(시작 전 연기, 무기한 연기) 적혀 있으면 gbEndDate는 null.
       - 마감이 연장됐다고 적혀 있으면 새 마감일이 적혀 있을 때만 그 날짜를 쓴다. 새 마감일이 없으면 gbEndDate는 null이고, 옛 마감일을 쓰지 않는다.
       - 이미 끝난 공동구매(마감일이 지났거나 "GB ENDED" 등)라도 적힌 날짜는 그대로 쓴다.
+
+      productName: 글이 다루는 상품·프로젝트의 이름 (예: "SWG Nightshift", "Class 60 V2", "GMK CYL nuSignal").
+      - 원문 표기(영문) 그대로 쓴다. 번역하지 않는다.
+      - 게시판 표시([IC], [GB] 등), 날짜, 진행 상태(Live, Extended, Cancelled, Round 3 등), 홍보 문구는 뺀다.
+      - 60자 이내로 쓴다.
+      - 한 글에 여러 상품이 있으면 대표 이름 하나만 쓴다.
+      - 이름을 알 수 없으면 null.
       """;
 
   /** 날짜(YYYY-MM-DD) 문자열 또는 null */
@@ -109,7 +120,7 @@ public class ClaudeSummarizer implements Summarizer {
   /**
    * 응답 형식. category는 미분류(UNCLASSIFIED)를 뺀 세 값만 허용한다. subcategory는 세부 분류 코드 또는 null(anyOf)이고, category와
    * 맞는지는 응답을 받은 뒤 확인한다. gbStartDate·gbEndDate는 날짜 문자열 또는 null(anyOf)이고, 날짜로 읽히는지와 순서는 응답을 받은 뒤
-   * 확인한다.
+   * 확인한다. productName은 문자열 또는 null(anyOf)이고, 비었거나 너무 긴지는 응답을 받은 뒤 확인한다.
    */
   static final BetaJsonOutputFormat FORMAT =
       BetaJsonOutputFormat.builder()
@@ -156,7 +167,11 @@ public class ClaudeSummarizer implements Summarizer {
                               "gbStartDate",
                               DATE_OR_NULL,
                               "gbEndDate",
-                              DATE_OR_NULL)))
+                              DATE_OR_NULL,
+                              "productName",
+                              Map.of(
+                                  "anyOf",
+                                  List.of(Map.of("type", "string"), Map.of("type", "null"))))))
                   .putAdditionalProperty(
                       "required",
                       JsonValue.from(
@@ -166,7 +181,8 @@ public class ClaudeSummarizer implements Summarizer {
                               "summaryLines",
                               "specs",
                               "gbStartDate",
-                              "gbEndDate")))
+                              "gbEndDate",
+                              "productName")))
                   .putAdditionalProperty("additionalProperties", JsonValue.from(false))
                   .build())
           .build();
@@ -220,7 +236,8 @@ public class ClaudeSummarizer implements Summarizer {
   }
 
   /**
-   * 공동구매 기간은 GB 글에서만 쓰고, 날짜로 읽히지 않거나 마감일이 시작일보다 앞이면 둘 다 버린다(요약은 그대로 쓴다).
+   * 공동구매 기간은 GB 글에서만 쓰고, 날짜로 읽히지 않거나 마감일이 시작일보다 앞이면 둘 다 버린다(요약은 그대로 쓴다). 상품 이름은 앞뒤 공백을
+   * 지우고, 비었거나 MAX_PRODUCT_NAME자를 넘으면 버린다(null).
    *
    * @throws IllegalStateException 거절(refusal)했거나 끝까지 답하지 않았거나 형식이 맞지 않으면
    */
@@ -280,11 +297,25 @@ public class ClaudeSummarizer implements Summarizer {
         subcategory,
         response.model().asString(),
         gbStartDate,
-        gbEndDate);
+        gbEndDate,
+        productName(output.getProductName()));
   }
 
   private static LocalDate parseDate(String date) {
     return date == null ? null : LocalDate.parse(date);
+  }
+
+  /** 앞뒤 공백을 지운 상품 이름. 없거나 비었거나 MAX_PRODUCT_NAME자를 넘으면 null */
+  private static String productName(String name) {
+    if (name == null || name.isBlank()) {
+      return null;
+    }
+    String stripped = name.strip();
+    if (stripped.length() > MAX_PRODUCT_NAME) {
+      log.warn("너무 긴 상품 이름을 버린다: {}", stripped);
+      return null;
+    }
+    return stripped;
   }
 
   /** 응답 JSON (FORMAT). 날짜는 문자열로 받는다(형식이 틀린 날짜 때문에 글 전체를 읽지 못하는 일이 없게, toResult에서 읽는다). */
@@ -296,6 +327,7 @@ public class ClaudeSummarizer implements Summarizer {
     private final List<SpecItem> specs;
     private final String gbStartDate;
     private final String gbEndDate;
+    private final String productName;
 
     @JsonCreator
     Output(
@@ -304,13 +336,15 @@ public class ClaudeSummarizer implements Summarizer {
         @JsonProperty("summaryLines") List<String> summaryLines,
         @JsonProperty("specs") List<SpecItem> specs,
         @JsonProperty("gbStartDate") String gbStartDate,
-        @JsonProperty("gbEndDate") String gbEndDate) {
+        @JsonProperty("gbEndDate") String gbEndDate,
+        @JsonProperty("productName") String productName) {
       this.category = category;
       this.subcategory = subcategory;
       this.summaryLines = summaryLines;
       this.specs = specs;
       this.gbStartDate = gbStartDate;
       this.gbEndDate = gbEndDate;
+      this.productName = productName;
     }
   }
 }
