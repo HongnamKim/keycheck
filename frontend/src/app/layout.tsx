@@ -1,10 +1,10 @@
 import { Analytics } from "@vercel/analytics/next";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Mono, IBM_Plex_Sans_KR } from "next/font/google";
 import Link from "next/link";
 import { Suspense } from "react";
 import BoardNav, { BoardNavLinks } from "@/components/BoardNav";
-import { SITE_URL } from "@/lib/seo";
+import { SITE_BG, SITE_DESCRIPTION, SITE_URL } from "@/lib/seo";
 import "./globals.css";
 import styles from "./layout.module.css";
 
@@ -23,19 +23,26 @@ const plexMono = IBM_Plex_Mono({
   subsets: ["latin"],
 });
 
-const description = "geekhack의 키보드·키캡 IC와 공동구매 글을 한국어 요약으로 먼저 훑어보세요";
-
 export const metadata: Metadata = {
   // OG 이미지·canonical 같은 상대 주소의 기준 주소. 운영 주소가 기본이다
   metadataBase: new URL(SITE_URL),
   title: { default: "키체크", template: "%s · 키체크" },
-  description,
+  description: SITE_DESCRIPTION,
   // 링크를 공유했을 때 보이는 기본 카드. 제목·설명은 두지 않아 페이지의 title·description을 물려받는다.
   // 이미지는 app/opengraph-image(사이트 기본 카드)가 붙고, 글 상세는 openGraph를 따로 둬 자기 카드를 쓴다
   openGraph: { siteName: "키체크", locale: "ko_KR", type: "website" },
+  // 파비콘(16·32·48)과 아이폰 홈 화면 아이콘. 파일은 public/, 원본은 docs/design/keycheck-icon.svg.
+  // 네이버 안내대로 절대 주소로 둔다(icons에는 metadataBase가 적용되지 않는다). manifest는 app/manifest.ts
+  icons: {
+    icon: { url: `${SITE_URL}/favicon.ico`, sizes: "16x16 32x32 48x48" },
+    apple: { url: `${SITE_URL}/apple-touch-icon.png`, sizes: "180x180" },
+  },
   // 네이버 서치어드바이저 소유 확인(공개 값). 구글 서치 콘솔은 DNS TXT 레코드로 확인한다
   verification: { other: { "naver-site-verification": "d91b66acf1b3eed4c7149d0f1f5a0f79b6a6520c" } },
 };
+
+/** 모바일 브라우저 주소창 색. 헤더와 같은 사이트 바탕색 */
+export const viewport: Viewport = { themeColor: SITE_BG };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
