@@ -1,0 +1,6 @@
+<!-- 키체크 아이콘(C안: 주황 키캡 + 흰 체크). 파비콘·홈 화면 아이콘의 원본. 색은 사이트 강조색(#b93a0b)과 그보다 진한 옆면 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="14" fill="#7d2606"/>
+  <rect x="5" y="3" width="54" height="50" rx="11" fill="#b93a0b"/>
+  <path d="M19 28.5 L28.5 38 L46 20.5" fill="none" stroke="#ffffff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

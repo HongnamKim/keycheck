@@ -7,6 +7,12 @@ import { boardLabel, displayTitle } from "./format";
 /** 사이트 주소. 메타데이터의 상대 주소(OG 이미지·canonical) 기준이고, 사이트맵·robots의 절대 주소에 쓴다. 운영 주소가 기본이다 */
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://keycheck.kr";
 
+/** 사이트 한 줄 설명. 기본 메타 설명과 manifest가 함께 쓴다 */
+export const SITE_DESCRIPTION = "geekhack의 키보드·키캡 IC와 공동구매 글을 한국어 요약으로 먼저 훑어보세요";
+
+/** 사이트 바탕색(globals.css --color-bg). 모바일 주소창 색과 manifest에 쓴다 */
+export const SITE_BG = "#f3f4f1";
+
 /** 글 설명(요약 첫 줄)의 최대 글자 수. 넘으면 자르고 "…"를 붙인다 */
 const DESCRIPTION_MAX = 120;
 
