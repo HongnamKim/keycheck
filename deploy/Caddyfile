@@ -1,0 +1,4 @@
+# api.keycheck.kr를 HTTPS로 받아 백엔드(app 컨테이너 8080)로 넘긴다. 인증서는 Caddy가 Let's Encrypt에서 받아 갱신한다
+api.keycheck.kr {
+	reverse_proxy app:8080
+}

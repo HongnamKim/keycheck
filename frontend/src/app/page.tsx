@@ -1,69 +1,52 @@
-import Image from "next/image";
+import { Suspense } from "react";
+import BoardRail from "@/components/home/BoardRail";
+import Dateline, { DatelineFallback } from "@/components/home/Dateline";
+import HighlightBento, { HighlightBentoFallback } from "@/components/home/HighlightBento";
 import styles from "./page.module.css";
 
+/**
+ * 메인. 날짜 줄 → 하이라이트(벤토) → IC 가로 줄 → 공동구매 가로 줄.
+ * 머리 글은 바로 그리고, 날짜 줄·하이라이트·두 줄은 각자 받아 한쪽이 느려도 다른 칸을 막지 않는다.
+ */
 export default function Home() {
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>
-            To get started, edit the{" "}
-            <code className={styles.code}>page.tsx</code> file.
-          </h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className={styles.home}>
+      <Suspense fallback={<DatelineFallback />}>
+        <Dateline />
+      </Suspense>
+
+      <section className={styles.hl} aria-labelledby="home-hl-title">
+        <div className={styles.hlHead}>
+          <div>
+            <p className={styles.kicker}>HIGHLIGHT</p>
+            <h1 id="home-hl-title" className={styles.hlTitle}>
+              요즘 키보드·키캡,
+              <br />
+              사진으로 먼저 봐요
+            </h1>
+          </div>
+          <p className={styles.hlLead}>
+            geekhack IC·공동구매 글에서 지금 볼 만한 글을 골랐어요. 아래로 내리면 게시판별 목록이 이어져요.
           </p>
         </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
+
+        <Suspense fallback={<HighlightBentoFallback />}>
+          <HighlightBento />
+        </Suspense>
+
+        <nav className={styles.jump} aria-label="목록 바로 가기">
+          <span className={styles.jumpCue}>↓ 아래로 이어져요</span>
+          <a href="#home-ic" className={styles.jumpLink}>
+            IC
           </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
+          <a href="#home-gb" className={styles.jumpLink}>
+            공동구매
           </a>
-        </div>
-      </main>
+        </nav>
+      </section>
+
+      <BoardRail board="ic" />
+      <BoardRail board="gb" />
     </div>
   );
 }

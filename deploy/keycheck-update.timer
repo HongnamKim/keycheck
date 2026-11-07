@@ -1,0 +1,10 @@
+# 3분마다 keycheck-update.service를 실행한다
+[Unit]
+Description=keycheck backend image update every 3 minutes
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=3min
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,64 @@
+/* 위치 기준은 부모가 정한다(정렬 줄). 툴팁이 그 줄 폭에 맞춰 펼쳐져 화면 밖으로 나가지 않는다 */
+.wrap {
+  display: inline-flex;
+  align-items: center;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-muted);
+  cursor: help;
+}
+
+.button:hover,
+.button:focus-visible {
+  color: var(--color-text);
+}
+
+.button svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.tip {
+  position: absolute;
+  top: calc(100% - 2px);
+  left: 0;
+  right: 0;
+  z-index: 10;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: var(--color-text);
+  color: #ffffff;
+  font-size: 13px;
+  line-height: 1.5;
+  font-weight: 400;
+  word-break: keep-all;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+
+.wrap:hover .tip,
+.button:focus-visible + .tip,
+.wrap[data-open] .tip {
+  visibility: visible;
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tip {
+    transition: none;
+  }
+}

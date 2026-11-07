@@ -1,0 +1,41 @@
+package com.keycheck.summary.dto;
+
+import com.keycheck.post.domain.Category;
+import com.keycheck.post.domain.SpecItem;
+import com.keycheck.post.domain.Subcategory;
+import com.keycheck.post.domain.VendorItem;
+import java.time.LocalDate;
+import java.util.List;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
+@Getter
+@RequiredArgsConstructor
+public class SummaryResult {
+  /** 한국어 요약 문장 목록 */
+  private final List<String> lines;
+
+  /** 스펙표 (레이아웃, 마운트, 소재 등) */
+  private final List<SpecItem> specs;
+
+  /** 요약기가 정한 분류. 정하지 않으면 null (가짜 요약기) */
+  private final Category category;
+
+  /** 요약기가 정한 세부 분류. category에 속한다. 없거나 정하지 않으면 null */
+  private final Subcategory subcategory;
+
+  /** 요약을 만든 요약기 ('fake' 또는 응답한 Claude 모델 ID) */
+  private final String summarizedBy;
+
+  /** 공동구매 시작일. GB 글에서만 뽑는다. IC 글이거나 모르거나 뽑지 않으면 null (가짜 요약기) */
+  private final LocalDate gbStartDate;
+
+  /** 공동구매 마감일. GB 글에서만 뽑는다. IC 글이거나 모르거나 뽑지 않으면 null (가짜 요약기) */
+  private final LocalDate gbEndDate;
+
+  /** 상품·프로젝트 이름(예: "SWG Nightshift"), 원문 표기. 모르거나 뽑지 않으면 null (가짜 요약기) */
+  private final String productName;
+
+  /** 본문에 적힌 벤더(이름·지역·판매 링크), 본문 순서. 없거나 뽑지 않으면 빈 목록 (가짜 요약기). null이 아니다. */
+  private final List<VendorItem> vendors;
+}
