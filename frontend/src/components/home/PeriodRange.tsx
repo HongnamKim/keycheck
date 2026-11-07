@@ -10,11 +10,12 @@ const ARROW = " → ";
 export default function PeriodRange({ range }: { range: string }) {
   const at = range.indexOf(ARROW);
   if (at < 0) return range;
+  // 한 상자로 감싼다. 칩(inline-flex) 안에서 글 조각이 따로 나뉘면 화살표 앞 띄어쓰기가 사라진다
   return (
-    <>
+    <span>
       {range.slice(0, at)} <span className={styles.arrow}>→</span>
       {" "}
       {range.slice(at + ARROW.length)}
-    </>
+    </span>
   );
 }

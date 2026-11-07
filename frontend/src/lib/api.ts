@@ -43,6 +43,8 @@ export interface PostCard {
   representativeImageUrl: string | null;
   /** 대표 이미지 축소본(가로 최대 640px) 주소. 대표 이미지나 축소본이 없으면 null이고 화면은 원본을 쓴다 */
   representativeThumbUrl: string | null;
+  /** 대표 이미지 큰 축소본(가로 최대 1280px) 주소. 메인 하이라이트 큰 칸에 쓴다. 대표 이미지나 큰 축소본이 없으면 null */
+  representativeLargeUrl: string | null;
   summaryStatus: SummaryStatus;
   summaryFirstLine: string | null;
   views: number;
@@ -53,6 +55,12 @@ export interface PostCard {
   estimatedPostedAt: string | null;
   /** 목록에서 읽은 마지막 게시물(댓글) 시각. 아직 읽은 적 없으면 null */
   lastPostAt: string | null;
+  /**
+   * 요약기가 뽑은 공동구매 시작일·마감일("YYYY-MM-DD", 시간대 없는 날짜). 공동구매 글만 있고, 모르면 null.
+   * new Date()로 파싱하지 않고 lib/gbPeriod로 쓴다.
+   */
+  gbStartDate: string | null;
+  gbEndDate: string | null;
   /** false면 목록에서만 가져온 틀 글: 본문·이미지를 아직 읽지 않아 representativeImageUrl·postedAt이 null */
   detailLoaded: boolean;
 }
@@ -120,6 +128,35 @@ export interface PostNeighbors {
   after: PostCard[];
 }
 
+/** 메인 하이라이트 칸 종류. 이 순서로 앞 칸에 들어간 글을 뒤 칸에서 빼고 고른다(백엔드 enum HighlightSlot) */
+export type HighlightSlotKind = "FEATURE" | "TALL" | "DEADLINE" | "IC_REPLIES" | "IC_VIEWS" | "GB_VIEWS";
+
+/** 하이라이트 한 칸(백엔드 HighlightSlotResponse) */
+export interface HighlightSlot {
+  slot: HighlightSlotKind;
+  /** DEADLINE 칸이 곧 끝나는 공동구매(마감 띠)로 뽑혔으면 true. false면 사진 칸으로 대신 채운 것 */
+  deadline: boolean;
+  /** 고른 창(최근 N일). 창을 넓혀 전체에서 골랐거나 마감 띠면 null */
+  windowDays: number | null;
+  /** 그 창의 조회(IC_REPLIES는 댓글) 순위. 마감 띠면 null */
+  rank: number | null;
+  post: PostCard;
+}
+
+/** 메인 하이라이트와 날짜 줄 숫자(백엔드 HighlightResponse) */
+export interface Highlights {
+  /** 서버가 칸을 고른 한국 시간 오늘("YYYY-MM-DD") */
+  today: string;
+  /** 최근 7일 새 IC 수 */
+  newIcCount: number;
+  /** 최근 7일 새 공동구매 수 */
+  newGbCount: number;
+  /** 오늘부터 14일 안에 마감하는 공동구매 수 */
+  endingSoonGbCount: number;
+  /** 고른 칸만 칸 순서대로. 후보가 없어 빈 칸은 빠진다 */
+  slots: HighlightSlot[];
+}
+
 export interface PostStats {
   views: number;
   replies: number;
@@ -142,6 +179,13 @@ export async function getPosts(
   if (cursor) query.set("cursor", cursor);
   const res = await fetch(`${API_BASE_URL}/api/posts?${query}`);
   if (!res.ok) throw new Error(`목록 조회 실패: ${res.status}`);
+  return res.json();
+}
+
+/** 메인 하이라이트. 서버에서 부르고, 한 렌더 안에서 여러 번 불러도 요청은 한 번이다. */
+export async function getHighlights(): Promise<Highlights> {
+  const res = await fetch(`${API_BASE_URL}/api/posts/highlights`);
+  if (!res.ok) throw new Error(`하이라이트 조회 실패: ${res.status}`);
   return res.json();
 }
 

@@ -1,42 +1,52 @@
-import BoardColumn from "@/components/BoardColumn";
+import { Suspense } from "react";
+import BoardRail from "@/components/home/BoardRail";
+import Dateline, { DatelineFallback } from "@/components/home/Dateline";
+import HighlightBento, { HighlightBentoFallback } from "@/components/home/HighlightBento";
 import styles from "./page.module.css";
 
-/** 메인. 짧은 소개와 IC·공동구매 최근 글 두 칸 */
+/**
+ * 메인. 날짜 줄 → 하이라이트(벤토) → IC 가로 줄 → 공동구매 가로 줄.
+ * 머리 글은 바로 그리고, 날짜 줄·하이라이트·두 줄은 각자 받아 한쪽이 느려도 다른 칸을 막지 않는다.
+ */
 export default function Home() {
   return (
     <div className={styles.home}>
-      <section className={styles.hero} aria-labelledby="hero-title">
-        <div className={styles.intro}>
-          <h1 id="hero-title" className={styles.heroTitle}>
-            키보드·키캡 IC와 공동구매를
-            <br />
-            한국어로 먼저 훑어보세요
-          </h1>
-          <p className={styles.lead}>
-            geekhack의 인터레스트 체크와 공동구매 글을 모아 핵심만 한국어로 요약해요. 대표 이미지와 스펙을 보고, 관심 가는
-            글은 원문으로 바로 넘어가면 돼요.
+      <Suspense fallback={<DatelineFallback />}>
+        <Dateline />
+      </Suspense>
+
+      <section className={styles.hl} aria-labelledby="home-hl-title">
+        <div className={styles.hlHead}>
+          <div>
+            <p className={styles.kicker}>HIGHLIGHT</p>
+            <h1 id="home-hl-title" className={styles.hlTitle}>
+              요즘 키보드·키캡,
+              <br />
+              사진으로 먼저 봐요
+            </h1>
+          </div>
+          <p className={styles.hlLead}>
+            geekhack IC·공동구매 글에서 지금 볼 만한 글을 골랐어요. 아래로 내리면 게시판별 목록이 이어져요.
           </p>
         </div>
-        <dl className={styles.facts}>
-          <div>
-            <dt>요약</dt>
-            <dd>한국어 3~4줄</dd>
-          </div>
-          <div>
-            <dt>확인 주기</dt>
-            <dd>30분마다</dd>
-          </div>
-          <div>
-            <dt>원문</dt>
-            <dd>geekhack</dd>
-          </div>
-        </dl>
+
+        <Suspense fallback={<HighlightBentoFallback />}>
+          <HighlightBento />
+        </Suspense>
+
+        <nav className={styles.jump} aria-label="목록 바로 가기">
+          <span className={styles.jumpCue}>↓ 아래로 이어져요</span>
+          <a href="#home-ic" className={styles.jumpLink}>
+            IC
+          </a>
+          <a href="#home-gb" className={styles.jumpLink}>
+            공동구매
+          </a>
+        </nav>
       </section>
 
-      <div className={styles.columns}>
-        <BoardColumn board="ic" />
-        <BoardColumn board="gb" />
-      </div>
+      <BoardRail board="ic" />
+      <BoardRail board="gb" />
     </div>
   );
 }

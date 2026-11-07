@@ -1,88 +1,161 @@
+/*
+ * 메인 본문(시안 C안). 시안 폭 1120px에서 좌우 여백 24px(모바일 16px)을 뺀 1072px.
+ * 레이아웃 .main의 위 여백(28px)을 메인에서만 상쇄해 날짜 줄을 헤더 바로 아래에 둔다.
+ * 글자 크기·줄 높이는 시안 바탕(15px / 1.5)을 따른다
+ */
 .home {
-  display: flex;
-  flex-direction: column;
-  gap: 36px;
+  max-width: 1072px;
+  margin: -28px auto 0;
+  font-size: 15px;
+  line-height: 1.5;
 }
 
-.hero {
+.hl {
+  padding-top: 34px;
+}
+
+.hlHead {
   display: flex;
-  flex-wrap: wrap;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 20px 40px;
-  padding: 12px 0 28px;
-  border-bottom: 1px solid var(--color-border);
+  gap: 40px;
+  margin-bottom: 22px;
 }
 
-.intro {
-  flex: 1 1 520px;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+.kicker {
+  margin: 0 0 10px;
+  font-family: var(--font-code);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: var(--color-accent);
 }
 
-.heroTitle {
-  font-size: 40px;
-  line-height: 1.2;
+.hlTitle {
+  font-size: 46px;
+  line-height: 1.12;
   font-weight: 700;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.04em;
   word-break: keep-all;
 }
 
-.lead {
-  max-width: 56ch;
-  font-size: 17px;
-  line-height: 1.65;
+.hlLead {
+  max-width: 33ch;
+  font-size: 15px;
+  line-height: 1.7;
   color: var(--color-text-body);
+  word-break: keep-all;
 }
 
-.facts {
-  flex: 0 1 380px;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1px;
-  background: var(--color-border);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.facts > div {
+/* 아래 게시판 줄로 바로 가기 */
+.jump {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 12px 14px;
-  background: var(--color-surface);
+  align-items: center;
+  gap: 8px;
+  margin-top: 28px;
 }
 
-.facts dt {
+.jumpCue {
+  margin-right: 6px;
+  font-family: var(--font-code);
   font-size: 12px;
-  line-height: 1.5;
   color: var(--color-muted);
 }
 
-.facts dd {
-  font-size: 15px;
-  line-height: 1.5;
+/* 높이는 테두리를 넣은 시안 값(데스크톱 36px, 태블릿·모바일 46px) */
+.jumpLink {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--color-text);
+  border-radius: 999px;
+  color: var(--color-text);
+  font-size: 14px;
   font-weight: 600;
+  text-decoration: none;
 }
 
-.columns {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 32px;
-  align-items: flex-start;
+.jumpLink:hover {
+  background: var(--color-text);
+  color: var(--color-bg);
 }
 
-/* 좁은 화면에서는 소개 제목을 줄인다 */
-@media (max-width: 640px) {
-  .heroTitle {
-    font-size: 30px;
+/* 1120px보다 좁으면 .main의 좌우 20px에 4px을 더해 시안 여백 24px로 */
+@media (max-width: 1119px) {
+  .home {
+    margin-inline: 4px;
+  }
+}
+
+/* 태블릿: 자리가 모자라면 소개글이 제목 아래로, 바로 가기는 손가락 크기로 */
+@media (max-width: 1023px) {
+  .hl {
+    padding-top: 30px;
   }
 
-  .lead {
-    font-size: 16px;
+  .hlHead {
+    flex-wrap: wrap;
+    gap: 14px 28px;
+    margin-bottom: 20px;
+  }
+
+  .hlTitle {
+    font-size: 42px;
+  }
+
+  .jumpLink {
+    height: 46px;
+    padding: 0 18px;
+  }
+}
+
+/* 모바일: 시안 여백 16px(.main 20px에서 4px 덜어 낸다), 제목 → 소개글, 바로 가기 버튼 둘은 같은 폭 */
+@media (max-width: 599px) {
+  .home {
+    margin-inline: -4px;
+  }
+
+  .hl {
+    padding-top: 24px;
+  }
+
+  .hlHead {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  .kicker {
+    margin-bottom: 8px;
+  }
+
+  .hlTitle {
+    font-size: 31px;
+    line-height: 1.16;
+  }
+
+  .hlLead {
+    max-width: none;
+    font-size: 14px;
+    line-height: 1.65;
+  }
+
+  .jump {
+    flex-wrap: wrap;
+    margin-top: 22px;
+  }
+
+  .jumpCue {
+    flex: 0 0 100%;
+    margin: 0;
+  }
+
+  .jumpLink {
+    flex: 1 1 0;
+    justify-content: center;
+    padding: 0 10px;
   }
 }
 

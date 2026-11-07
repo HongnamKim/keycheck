@@ -6,6 +6,7 @@ import { bentoImage, slotKicker } from "@/lib/highlight";
 import { postHref } from "@/lib/query";
 import BoardBadge from "../BoardBadge";
 import RemoteImage from "../RemoteImage";
+import PeriodRange from "./PeriodRange";
 import Segs from "./Segs";
 import styles from "./BentoCell.module.css";
 
@@ -94,15 +95,16 @@ function PhotoCell({
   // 고른 기준을 맨 앞에: 댓글 1위 칸은 댓글부터(시안 d)
   const meta = slot.slot === "IC_REPLIES" ? [replies(post), views(post), posted] : [views(post), replies(post), posted];
   const summary = post.summaryStatus === "DONE" ? post.summaryFirstLine : null;
+  const look = photoLook(slot, compact);
 
   return (
     <Link
       href={postHref(post.id)}
       className={classes(
         styles.cell,
-        photoLook(slot, compact),
-        // 밝은 사진 위 글자: 아래쪽을 더 일찍 어둡게(시안 d·f)
-        (slot.slot === "IC_REPLIES" || slot.slot === "GB_VIEWS") && styles.darkShade,
+        look,
+        // 밝은 사진 위 글자: 큰 칸이 아니면 아래쪽을 더 일찍 어둡게(시안 d·f의 그림자. 사진이 밝을지는 칸 자리로 알 수 없다)
+        look !== styles.feature && styles.darkShade,
         // 모바일에서 한 줄을 다 쓰는 칸은 큰 칸처럼 사진이 칸 전체를 덮는다(시안 f)
         (compact || slot.slot === "GB_VIEWS") && styles.wideOnMobile,
         className,
@@ -155,8 +157,9 @@ function Ledger({ post, today, posted }: { post: PostCard; today: string; posted
             <span className={styles.dot} />
             공동구매 기간
           </span>
-          {/* 줄이 바뀌어도 화살표는 마감일과 함께 다음 줄로(시안 "→&nbsp;11/13(금)") */}
-          <span className={styles.ledgerValue}>{period.range.replace(" → ", ` →${NBSP}`)}</span>
+          <span className={styles.ledgerValue}>
+            <PeriodRange range={period.range} />
+          </span>
           {period.dday && (
             <span className={styles.ledgerValue}>
               마감까지<span className={styles.dday}>{period.dday}</span>
@@ -198,7 +201,10 @@ function DeadlineCell({
       <span className={styles.dropText}>
         <Segs className={styles.kicker} items={slotKicker(slot)} />
         <span className={styles.dropTitle}>{post.title}</span>
-        <Segs className={styles.meta} items={[period?.range, views(post), replies(post)]} />
+        <Segs
+          className={styles.meta}
+          items={[period && <PeriodRange range={period.range} />, views(post), replies(post)]}
+        />
       </span>
       {post.gbEndDate && period?.dday && (
         <span className={styles.dropTime}>

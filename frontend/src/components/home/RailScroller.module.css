@@ -1,10 +1,10 @@
-/* 섹션 머리 화살표. 끝에 닿은 쪽은 흐리게 */
+/* 섹션 머리 화살표. 끝에 닿은 쪽은 흐리게. 크기는 테두리를 넣은 시안 값(42px) */
 .arrow {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   padding: 0;
   border: 1px solid var(--color-text);
   border-radius: 50%;
@@ -13,7 +13,7 @@
   cursor: pointer;
 }
 
-.arrow:disabled {
+.arrow[aria-disabled="true"] {
   border-color: var(--color-border);
   color: #9ba09c;
   cursor: default;
@@ -35,13 +35,16 @@
   margin-right: -24px;
 }
 
+/* 왼쪽 4px 여백: 맨 왼쪽 카드의 키보드 초점 테두리가 스크롤 상자에 잘리지 않게. 그만큼 왼쪽으로 당겨 카드 자리는 그대로 둔다 */
 .track {
   display: flex;
   gap: 16px;
+  margin-left: -4px;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
+  scroll-padding-left: 4px;
   scrollbar-width: none;
-  padding: 2px 24px 4px 0;
+  padding: 2px 24px 4px 4px;
   list-style: none;
 }
 
@@ -124,6 +127,7 @@
 
   .track {
     gap: 12px;
+    margin-left: 0;
     padding: 2px 16px 4px;
     scroll-padding: 0 16px;
   }

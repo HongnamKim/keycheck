@@ -5,6 +5,7 @@ import { gbPeriodChip } from "@/lib/gbPeriod";
 import { imageSources } from "@/lib/image";
 import { postHref } from "@/lib/query";
 import RemoteImage from "../RemoteImage";
+import PeriodRange from "./PeriodRange";
 import Segs from "./Segs";
 import styles from "./RailCard.module.css";
 
@@ -48,7 +49,7 @@ export default function RailCard({ post, board, today }: { post: PostCard; board
           {chip && <span className={styles.chip}>{chip}</span>}
           {period && (
             <span className={period.ended ? `${styles.chip} ${styles.date} ${styles.ended}` : `${styles.chip} ${styles.date}`}>
-              {period.range}
+              <PeriodRange range={period.range} />
             </span>
           )}
           {period?.dday && <span className={`${styles.chip} ${styles.dday}`}>{period.dday}</span>}

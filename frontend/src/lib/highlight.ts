@@ -26,13 +26,15 @@ function windowLabel(windowDays: number | null, wide: boolean): string {
 }
 
 /**
- * 칸 키커 토막(시안 .mc-segs). 예: ["최근 7일 새 공동구매", "조회 1위"], 작은 칸 ["2주 새 IC", "댓글 1위"].
- * 마감 띠는 ["곧 끝나는 공동구매"] 한 토막.
+ * 칸 키커 토막(시안 .mc-segs). 예: ["최근 7일 새 공동구매", "조회 1위"], 작은 칸 ["2주 새 IC", "댓글 1위"],
+ * 전체로 넓힌 칸 ["전체 기간 공동구매", "조회 1위"]. 마감 띠는 ["곧 끝나는 공동구매"] 한 토막.
  */
 export function slotKicker(slot: HighlightSlot): string[] {
   if (slot.deadline) return ["곧 끝나는 공동구매"];
   const rule = SLOT_RULES[slot.slot];
-  const segments = [`${windowLabel(slot.windowDays, rule.wide)} 새 ${boardLabel(rule.board)}`];
+  // 전체로 넓혔으면 오래된 글도 들어오므로 "새"를 붙이지 않는다
+  const fresh = slot.windowDays === null ? "" : "새 ";
+  const segments = [`${windowLabel(slot.windowDays, rule.wide)} ${fresh}${boardLabel(rule.board)}`];
   if (slot.rank !== null) segments.push(`${rule.metric}${NBSP}${slot.rank}위`);
   return segments;
 }

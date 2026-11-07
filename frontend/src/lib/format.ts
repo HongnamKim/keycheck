@@ -43,6 +43,36 @@ export function formatPostedAt(iso: string): string {
   return `${kst.getUTCFullYear()}.${pad(kst.getUTCMonth() + 1)}.${pad(kst.getUTCDate())}`;
 }
 
+/** 한국 시간 오늘 날짜(예: 2026-11-07). 서버가 그린 시각에서 구해 화면에 문자열로 넘긴다 */
+export function kstDateKey(now: Date): string {
+  return new Date(now.getTime() + KST_OFFSET_MS).toISOString().slice(0, 10);
+}
+
+/** 시각을 한국 시간 짧은 월/일로 표기 (예: 11/1). 카드 메타의 날짜 */
+export function formatShortDate(iso: string): string {
+  const kst = new Date(new Date(iso).getTime() + KST_OFFSET_MS);
+  return `${kst.getUTCMonth() + 1}/${kst.getUTCDate()}`;
+}
+
+const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
+
+/** "YYYY-MM-DD" 날짜(시간대 없음)를 나눠 읽는다. new Date(문자열)는 시간대에 따라 하루 밀릴 수 있어 쓰지 않는다 */
+function dateParts(date: string): { month: number; day: number; weekday: string } {
+  const [year, month, day] = date.split("-").map(Number);
+  return { month, day, weekday: WEEKDAYS[new Date(Date.UTC(year, month - 1, day)).getUTCDay()] };
+}
+
+/** 메인 날짜 줄의 날짜 (예: 2026-11-07 → 2026.11.07 토) */
+export function formatDateline(today: string): string {
+  return `${today.split("-").join(".")} ${dateParts(today).weekday}`;
+}
+
+/** "YYYY-MM-DD" 날짜를 월/일로 표기 (예: 11/13, withWeekday면 11/13(금)) */
+export function formatMonthDay(date: string, withWeekday = false): string {
+  const { month, day, weekday } = dateParts(date);
+  return withWeekday ? `${month}/${day}(${weekday})` : `${month}/${day}`;
+}
+
 /**
  * 작성일 표기. 정확한 작성일(postedAt)이 있으면 그것을, 없으면 글 번호로 추정한 날짜에 "쯤"을 붙인다.
  * 둘 다 없으면 null.
@@ -53,6 +83,16 @@ export function formatPostedDate(
 ): { text: string; estimated: boolean } | null {
   if (postedAt) return { text: `${formatPostedAt(postedAt)} 작성`, estimated: false };
   if (estimatedPostedAt) return { text: `${formatPostedAt(estimatedPostedAt)}쯤 작성`, estimated: true };
+  return null;
+}
+
+/**
+ * 메인 가로 줄 카드의 짧은 작성일 (예: 11/1). 정확한 작성일이 없는 틀 글은 추정 날짜에 "쯤"을 붙이고(11/1쯤),
+ * 둘 다 없으면 null.
+ */
+export function formatShortPostedDate(postedAt: string | null, estimatedPostedAt: string | null): string | null {
+  if (postedAt) return formatShortDate(postedAt);
+  if (estimatedPostedAt) return `${formatShortDate(estimatedPostedAt)}쯤`;
   return null;
 }
 
@@ -100,15 +140,25 @@ export function postCategoryLabel(category: Category, subcategory: Subcategory |
   return subcategory ? `${categoryLabel(category)} · ${subcategoryLabel(subcategory)}` : categoryLabel(category);
 }
 
+/**
+ * 메인 사진 위 칩 글자 (예: 60%, SP, 키캡). 세부 분류가 있으면 그것만, "그 외"면 분류를 쓴다.
+ * 미분류(틀 글)면 null이라 칩을 그리지 않는다.
+ */
+export function photoChipLabel(category: Category, subcategory: Subcategory | null): string | null {
+  if (category === "UNCLASSIFIED") return null;
+  if (subcategory && subcategory !== "KB_ETC" && subcategory !== "KC_ETC") return subcategoryLabel(subcategory);
+  return categoryLabel(category);
+}
+
 /** 글마다 붙는 게시판 배지 글자 */
 export function boardLabel(board: Board): string {
   return board === "GB" ? "공동구매" : "IC";
 }
 
-/** 게시판 목록·메인 칸의 제목, 제목 옆 배지 글자, 한 줄 설명 (승인된 시안 문구) */
-export const BOARD_INFO: Record<BoardFilter, { title: string; badge: string; desc: string }> = {
-  ic: { title: "IC", badge: "IC", desc: "관심 조사 글이에요. 아직 판매 전이라 의견을 모으는 단계예요." },
-  gb: { title: "공동구매", badge: "GB", desc: "주문을 받는 중이거나 곧 받을 글이에요. 기간과 벤더를 확인해 보세요." },
+/** 게시판 목록의 제목과 한 줄 설명 (승인된 시안 문구) */
+export const BOARD_INFO: Record<BoardFilter, { title: string; desc: string }> = {
+  ic: { title: "IC", desc: "관심 조사 글이에요. 아직 판매 전이라 의견을 모으는 단계예요." },
+  gb: { title: "공동구매", desc: "주문을 받는 중이거나 곧 받을 글이에요. 기간과 벤더를 확인해 보세요." },
 };
 
 /** 보던 목록의 이름 (예: 공동구매 목록, IC · 키보드 · 65% · 조회순 목록). 상세 하단 주변 글 목록의 제목 */

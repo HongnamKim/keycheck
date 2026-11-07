@@ -20,6 +20,7 @@ function card(id: number): PostCard {
     subcategory: null,
     representativeImageUrl: null,
     representativeThumbUrl: null,
+    representativeLargeUrl: null,
     summaryStatus: "PENDING",
     summaryFirstLine: null,
     views: 10,
@@ -28,6 +29,8 @@ function card(id: number): PostCard {
     postedAt: null,
     estimatedPostedAt: null,
     lastPostAt: null,
+    gbStartDate: null,
+    gbEndDate: null,
     detailLoaded: false,
   };
 }

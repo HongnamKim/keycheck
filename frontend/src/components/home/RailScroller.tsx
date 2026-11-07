@@ -78,16 +78,23 @@ function Chevron({ direction, size }: { direction: 1 | -1; size: number }) {
   );
 }
 
-/** 섹션 머리의 좌우 화살표(데스크톱만). 끝에 닿은 쪽은 끈다. name은 게시판 이름(IC, 공동구매) */
+/**
+ * 섹션 머리의 좌우 화살표(데스크톱만). 끝에 닿은 쪽은 끈다. name은 게시판 이름(IC, 공동구매)
+ * disabled 대신 aria-disabled로 끈다: 키보드로 누르던 화살표가 끝에서 꺼져도 포커스가 그 자리에 남는다
+ */
 export function RailArrows({ name }: { name: string }) {
   const { view, scrollPage } = useRail();
+  const offPrev = !view || view.atStart;
+  const offNext = !view || view.atEnd;
   return (
     <>
       <button
         type="button"
         className={styles.arrow}
-        disabled={!view || view.atStart}
-        onClick={() => scrollPage(-1)}
+        aria-disabled={offPrev}
+        onClick={() => {
+          if (!offPrev) scrollPage(-1);
+        }}
         aria-label={`이전 ${name} 글`}
       >
         <Chevron direction={-1} size={18} />
@@ -95,8 +102,10 @@ export function RailArrows({ name }: { name: string }) {
       <button
         type="button"
         className={styles.arrow}
-        disabled={!view || view.atEnd}
-        onClick={() => scrollPage(1)}
+        aria-disabled={offNext}
+        onClick={() => {
+          if (!offNext) scrollPage(1);
+        }}
         aria-label={`다음 ${name} 글`}
       >
         <Chevron direction={1} size={18} />

@@ -14,7 +14,7 @@ const plexSans = IBM_Plex_Sans_KR({
 
 const plexMono = IBM_Plex_Mono({
   variable: "--font-mono",
-  weight: ["400", "500"],
+  weight: ["400", "500", "600"],
   subsets: ["latin"],
 });
 

@@ -4,11 +4,17 @@ import {
   categoryLabel,
   formatAgo,
   formatCheckedAt,
+  formatDateline,
   formatLastPost,
+  formatMonthDay,
   formatPostedAt,
   formatPostedDate,
+  formatShortDate,
+  formatShortPostedDate,
   formatViews,
+  kstDateKey,
   listTitle,
+  photoChipLabel,
   postCategoryLabel,
   subcategoryLabel,
 } from "./format";
@@ -80,6 +86,85 @@ describe("formatPostedAt", () => {
     ["2026-01-05T00:00:00Z", "2026.01.05"],
   ])("%s → %s (한국 시간)", (iso, expected) => {
     expect(formatPostedAt(iso)).toBe(expected);
+  });
+});
+
+describe("kstDateKey", () => {
+  it.each([
+    ["2026-11-06T14:59:59Z", "2026-11-06"],
+    ["2026-11-06T15:00:00Z", "2026-11-07"],
+    ["2026-12-31T15:00:00Z", "2027-01-01"],
+  ])("%s → %s (한국 시간 오늘)", (iso, expected) => {
+    expect(kstDateKey(new Date(iso))).toBe(expected);
+  });
+});
+
+describe("formatDateline", () => {
+  it.each([
+    ["2026-11-07", "2026.11.07 토"],
+    ["2026-11-08", "2026.11.08 일"],
+    ["2026-01-05", "2026.01.05 월"],
+  ])("%s → %s", (today, expected) => {
+    expect(formatDateline(today)).toBe(expected);
+  });
+});
+
+describe("formatShortDate", () => {
+  it.each([
+    ["2026-10-31T16:00:00Z", "11/1"],
+    ["2026-10-31T14:59:59Z", "10/31"],
+    ["2026-01-05T00:00:00Z", "1/5"],
+  ])("%s → %s (한국 시간 월/일)", (iso, expected) => {
+    expect(formatShortDate(iso)).toBe(expected);
+  });
+});
+
+describe("formatShortPostedDate", () => {
+  it("정확한 작성일이 있으면 한국 시간 월/일", () => {
+    expect(formatShortPostedDate("2026-10-31T16:00:00Z", null)).toBe("11/1");
+  });
+
+  it("정확한 작성일이 있으면 추정값은 쓰지 않는다", () => {
+    expect(formatShortPostedDate("2026-10-30T03:00:00Z", "2026-01-01T00:00:00Z")).toBe("10/30");
+  });
+
+  it("추정값만 있으면 쯤을 붙인다", () => {
+    expect(formatShortPostedDate(null, "2026-07-14T03:00:00Z")).toBe("7/14쯤");
+  });
+
+  it("둘 다 없으면 null", () => {
+    expect(formatShortPostedDate(null, null)).toBeNull();
+  });
+});
+
+describe("formatMonthDay", () => {
+  it("날짜 문자열을 월/일로. 앞자리 0은 뺀다", () => {
+    expect(formatMonthDay("2026-11-13")).toBe("11/13");
+    expect(formatMonthDay("2026-07-06")).toBe("7/6");
+  });
+
+  it("withWeekday면 요일을 괄호로 붙인다", () => {
+    expect(formatMonthDay("2026-11-13", true)).toBe("11/13(금)");
+    expect(formatMonthDay("2026-10-30", true)).toBe("10/30(금)");
+    expect(formatMonthDay("2026-11-08", true)).toBe("11/8(일)");
+  });
+});
+
+describe("photoChipLabel", () => {
+  it("세부 분류가 있으면 세부 분류만", () => {
+    expect(photoChipLabel("KEYBOARD", "KB_60")).toBe("60%");
+    expect(photoChipLabel("KEYCAP", "KC_SP")).toBe("SP");
+  });
+
+  it("세부 분류가 그 외이거나 없으면 분류", () => {
+    expect(photoChipLabel("KEYCAP", "KC_ETC")).toBe("키캡");
+    expect(photoChipLabel("KEYBOARD", "KB_ETC")).toBe("키보드");
+    expect(photoChipLabel("KEYBOARD", null)).toBe("키보드");
+    expect(photoChipLabel("OTHER", null)).toBe("기타");
+  });
+
+  it("미분류면 칩을 그리지 않는다", () => {
+    expect(photoChipLabel("UNCLASSIFIED", null)).toBeNull();
   });
 });
 

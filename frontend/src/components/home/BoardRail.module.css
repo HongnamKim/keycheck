@@ -42,7 +42,11 @@
   margin-left: auto;
 }
 
+/* 손가락 크기(44px)로 누르게. 머리 줄이 이보다 높아 보기에는 달라지지 않는다 */
 .more {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   margin-left: 12px;
   font-size: 14px;
   font-weight: 600;
@@ -63,12 +67,6 @@
   .sec {
     margin-top: 40px;
     padding-top: 32px;
-  }
-
-  .more {
-    display: inline-flex;
-    align-items: center;
-    min-height: 44px;
   }
 }
 

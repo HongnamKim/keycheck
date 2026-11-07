@@ -63,12 +63,13 @@ describe("slotKicker", () => {
     expect(slotKicker(slot("DEADLINE", null, null, true))).toEqual(["곧 끝나는 공동구매"]);
   });
 
-  it("넓힌 창은 그 일수로, 전체로 넓혔으면 전체 기간", () => {
+  it("넓힌 창은 그 일수로, 전체로 넓혔으면 오래된 글도 들어오므로 '새' 없이 전체 기간", () => {
     expect(slotKicker(slot("FEATURE", 30, 1))).toEqual([`최근${NB}30일 새 공동구매`, `조회${NB}1위`]);
     expect(slotKicker(slot("TALL", 90, 1))[0]).toBe(`최근${NB}90일 새 IC`);
     expect(slotKicker(slot("IC_VIEWS", 90, 3))[0]).toBe("90일 새 IC");
-    expect(slotKicker(slot("FEATURE", null, 1))).toEqual(["전체 기간 새 공동구매", `조회${NB}1위`]);
-    expect(slotKicker(slot("GB_VIEWS", null, 1))[0]).toBe("전체 기간 새 공동구매");
+    expect(slotKicker(slot("FEATURE", null, 1))).toEqual(["전체 기간 공동구매", `조회${NB}1위`]);
+    expect(slotKicker(slot("GB_VIEWS", null, 1))[0]).toBe("전체 기간 공동구매");
+    expect(slotKicker(slot("IC_REPLIES", null, 2))).toEqual(["전체 기간 IC", `댓글${NB}2위`]);
   });
 });
 

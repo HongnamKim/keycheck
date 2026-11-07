@@ -24,3 +24,34 @@
   color: var(--color-text);
   font-weight: 700;
 }
+
+/* 태블릿 이하: 손가락으로 누르기 쉽게 링크 폭도 44px 이상, 링크 좌우 여백이 링크 사이 간격을 대신한다(시안) */
+@media (max-width: 1023px) {
+  .nav {
+    gap: 0;
+  }
+
+  .link {
+    justify-content: center;
+    min-width: 44px;
+    padding: 0 12px;
+  }
+}
+
+/* 모바일에서는 헤더 좌우 끝까지 닿는 두 칸 탭 줄. 16px은 모바일 .headerInner의 좌우 padding이다 */
+@media (max-width: 599px) {
+  .nav {
+    flex: 0 0 calc(100% + 32px);
+    gap: 0;
+    margin: 6px -16px 0;
+    padding: 0 8px;
+    border-top: 1px solid var(--color-divider);
+  }
+
+  .link {
+    flex: 1 1 0;
+    justify-content: center;
+    min-height: 46px;
+    font-size: 15px;
+  }
+}
