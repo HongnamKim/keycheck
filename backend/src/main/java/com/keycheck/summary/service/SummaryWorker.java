@@ -2,6 +2,7 @@ package com.keycheck.summary.service;
 
 import com.anthropic.errors.AnthropicException;
 import com.anthropic.errors.AnthropicInvalidDataException;
+import com.anthropic.errors.AnthropicServiceException;
 import com.keycheck.crawl.config.CollectProperties;
 import com.keycheck.post.domain.Board;
 import com.keycheck.post.domain.Post;
@@ -13,6 +14,8 @@ import com.keycheck.summary.dto.SummaryResult;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -32,6 +35,9 @@ public class SummaryWorker {
   /** API를 쓸 수 없을 때(인증·설정·과부하·연결 오류) 다음 시도까지 쉬는 시간 */
   static final Duration ERROR_PAUSE = Duration.ofMinutes(1);
 
+  /** 하루 요약 상한을 세는 날짜의 시간대 */
+  private static final ZoneId DAILY_LIMIT_ZONE = ZoneId.of("Asia/Seoul");
+
   private final PostRepository postRepository;
   private final Summarizer summarizer;
   private final SummaryProperties properties;
@@ -39,6 +45,11 @@ public class SummaryWorker {
   private final Clock clock;
 
   private Instant pausedUntil = Instant.MIN;
+
+  /** Claude 요약기를 부른 횟수를 세는 날짜(한국 시간)와 그날 부른 횟수, 상한 경고를 남겼는지 */
+  private LocalDate countedDate;
+  private int countedToday;
+  private boolean limitWarned;
 
   /**
    * 이번 실행에서 이미 요약한 글 ID(요약 대기였던 글 포함). 요약해도 여전히 대상인 글(예: 세부 분류나 상품 이름을 정하지 못한 글)을 계속
@@ -50,9 +61,10 @@ public class SummaryWorker {
    * 요약 대상 중 맨 앞 글(요약 대기 글 중 본문을 가장 늦게 채운 글. 미리 읽기로 채우고 아무도 열지 않은 글은 뒤로) 하나를 요약한다. 글 때문에 요약할 수 없으면 FAILED로 두고 다시 시도하지 않는다. 단 GB
    * 다시 요약이 실패하면 요약은 그대로 두고 기간만 비운 뒤 그 제목으로는 다시 요약하지 않는다. 상품 이름을 채우려는 다시 요약이 실패해도 요약은
    * 그대로 두고 그 실행에서는 다시 요약하지 않는다(재시작하면 다시 요약한다). API를 쓸 수 없으면 상태를 그대로 두고
-   * ERROR_PAUSE 동안 쉰다. 요약한 글은 한 실행에서 다시 요약하지 않는다(GB 다시 요약은 제목이 바뀔 때마다 한 번).
+   * ERROR_PAUSE 동안 쉰다. 요약한 글은 한 실행에서 다시 요약하지 않는다(GB 다시 요약은 제목이 바뀔 때마다 한 번). 오늘(한국 시간) Claude
+   * 요약기를 부른 횟수(API 오류 응답은 빼고)가 하루 상한에 닿았으면 다음 날까지 쉰다. 가짜 요약기는 세지 않는다.
    *
-   * @return 대상이 있었으면 true (쉬는 중이면 false)
+   * @return 대상이 있었으면 true (쉬는 중이거나 하루 상한에 닿았으면 false)
    */
   public boolean summarizeNext() {
     if (clock.instant().isBefore(pausedUntil)) {
@@ -78,6 +90,15 @@ public class SummaryWorker {
     if (post == null) {
       return false;
     }
+    if (claude && !countToday()) {
+      // 다음 날 0시(한국 시간)까지 대상을 다시 읽지 않는다. 5초마다 도는 작업이 그동안 DB 전송량을 쓰지 않게
+      pausedUntil =
+          LocalDate.ofInstant(clock.instant(), DAILY_LIMIT_ZONE)
+              .plusDays(1)
+              .atStartOfDay(DAILY_LIMIT_ZONE)
+              .toInstant();
+      return false;
+    }
     boolean gbRedo = isGbRedo(post, claude);
     // 상품 이름을 채우려는 다시 요약(다른 다시 요약 조건에도 걸려 있어도)
     boolean productNameRedo =
@@ -97,6 +118,10 @@ public class SummaryWorker {
       if (isApiUnavailable(e)) {
         log.error("요약 API를 쓸 수 없어 {} 쉰다: topic={}", ERROR_PAUSE, post.getTopicId(), e);
         pausedUntil = clock.instant().plus(ERROR_PAUSE);
+        // 오류 응답(인증·과부하·요청 한도 등)은 과금되지 않으니 하루 상한에서 되돌린다. 연결 실패·시간 초과는 과금됐을 수 있어 센다
+        if (claude && e instanceof AnthropicServiceException) {
+          uncountToday();
+        }
       } else if (gbRedo) {
         log.warn("공동구매 기간을 다시 뽑지 못해 요약은 두고 기간만 비운다: topic={}", post.getTopicId(), e);
         postRepository.markGbRedoFailed(post.getId(), post.getTitle());
@@ -125,6 +150,34 @@ public class SummaryWorker {
         result.getVendors());
     redone.add(post.getId());
     return true;
+  }
+
+  /**
+   * 오늘(한국 시간) Claude 요약기를 부른 횟수가 하루 상한보다 적으면 한 번을 센다. 상한에 닿으면 그날 처음 한 번만 경고를 남긴다.
+   *
+   * @return 세었으면 true, 상한에 닿았으면 false
+   */
+  private synchronized boolean countToday() {
+    LocalDate today = LocalDate.ofInstant(clock.instant(), DAILY_LIMIT_ZONE);
+    if (!today.equals(countedDate)) {
+      countedDate = today;
+      countedToday = 0;
+      limitWarned = false;
+    }
+    if (countedToday >= properties.getDailyLimit()) {
+      if (!limitWarned) {
+        log.warn("오늘(한국 시간) 요약 상한 {}건에 닿아 다음 날까지 요약하지 않는다", properties.getDailyLimit());
+        limitWarned = true;
+      }
+      return false;
+    }
+    countedToday++;
+    return true;
+  }
+
+  /** countToday로 센 한 번을 되돌린다 */
+  private synchronized void uncountToday() {
+    countedToday--;
   }
 
   /**

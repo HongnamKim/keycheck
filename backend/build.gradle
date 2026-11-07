@@ -27,6 +27,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-flyway'
+    // 배포 서버 상태 확인(/actuator/health)
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.flywaydb:flyway-database-postgresql'
     implementation 'org.jsoup:jsoup:1.23.2'
     implementation 'com.anthropic:anthropic-java:3.4.0'

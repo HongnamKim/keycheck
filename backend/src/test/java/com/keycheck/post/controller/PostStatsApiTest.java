@@ -13,10 +13,14 @@ import com.keycheck.MutableClock;
 import com.keycheck.TestcontainersConfiguration;
 import com.keycheck.crawl.client.GeekhackClient;
 import com.keycheck.crawl.client.RequestGate;
+import com.keycheck.crawl.config.CollectProperties;
+import com.keycheck.crawl.parser.TopicParser;
+import com.keycheck.post.config.StatsProperties;
 import com.keycheck.post.domain.Board;
 import com.keycheck.post.domain.Category;
 import com.keycheck.post.domain.Post;
 import com.keycheck.post.repository.PostRepository;
+import com.keycheck.post.service.PostStatsService;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -46,6 +50,8 @@ class PostStatsApiTest {
   @Autowired private PostRepository postRepository;
   @Autowired private MutableClock clock;
   @Autowired private JdbcTemplate jdbcTemplate;
+  @Autowired private TopicParser topicParser;
+  @Autowired private CollectProperties collectProperties;
 
   // 실제 geekhack을 호출하지 않는다. 파서와 DB는 실제 것을 쓴다.
   @MockitoBean private GeekhackClient client;
@@ -64,20 +70,27 @@ class PostStatsApiTest {
     when(client.fetchTopicLastPage(TOPIC_ID)).thenReturn(lastPage);
   }
 
+  /** 마지막 댓글이 3일 전인(최근 활동이 있는) 글 */
   private Post savePostCheckedAgo(Duration ago) {
-    return postRepository.saveAndFlush(
+    return savePost(TOPIC_ID, ago, clock.instant().minus(Duration.ofDays(3)));
+  }
+
+  private Post savePost(long topicId, Duration checkedAgo, Instant lastPostAt) {
+    Post post =
         Post.create(
             Board.IC,
-            TOPIC_ID,
+            topicId,
             "글",
             "maker",
             Category.KEYBOARD,
             Instant.parse("2026-10-01T00:00:00Z"),
             100,
             5,
-            clock.instant().minus(ago),
-            "https://geekhack.test/index.php?topic=2000.0",
-            "본문"));
+            clock.instant().minus(checkedAgo),
+            "https://geekhack.test/index.php?topic=" + topicId + ".0",
+            "본문");
+    post.updateLastPostAt(lastPostAt);
+    return postRepository.saveAndFlush(post);
   }
 
   private void assertStoredValuesReturned(Post post) throws Exception {
@@ -180,6 +193,64 @@ class PostStatsApiTest {
 
     assertThat(postRepository.findById(post.getId()).orElseThrow().getStatsCheckedAt())
         .isEqualTo(post.getStatsCheckedAt());
+  }
+
+  @Test
+  @DisplayName("마지막 댓글(모르면 작성일)이 30일보다 오래된 글은 확인한 지 24시간이 지나야 갱신하고, 그 밖의 글은 지금처럼 1시간이 지나면 갱신한다")
+  void statsInactiveInterval() throws Exception {
+    when(client.fetchTopicLastPage(anyLong())).thenReturn(lastPage);
+    Instant longAgo = clock.instant().minus(Duration.ofDays(40));
+    Post inactiveChecked2h = savePost(2001, Duration.ofHours(2), longAgo);
+    Post inactiveChecked25h = savePost(2002, Duration.ofHours(25), longAgo);
+    Post activeChecked2h =
+        savePost(2003, Duration.ofHours(2), clock.instant().minus(Duration.ofDays(3)));
+    // 마지막 댓글을 모르면 작성일(2026-10-01, 30일보다 오래됨)로 본다
+    Post unknownLastPostChecked2h = savePost(2004, Duration.ofHours(2), null);
+
+    assertStoredValuesReturned(inactiveChecked2h);
+    assertStoredValuesReturned(unknownLastPostChecked2h);
+    mockMvc
+        .perform(get("/api/posts/" + inactiveChecked25h.getId() + "/stats"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.views").value(512));
+    mockMvc
+        .perform(get("/api/posts/" + activeChecked2h.getId() + "/stats"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.views").value(512));
+
+    verify(client, never()).fetchTopicLastPage(2001L);
+    verify(client, never()).fetchTopicLastPage(2004L);
+    verify(client).fetchTopicLastPage(2002L);
+    verify(client).fetchTopicLastPage(2003L);
+  }
+
+  @Test
+  @DisplayName("한 시간(정각 기준) 동안 geekhack 갱신 예산을 다 쓰면 저장값을 주고, 다음 정각부터 다시 갱신한다")
+  void statsHourlyBudget() {
+    clock.set(Instant.parse("2026-11-01T00:30:00Z"));
+    when(client.fetchTopicLastPage(anyLong())).thenReturn(lastPage);
+    PostStatsService service =
+        new PostStatsService(
+            postRepository,
+            client,
+            gate,
+            topicParser,
+            collectProperties,
+            new StatsProperties(2, Duration.ofDays(30), Duration.ofHours(24)),
+            clock);
+    Instant recent = clock.instant().minus(Duration.ofDays(3));
+    Post first = savePost(2001, Duration.ofHours(2), recent);
+    Post second = savePost(2002, Duration.ofHours(2), recent);
+    Post third = savePost(2003, Duration.ofHours(2), recent);
+
+    assertThat(service.getStats(first.getId()).getViews()).isEqualTo(512);
+    assertThat(service.getStats(second.getId()).getViews()).isEqualTo(512);
+    assertThat(service.getStats(third.getId()).getViews()).isEqualTo(100);
+    verify(client, never()).fetchTopicLastPage(2003L);
+
+    clock.set(Instant.parse("2026-11-01T01:00:00Z"));
+    assertThat(service.getStats(third.getId()).getViews()).isEqualTo(512);
+    verify(client).fetchTopicLastPage(2003L);
   }
 
   @Test

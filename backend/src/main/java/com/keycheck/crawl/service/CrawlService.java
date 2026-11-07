@@ -4,6 +4,7 @@ import com.keycheck.classify.service.Classifier;
 import com.keycheck.crawl.client.GeekhackClient;
 import com.keycheck.crawl.client.RequestGate;
 import com.keycheck.crawl.config.CollectProperties;
+import com.keycheck.crawl.config.FillProperties;
 import com.keycheck.crawl.config.GeekhackProperties;
 import com.keycheck.crawl.domain.BoardBackfill;
 import com.keycheck.crawl.dto.BoardTopic;
@@ -19,8 +20,12 @@ import com.keycheck.post.domain.Post;
 import com.keycheck.post.repository.PostRepository;
 import java.time.Clock;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -58,10 +63,17 @@ public class CrawlService {
   private final BoardBackfillRepository backfillRepository;
   private final GeekhackProperties properties;
   private final CollectProperties collectProperties;
+  private final FillProperties fillProperties;
   private final Clock clock;
 
   /** 과거 글 확보는 게시판과 상관없이 한 번에 한 요청만 한다 */
   private final ReentrantLock backfillLock = new ReentrantLock();
+
+  /** 지금 진행 중인 틀 글 채우기(상세 열기·미리 읽기) 수. FillProperties.maxConcurrent를 넘지 않는다 */
+  private final AtomicInteger filling = new AtomicInteger();
+
+  /** 상세 열기에서 채우기에 실패한 글 ID와 그 시각 */
+  private final Map<Long, Instant> fillFailedAt = new ConcurrentHashMap<>();
 
   public void crawl() {
     for (Board board : Board.values()) {
@@ -129,26 +141,66 @@ public class CrawlService {
   }
 
   /**
-   * 틀 글을 글 첫 페이지로 채운다. maxWait 안에 요청 간격을 얻지 못하거나 읽기에 실패하면 그대로 둔다.
+   * 틀 글을 글 첫 페이지로 채운다. maxWait 안에 요청 간격을 얻지 못하거나 읽기에 실패하면 그대로 둔다. 채우기(미리 읽기 포함)가 이미 동시
+   * 상한만큼 진행 중이거나, 이 글이 실패 쿨다운 안이면 기다리지도 요청하지도 않고 그대로 둔다. 읽기에 실패하면 쿨다운을 시작한다.
    *
    * @param post 틀 글 (isDetailLoaded() == false)
    */
   public void fillSkeleton(Post post, Duration maxWait) {
-    if (gate.tryAcquire(maxWait)) {
-      readAndFill(post, false);
+    if (inFillCooldown(post) || !startFill()) {
+      return;
+    }
+    try {
+      if (gate.tryAcquire(maxWait) && !readAndFill(post, false)) {
+        recordFillFailure(post);
+      }
+    } finally {
+      filling.decrementAndGet();
     }
   }
 
   /**
-   * 틀 글을 글 첫 페이지로 채운다. 사용자 요청·정기 수집이 쓰지 않는 빈 간격만 쓰고(RequestGate.tryAcquireIdle) 기다리지 않는다.
+   * 틀 글을 글 첫 페이지로 채운다. 사용자 요청·정기 수집이 쓰지 않는 빈 간격만 쓰고(RequestGate.tryAcquireIdle) 기다리지 않는다. 상세
+   * 열기와 같은 동시 상한을 쓰고, 실패 쿨다운은 보지 않는다(PrefetchWorker가 실패 횟수를 센다).
    *
    * @param post 틀 글 (isDetailLoaded() == false)
    */
   public PrefetchResult prefetchSkeleton(Post post) {
-    if (!gate.tryAcquireIdle()) {
+    if (!startFill()) {
       return PrefetchResult.NO_SLOT;
     }
-    return readAndFill(post, true) ? PrefetchResult.FILLED : PrefetchResult.FAILED;
+    try {
+      if (!gate.tryAcquireIdle()) {
+        return PrefetchResult.NO_SLOT;
+      }
+      return readAndFill(post, true) ? PrefetchResult.FILLED : PrefetchResult.FAILED;
+    } finally {
+      filling.decrementAndGet();
+    }
+  }
+
+  /** 동시 상한 안이면 채우기 하나를 시작한 것으로 센다(기다리지 않는다). true면 끝날 때 filling을 줄인다. */
+  private boolean startFill() {
+    if (filling.incrementAndGet() > fillProperties.getMaxConcurrent()) {
+      filling.decrementAndGet();
+      return false;
+    }
+    return true;
+  }
+
+  private boolean inFillCooldown(Post post) {
+    Instant failedAt = fillFailedAt.get(post.getId());
+    return failedAt != null
+        && clock.instant().isBefore(failedAt.plus(fillProperties.getFailureCooldown()));
+  }
+
+  /** 쿨다운이 끝난 기록은 이때 지운다 */
+  private void recordFillFailure(Post post) {
+    Instant now = clock.instant();
+    fillFailedAt
+        .values()
+        .removeIf(failedAt -> !now.isBefore(failedAt.plus(fillProperties.getFailureCooldown())));
+    fillFailedAt.put(post.getId(), now);
   }
 
   /**

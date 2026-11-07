@@ -10,6 +10,9 @@ spring:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/keycheck}
     username: ${DB_USERNAME:keycheck}
     password: ${DB_PASSWORD:keycheck}
+    hikari:
+      # 배포 DB(Supabase 세션 풀러)는 연결 수가 적어 운영은 5
+      maximum-pool-size: ${DB_POOL_SIZE:10}
   task:
     scheduling:
       pool:
@@ -20,8 +23,28 @@ spring:
       ddl-auto: validate
     open-in-view: false
 
+server:
+  # 끌 때 처리 중인 요청을 마치고 내린다
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # 상태 확인(/actuator/health)만 연다
+        include: health
+  endpoint:
+    health:
+      # DB 등 세부 항목은 숨기고 UP·DOWN만 알려 준다
+      show-details: never
+
 springdoc:
   paths-to-match: /api/**
+  # 운영은 SPRINGDOC_ENABLED=false로 API 문서와 Swagger UI를 끈다
+  api-docs:
+    enabled: ${SPRINGDOC_ENABLED:true}
+  swagger-ui:
+    enabled: ${SPRINGDOC_ENABLED:true}
 
 keycheck:
   # fake | claude
@@ -48,6 +71,9 @@ keycheck:
     # 켜면 이름이 없는 요약 완료 글을 다시 요약한다. 글당 약 1.1센트, 켜기 전 확인.
     # 실행마다 글당 한 번(AI가 이름을 모르는 글과 다시 요약에 실패한 글은 재시작할 때마다 다시 요약한다. 실패해도 요약은 그대로). 가짜 요약기에서는 무시
     redo-missing-product-name: false
+    # 하루(한국 시간 자정 기준)에 Claude 요약기를 부르는 상한(글 탓 실패·연결 실패·시간 초과 포함, 과금되지 않는 API 오류 응답은 빼고).
+    # 닿으면 다음 날까지 쉰다. 메모리에서 세므로 재시작하면 0부터 센다(최종 안전망은 Anthropic 월 지출 한도). 가짜 요약기에서는 무시
+    daily-limit: 300
   crawl:
     # 켜면 기동 직후와 이후 interval마다 실제 geekhack에 요청한다
     enabled: ${CRAWL_ENABLED:false}
@@ -56,6 +82,17 @@ keycheck:
     # 켜면 틀 글을 하나씩 실제 geekhack에서 읽는다. 채운 글은 요약 작업이 요약하므로 SUMMARIZER=claude면 글당 약 1.1센트
     enabled: ${PREFETCH_ENABLED:false}
     interval: 10s
+  fill:
+    # 틀 글 채우기(상세 열기·미리 읽기)를 동시에 하는 상한. 넘치면 기다리지 않고 틀 그대로 돌려준다(서버 스레드가 묶이지 않게)
+    max-concurrent: 3
+    # 상세 열기에서 채우기에 실패한 글은 이 시간 동안 geekhack에 다시 요청하지 않고 틀 그대로 돌려준다(미리 읽기는 따로 실패 횟수를 센다)
+    failure-cooldown: 10m
+  stats:
+    # 상세 화면 조회수 갱신이 한 시간(정각 기준) 동안 geekhack에 요청하는 상한. 다 쓰면 저장값을 준다
+    hourly-budget: 60
+    # 마지막 댓글(없으면 작성일)이 inactive-after보다 오래된 글은 inactive-interval마다만 갱신한다(그 밖의 글은 1시간)
+    inactive-after: 30d
+    inactive-interval: 24h
   collect:
     # 이 글 번호 이상인 글만 모으고 보여 준다. 2020-01-01 무렵 첫 글 번호.
     # DB의 작성일 기준점(102599 = 2019-09-24, 112165 = 2021-04-07)으로 보간한 추정값이며 며칠 오차는 괜찮다.
@@ -74,7 +111,8 @@ keycheck:
     enabled: ${THUMBNAIL_ENABLED:false}
     interval: 3s
   cors:
-    allowed-origins: http://localhost:3000
+    # 브라우저에서 백엔드를 부르는 프론트 주소(쉼표로 여러 개). placeholder로 두어 .env 파일에서도 적용된다
+    allowed-origins: ${KEYCHECK_CORS_ALLOWED_ORIGINS:http://localhost:3000}
   geekhack:
     base-url: https://geekhack.org
     user-agent: "keycheck/0.1 (+https://github.com/HongnamKim/keycheck)"

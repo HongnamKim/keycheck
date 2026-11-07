@@ -6,7 +6,9 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -200,6 +202,29 @@ class PostDetailFillApiTest {
     Post post = saveSkeleton();
 
     assertSkeletonReturned(post);
+  }
+
+  @Test
+  @DisplayName("채우기에 실패한 글은 10분 동안 geekhack에 다시 요청하지 않고 틀 그대로 돌려주고, 10분이 지나면 다시 채운다")
+  void fillCooldownSkipsRecentFailure() throws Exception {
+    when(client.fetchTopic(TOPIC_ID)).thenThrow(new IllegalStateException("요청 실패"));
+    Post post = saveSkeleton();
+
+    assertSkeletonReturned(post);
+    clock.advance(Duration.ofMinutes(10).minusSeconds(1));
+    assertSkeletonReturned(post);
+
+    verify(client, times(1)).fetchTopic(TOPIC_ID);
+    verify(gate, times(1)).tryAcquire(any(Duration.class));
+
+    doReturn(topicPage).when(client).fetchTopic(TOPIC_ID);
+    clock.advance(Duration.ofSeconds(1));
+    mockMvc
+        .perform(get("/api/posts/" + post.getId()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.detailLoaded").value(true));
+
+    verify(client, times(2)).fetchTopic(TOPIC_ID);
   }
 
   @Test

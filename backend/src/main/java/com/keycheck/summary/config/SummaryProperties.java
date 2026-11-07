@@ -21,4 +21,10 @@ public class SummaryProperties {
    * 1.1센트이므로 켜기 전에 확인한다.
    */
   private final boolean redoMissingProductName;
+
+  /**
+   * 하루(한국 시간 자정 기준)에 Claude 요약기를 부르는 상한. 글 탓 실패와 연결 실패·시간 초과는 세고, 과금되지 않는 API 오류 응답(인증·과부하·요청
+   * 한도 등)은 세지 않는다. 닿으면 다음 날까지 쉰다. 메모리에서 세므로 재시작하면 0부터 센다. 가짜 요약기에서는 무시.
+   */
+  private final int dailyLimit;
 }

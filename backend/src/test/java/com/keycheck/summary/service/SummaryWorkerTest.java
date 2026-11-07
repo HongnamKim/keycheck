@@ -2,6 +2,10 @@ package com.keycheck.summary.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
+import static org.mockito.AdditionalAnswers.delegatesTo;
+import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import com.anthropic.core.JsonValue;
 import com.anthropic.core.http.Headers;
@@ -65,10 +69,19 @@ class SummaryWorkerTest {
 
   private SummaryWorker worker(
       boolean redoFake, boolean redoMissingSubcategory, boolean redoMissingProductName) {
+    return worker(redoFake, redoMissingSubcategory, redoMissingProductName, 300);
+  }
+
+  private SummaryWorker worker(
+      boolean redoFake,
+      boolean redoMissingSubcategory,
+      boolean redoMissingProductName,
+      int dailyLimit) {
     return new SummaryWorker(
         postRepository,
         summarizer,
-        new SummaryProperties(redoFake, redoMissingSubcategory, redoMissingProductName),
+        new SummaryProperties(
+            redoFake, redoMissingSubcategory, redoMissingProductName, dailyLimit),
         new CollectProperties(0),
         clock);
   }
@@ -250,6 +263,87 @@ class SummaryWorkerTest {
   }
 
   @Test
+  @DisplayName("하루 요약 상한에 닿으면 대기 글이 있어도 쉬고, 한국 시간으로 다음 날이 되면 다시 요약한다")
+  void stopsAtDailyLimit() {
+    saveLoaded(2000);
+    saveLoaded(3000);
+    saveLoaded(4000);
+    // 상한에 닿은 뒤 DB를 읽는지 보려고 실제 저장소에 넘기는 목을 쓴다
+    PostRepository repository = mock(PostRepository.class, delegatesTo(postRepository));
+    SummaryWorker worker =
+        new SummaryWorker(
+            repository,
+            summarizer,
+            new SummaryProperties(false, false, false, 2),
+            new CollectProperties(0),
+            clock);
+
+    assertThat(worker.summarizeNext()).isTrue();
+    assertThat(worker.summarizeNext()).isTrue();
+    assertThat(worker.summarizeNext()).isFalse();
+    assertThat(summarizer.titles()).containsExactly("[IC] 글 4000", "[IC] 글 3000");
+
+    // CHECKED_AT은 한국 시간 11월 1일 9시라, 15시간 뒤가 한국 시간 다음 날 0시다(UTC로는 아직 11월 1일)
+    clearInvocations(repository);
+    clock.advance(Duration.ofHours(15).minusSeconds(1));
+    assertThat(worker.summarizeNext()).isFalse();
+    // 상한에 닿은 날에는 요약 대상을 다시 읽지 않는다(5초마다 도는 작업이 DB 전송량을 쓰지 않게)
+    verifyNoInteractions(repository);
+    clock.advance(Duration.ofSeconds(1));
+    assertThat(worker.summarizeNext()).isTrue();
+    assertThat(summarizer.titles())
+        .containsExactly("[IC] 글 4000", "[IC] 글 3000", "[IC] 글 2000");
+  }
+
+  @Test
+  @DisplayName("API가 오류 응답을 준 호출(과금되지 않음)은 하루 상한에 세지 않고, 연결 실패·시간 초과는 센다")
+  void apiErrorResponseIsNotCountedTowardDailyLimit() {
+    saveLoaded(2000);
+    saveLoaded(3000);
+    SummaryWorker worker = worker(false, false, false, 1);
+    summarizer.error =
+        UnauthorizedException.builder()
+            .headers(Headers.builder().build())
+            .body(JsonValue.from("invalid x-api-key"))
+            .build();
+
+    assertThat(worker.summarizeNext()).isTrue();
+    summarizer.error = null;
+    clock.advance(SummaryWorker.ERROR_PAUSE);
+    assertThat(worker.summarizeNext()).isTrue();
+    assertThat(worker.summarizeNext()).isFalse();
+    assertThat(summarizer.titles()).containsExactly("[IC] 글 3000", "[IC] 글 3000");
+
+    // 시간 초과는 Anthropic이 처리를 마쳐 과금됐을 수 있다
+    SummaryWorker timedOut = worker(false, false, false, 1);
+    summarizer.error = new AnthropicIoException("시간 초과");
+    assertThat(timedOut.summarizeNext()).isTrue();
+    summarizer.error = null;
+    clock.advance(SummaryWorker.ERROR_PAUSE);
+    assertThat(timedOut.summarizeNext()).isFalse();
+  }
+
+  @Test
+  @DisplayName("가짜 요약기는 과금되지 않으니 하루 상한과 상관없이 요약한다")
+  void fakeSummarizerIgnoresDailyLimit() {
+    saveLoaded(2000);
+    saveLoaded(3000);
+    SummaryWorker worker =
+        new SummaryWorker(
+            postRepository,
+            new FakeSummarizer(),
+            new SummaryProperties(false, false, false, 1),
+            new CollectProperties(0),
+            clock);
+
+    assertThat(worker.summarizeNext()).isTrue();
+    assertThat(worker.summarizeNext()).isTrue();
+    assertThat(postRepository.findAll())
+        .extracting(Post::getSummaryStatus)
+        .containsOnly(SummaryStatus.DONE);
+  }
+
+  @Test
   @DisplayName("방금 본문을 채운 글은 글 번호가 작아도 먼저 요약한다")
   void summarizesJustFilledFirst() {
     saveLoaded(3000);
@@ -332,7 +426,7 @@ class SummaryWorkerTest {
         new SummaryWorker(
             postRepository,
             summarizer,
-            new SummaryProperties(false, false, false),
+            new SummaryProperties(false, false, false, 300),
             new CollectProperties(2500),
             clock);
 
@@ -492,7 +586,7 @@ class SummaryWorkerTest {
         new SummaryWorker(
             postRepository,
             new FakeSummarizer(),
-            new SummaryProperties(false, true, false),
+            new SummaryProperties(false, true, false, 300),
             new CollectProperties(0),
             clock);
 
@@ -648,7 +742,7 @@ class SummaryWorkerTest {
         new SummaryWorker(
             postRepository,
             new FakeSummarizer(),
-            new SummaryProperties(false, false, true),
+            new SummaryProperties(false, false, true, 300),
             new CollectProperties(0),
             clock);
 
@@ -884,7 +978,7 @@ class SummaryWorkerTest {
         new SummaryWorker(
             postRepository,
             new FakeSummarizer(),
-            new SummaryProperties(false, false, false),
+            new SummaryProperties(false, false, false, 300),
             new CollectProperties(0),
             clock);
 
@@ -905,7 +999,7 @@ class SummaryWorkerTest {
         new SummaryWorker(
             postRepository,
             new FakeSummarizer(),
-            new SummaryProperties(true, false, false),
+            new SummaryProperties(true, false, false, 300),
             new CollectProperties(0),
             clock);
 
