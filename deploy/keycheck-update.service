@@ -1,0 +1,12 @@
+# 백엔드 새 이미지 확인·갱신. keycheck-update.timer가 3분마다 실행한다
+[Unit]
+Description=keycheck backend image update
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/keycheck/update.sh
+# 이미지 받기가 멈춰도 다음 확인이 막히지 않게 한다(oneshot은 기본으로 시간 제한이 없다)
+TimeoutStartSec=10min
