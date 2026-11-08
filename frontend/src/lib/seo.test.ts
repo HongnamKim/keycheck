@@ -185,34 +185,52 @@ describe("ogCardVersion", () => {
 });
 
 describe("sitemapEntries", () => {
-  it("메인과 두 목록을 먼저, 글은 받은 순서대로 절대 주소로 담는다", () => {
+  it("메인과 두 목록, 국내 판매 목록을 먼저, 글과 판매 글은 받은 순서대로 절대 주소로 담는다", () => {
     expect(
-      sitemapEntries([
-        { id: 30, lastModified: null },
-        { id: 12, lastModified: null },
-      ]),
+      sitemapEntries(
+        [
+          { id: 30, lastModified: null },
+          { id: 12, lastModified: null },
+        ],
+        [{ id: 3, lastModified: null }],
+      ),
     ).toEqual([
       { url: SITE_URL },
       { url: `${SITE_URL}/ic` },
       { url: `${SITE_URL}/gb` },
+      { url: `${SITE_URL}/sales` },
       { url: `${SITE_URL}/posts/30` },
       { url: `${SITE_URL}/posts/12` },
+      { url: `${SITE_URL}/sales/3` },
     ]);
   });
 
   it("요약을 마친 시각을 아는 글만 lastModified를 넣는다", () => {
     expect(
-      sitemapEntries([
-        { id: 30, lastModified: "2026-11-07T12:30:00Z" },
-        { id: 12, lastModified: null },
-      ]).slice(3),
+      sitemapEntries(
+        [
+          { id: 30, lastModified: "2026-11-07T12:30:00Z" },
+          { id: 12, lastModified: null },
+        ],
+        [],
+      ).slice(4),
     ).toEqual([{ url: `${SITE_URL}/posts/30`, lastModified: "2026-11-07T12:30:00Z" }, { url: `${SITE_URL}/posts/12` }]);
   });
 
-  it("요약이 끝난 글이 없어도 메인과 두 목록은 담는다", () => {
-    expect(sitemapEntries([]).map((entry) => entry.url)).toEqual([SITE_URL, `${SITE_URL}/ic`, `${SITE_URL}/gb`]);
+  it("판매 글도 lastModified를 알 때만 넣는다", () => {
+    expect(sitemapEntries([], [{ id: 3, lastModified: "2026-11-08T00:00:00Z" }]).slice(4)).toEqual([
+      { url: `${SITE_URL}/sales/3`, lastModified: "2026-11-08T00:00:00Z" },
+    ]);
   });
 
+  it("글이 없어도 메인과 두 목록, 판매 목록은 담는다", () => {
+    expect(sitemapEntries([], []).map((entry) => entry.url)).toEqual([
+      SITE_URL,
+      `${SITE_URL}/ic`,
+      `${SITE_URL}/gb`,
+      `${SITE_URL}/sales`,
+    ]);
+  });
 });
 
 describe("siteOpenGraph", () => {

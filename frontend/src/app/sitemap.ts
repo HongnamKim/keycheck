@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { connection } from "next/server";
-import { getSitemapPosts } from "@/lib/api";
+import { getSaleSitemap, getSitemapPosts } from "@/lib/api";
 import { sitemapEntries } from "@/lib/seo";
 
 /**
@@ -9,5 +9,6 @@ import { sitemapEntries } from "@/lib/seo";
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   await connection();
-  return sitemapEntries(await getSitemapPosts());
+  const [posts, sales] = await Promise.all([getSitemapPosts(), getSaleSitemap()]);
+  return sitemapEntries(posts, sales);
 }

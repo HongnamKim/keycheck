@@ -164,17 +164,22 @@ export function jsonLdHtml(data: object): string {
 }
 
 /**
- * 사이트맵 항목. 메인과 두 목록, 요약이 끝난 글을 절대 주소로 담는다(목록 필터 주소는 canonical과 같이 뺀다).
- * 글의 lastModified(요약을 마친 시각)는 알 때만 넣는다
+ * 사이트맵 항목. 메인과 두 목록, 국내 판매 목록, 요약이 끝난 글과 판매 글을 절대 주소로 담는다(목록 필터 주소는 canonical과 같이 뺀다).
+ * 글과 판매 글의 lastModified(요약을 마친 시각, 판매 글의 갱신 시각)는 알 때만 넣는다
  */
-export function sitemapEntries(posts: SitemapPost[]): MetadataRoute.Sitemap {
+export function sitemapEntries(posts: SitemapPost[], sales: SitemapPost[]): MetadataRoute.Sitemap {
   return [
     { url: SITE_URL },
     { url: `${SITE_URL}/ic` },
     { url: `${SITE_URL}/gb` },
+    { url: `${SITE_URL}/sales` },
     ...posts.map((post) => ({
       url: `${SITE_URL}/posts/${post.id}`,
       ...(post.lastModified ? { lastModified: post.lastModified } : {}),
+    })),
+    ...sales.map((sale) => ({
+      url: `${SITE_URL}/sales/${sale.id}`,
+      ...(sale.lastModified ? { lastModified: sale.lastModified } : {}),
     })),
   ];
 }
