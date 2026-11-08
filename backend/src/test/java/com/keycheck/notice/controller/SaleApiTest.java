@@ -1,0 +1,315 @@
+package com.keycheck.notice.controller;
+
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.nullValue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.keycheck.TestcontainersConfiguration;
+import com.keycheck.notice.domain.ArchiveStatus;
+import com.keycheck.notice.domain.Notice;
+import com.keycheck.notice.domain.NoticeOrigin;
+import com.keycheck.notice.domain.SaleCategory;
+import com.keycheck.notice.domain.SaleItem;
+import com.keycheck.notice.domain.SaleLink;
+import com.keycheck.notice.domain.SalePhase;
+import com.keycheck.notice.domain.SaleType;
+import com.keycheck.notice.dto.SaleItemDraft;
+import com.keycheck.notice.repository.NoticeAttachmentRepository;
+import com.keycheck.notice.repository.NoticeRepository;
+import com.keycheck.notice.repository.SaleItemRepository;
+import com.keycheck.post.domain.KoreanVendor;
+import com.keycheck.post.domain.SummaryStatus;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.context.annotation.Import;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.json.JsonCompareMode;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.support.TransactionTemplate;
+
+@SpringBootTest
+@AutoConfigureMockMvc
+@Import(TestcontainersConfiguration.class)
+class SaleApiTest {
+  private static final Instant BASE = Instant.parse("2026-11-01T00:00:00Z");
+
+  @Autowired private MockMvc mockMvc;
+  @Autowired private NoticeRepository noticeRepository;
+  @Autowired private NoticeAttachmentRepository attachmentRepository;
+  @Autowired private SaleItemRepository saleItemRepository;
+  @Autowired private JdbcTemplate jdbcTemplate;
+  @Autowired private TransactionTemplate transaction;
+
+  private long nextId = 8_000_000L;
+
+  @BeforeEach
+  void setUp() {
+    jdbcTemplate.update("update notice set parent_id = null");
+    noticeRepository.deleteAll();
+  }
+
+  private Notice notice(KoreanVendor vendor, Instant postedAt, SummaryStatus status) {
+    long id = nextId++;
+    Notice notice =
+        Notice.create(id, id + 1, 555L, vendor, NoticeOrigin.BOT, postedAt, "공지", true, "{}");
+    notice = noticeRepository.save(notice);
+    if (status == SummaryStatus.DONE) {
+      noticeRepository.markSummarized(
+          notice.getId(), SummaryStatus.DONE, "model", Instant.parse("2026-11-05T09:30:00Z"));
+    }
+    return notice;
+  }
+
+  private SaleItem item(Notice notice, int position, String name, SaleCategory category) {
+    return item(notice, position, name, category, List.of());
+  }
+
+  private SaleItem item(
+      Notice notice, int position, String name, SaleCategory category, List<Long> imageIds) {
+    return saleItemRepository.save(
+        SaleItem.create(
+            notice,
+            position,
+            new SaleItemDraft(
+                name,
+                category,
+                SaleType.SALE,
+                SalePhase.OPEN,
+                LocalDate.of(2026, 11, 10),
+                LocalTime.of(20, 30),
+                LocalDate.of(2026, 11, 20),
+                null,
+                "12월 배송",
+                List.of("첫 줄", "둘째 줄"),
+                List.of(new SaleLink("구매", "https://shop.test/a")),
+                imageIds)));
+  }
+
+  private void attachment(Notice notice, long attachmentId, int position, ArchiveStatus status) {
+    transaction.executeWithoutResult(
+        s -> {
+          Notice loaded = noticeRepository.findById(notice.getId()).orElseThrow();
+          loaded.addAttachment(attachmentId, position, "a.png", "http://cdn/x");
+          noticeRepository.saveAndFlush(loaded);
+        });
+    attachmentRepository.markArchived(attachmentId, status);
+  }
+
+  @Test
+  @DisplayName("최근 공지 순으로 20개씩 준다")
+  void pagesTwentyAtATime() throws Exception {
+    for (int i = 0; i < 25; i++) {
+      Notice n = notice(KoreanVendor.SWAGKEYS, BASE.plusSeconds(i * 60L), SummaryStatus.DONE);
+      item(n, 0, "상품 " + i, SaleCategory.KEYBOARD);
+    }
+
+    String body =
+        mockMvc
+            .perform(get("/api/sales"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.items", hasSize(20)))
+            .andExpect(jsonPath("$.items[0].productName").value("상품 24"))
+            .andExpect(jsonPath("$.items[19].productName").value("상품 5"))
+            .andExpect(jsonPath("$.hasMore").value(true))
+            .andReturn()
+            .getResponse()
+            .getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
+    String cursor = com.jayway.jsonpath.JsonPath.read(body, "$.nextCursor");
+
+    mockMvc
+        .perform(get("/api/sales").param("cursor", cursor))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.items", hasSize(5)))
+        .andExpect(jsonPath("$.items[0].productName").value("상품 4"))
+        .andExpect(jsonPath("$.items[4].productName").value("상품 0"))
+        .andExpect(jsonPath("$.hasMore").value(false))
+        .andExpect(jsonPath("$.nextCursor").value(nullValue()));
+  }
+
+  @Test
+  @DisplayName("같은 공지의 건은 공지 안 순서로 나오고 쪽 경계에서도 빠지거나 겹치지 않는다")
+  void sameNoticeKeepsPositionAcrossPages() throws Exception {
+    Notice n = notice(KoreanVendor.SWAGKEYS, BASE, SummaryStatus.DONE);
+    for (int i = 0; i < 22; i++) {
+      item(n, i, "건 " + i, SaleCategory.KEYCAP);
+    }
+    String body =
+        mockMvc
+            .perform(get("/api/sales"))
+            .andExpect(jsonPath("$.items[0].productName").value("건 0"))
+            .andExpect(jsonPath("$.items[19].productName").value("건 19"))
+            .andReturn()
+            .getResponse()
+            .getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
+    String cursor = com.jayway.jsonpath.JsonPath.read(body, "$.nextCursor");
+
+    mockMvc
+        .perform(get("/api/sales").param("cursor", cursor))
+        .andExpect(jsonPath("$.items", hasSize(2)))
+        .andExpect(jsonPath("$.items[0].productName").value("건 20"))
+        .andExpect(jsonPath("$.items[1].productName").value("건 21"));
+  }
+
+  @Test
+  @DisplayName("공지 시각에 마이크로초가 남아 있어도 커서가 건을 건너뛰거나 겹치지 않는다")
+  void microsecondsDoNotBreakCursor() throws Exception {
+    Notice n = notice(KoreanVendor.SWAGKEYS, BASE, SummaryStatus.DONE);
+    for (int i = 0; i < 21; i++) {
+      item(n, i, "건 " + i, SaleCategory.KEYCAP);
+    }
+    jdbcTemplate.update(
+        "update sale_item set posted_at = posted_at + (id % 3) * interval '100 microseconds'"
+            + " where notice_id = ?",
+        n.getId());
+    String body =
+        mockMvc
+            .perform(get("/api/sales"))
+            .andExpect(jsonPath("$.items", hasSize(20)))
+            .andReturn()
+            .getResponse()
+            .getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
+    String cursor = com.jayway.jsonpath.JsonPath.read(body, "$.nextCursor");
+
+    mockMvc
+        .perform(get("/api/sales").param("cursor", cursor))
+        .andExpect(jsonPath("$.items", hasSize(1)))
+        .andExpect(jsonPath("$.items[0].productName").value("건 20"));
+  }
+
+  @Test
+  @DisplayName("판매처와 분류로 거른다")
+  void filtersByVendorAndCategory() throws Exception {
+    Notice swag = notice(KoreanVendor.SWAGKEYS, BASE, SummaryStatus.DONE);
+    Notice geon = notice(KoreanVendor.GEONWORKS, BASE.plusSeconds(60), SummaryStatus.DONE);
+    item(swag, 0, "스웩 키캡", SaleCategory.KEYCAP);
+    item(geon, 0, "건 키보드", SaleCategory.KEYBOARD);
+    item(geon, 1, "건 키캡", SaleCategory.KEYCAP);
+
+    mockMvc
+        .perform(get("/api/sales").param("vendor", "geonworks").param("category", "keycap"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.items[*].productName", contains("건 키캡")))
+        .andExpect(jsonPath("$.items[0].vendor").value("GEONWORKS"));
+    mockMvc
+        .perform(get("/api/sales").param("category", "keycap"))
+        .andExpect(jsonPath("$.items[*].productName", contains("건 키캡", "스웩 키캡")));
+  }
+
+  @Test
+  @DisplayName("숨김, OTHER, 요약 전 공지의 건은 내보내지 않는다")
+  void excludesHiddenOtherAndPending() throws Exception {
+    Notice done = notice(KoreanVendor.SWAGKEYS, BASE, SummaryStatus.DONE);
+    Notice pending = notice(KoreanVendor.SWAGKEYS, BASE.plusSeconds(60), SummaryStatus.PENDING);
+    item(done, 0, "보이는 건", SaleCategory.KEYBOARD);
+    SaleItem hidden = item(done, 1, "숨긴 건", SaleCategory.KEYBOARD);
+    hidden.setHidden(true);
+    saleItemRepository.save(hidden);
+    item(done, 2, "기타 건", SaleCategory.OTHER);
+    item(pending, 0, "요약 전 건", SaleCategory.KEYBOARD);
+
+    mockMvc
+        .perform(get("/api/sales"))
+        .andExpect(jsonPath("$.items[*].productName", contains("보이는 건")));
+    mockMvc
+        .perform(get("/api/sales/sitemap"))
+        .andExpect(jsonPath("$", hasSize(1)));
+    mockMvc.perform(get("/api/sales/" + hidden.getId())).andExpect(status().isNotFound());
+  }
+
+  @Test
+  @DisplayName("잘못된 필터와 커서는 400")
+  void rejectsBadParams() throws Exception {
+    mockMvc.perform(get("/api/sales").param("vendor", "foo")).andExpect(status().isBadRequest());
+    mockMvc.perform(get("/api/sales").param("vendor", "klc_playground"))
+        .andExpect(status().isBadRequest());
+    mockMvc.perform(get("/api/sales").param("category", "other")).andExpect(status().isBadRequest());
+    mockMvc.perform(get("/api/sales").param("cursor", "abc")).andExpect(status().isBadRequest());
+    mockMvc.perform(get("/api/sales").param("cursor", "1_x")).andExpect(status().isBadRequest());
+    mockMvc.perform(get("/api/sales").param("cursor", "1_2_3")).andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @DisplayName("카드는 대표 사진이 보관됐을 때만 사진 주소를 주고 시각은 HH:mm으로 준다")
+  void cardImageOnlyWhenArchived() throws Exception {
+    Notice n = notice(KoreanVendor.SWAGKEYS, BASE, SummaryStatus.DONE);
+    attachment(n, 7001L, 0, ArchiveStatus.DONE);
+    attachment(n, 7002L, 1, ArchiveStatus.FAILED);
+    item(n, 0, "사진 있음", SaleCategory.KEYBOARD, List.of(7001L));
+    item(n, 1, "사진 실패", SaleCategory.KEYBOARD, List.of(7002L));
+    item(n, 2, "사진 없음", SaleCategory.KEYBOARD);
+
+    mockMvc
+        .perform(get("/api/sales"))
+        .andExpect(jsonPath("$.items[0].thumbUrl").value("https://img.test/notices/7001-640.webp"))
+        .andExpect(jsonPath("$.items[0].largeUrl").value("https://img.test/notices/7001-1280.webp"))
+        .andExpect(jsonPath("$.items[0].startDate").value("2026-11-10"))
+        .andExpect(jsonPath("$.items[0].startTime").value("20:30"))
+        .andExpect(jsonPath("$.items[0].endDate").value("2026-11-20"))
+        .andExpect(jsonPath("$.items[0].endTime").value(nullValue()))
+        .andExpect(jsonPath("$.items[0].summaryFirstLine").value("첫 줄"))
+        .andExpect(jsonPath("$.items[0].postedAt").value("2026-11-01T00:00:00Z"))
+        .andExpect(jsonPath("$.items[1].thumbUrl").value(nullValue()))
+        .andExpect(jsonPath("$.items[1].largeUrl").value(nullValue()))
+        .andExpect(jsonPath("$.items[2].thumbUrl").value(nullValue()));
+  }
+
+  @Test
+  @DisplayName("상세는 사진과 링크를 준다")
+  void detailHasImagesAndLinks() throws Exception {
+    Notice n = notice(KoreanVendor.SWAGKEYS, BASE, SummaryStatus.DONE);
+    attachment(n, 7, 0, ArchiveStatus.DONE);
+    attachment(n, 8, 1, ArchiveStatus.FAILED);
+    attachment(n, 9, 2, ArchiveStatus.DONE);
+    SaleItem saved = item(n, 0, "상세 건", SaleCategory.KEYCAP, List.of(9L, 8L, 7L));
+
+    mockMvc
+        .perform(get("/api/sales/" + saved.getId()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.productName").value("상세 건"))
+        .andExpect(jsonPath("$.summaryLines", contains("첫 줄", "둘째 줄")))
+        .andExpect(jsonPath("$.shippingNote").value("12월 배송"))
+        .andExpect(jsonPath("$.links[0].text").value("구매"))
+        .andExpect(jsonPath("$.links[0].url").value("https://shop.test/a"))
+        .andExpect(jsonPath("$.images", hasSize(2)))
+        .andExpect(jsonPath("$.images[0].url").value("https://img.test/notices/9.webp"))
+        .andExpect(jsonPath("$.images[0].largeUrl").value("https://img.test/notices/9-1280.webp"))
+        .andExpect(jsonPath("$.images[0].thumbUrl").value("https://img.test/notices/9-640.webp"))
+        .andExpect(jsonPath("$.images[1].url").value("https://img.test/notices/7.webp"))
+        .andExpect(jsonPath("$.thumbUrl").value("https://img.test/notices/9-640.webp"));
+  }
+
+  @Test
+  @DisplayName("없는 판매 건은 404")
+  void unknownIs404() throws Exception {
+    mockMvc.perform(get("/api/sales/999999999")).andExpect(status().isNotFound());
+  }
+
+  @Test
+  @DisplayName("사이트맵은 id와 요약 시각")
+  void sitemapHasIdAndSummarizedAt() throws Exception {
+    Notice n = notice(KoreanVendor.SWAGKEYS, BASE, SummaryStatus.DONE);
+    SaleItem saved = item(n, 0, "건", SaleCategory.KEYBOARD);
+
+    mockMvc
+        .perform(get("/api/sales/sitemap"))
+        .andExpect(status().isOk())
+        .andExpect(
+            content()
+                .json(
+                    "[{\"id\": %d, \"lastModified\": \"2026-11-05T09:30:00Z\"}]"
+                        .formatted(saved.getId()),
+                    JsonCompareMode.STRICT));
+  }
+}

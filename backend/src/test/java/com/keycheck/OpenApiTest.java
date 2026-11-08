@@ -31,6 +31,7 @@ class OpenApiTest {
         .andExpect(
             jsonPath("$.paths['/api/posts/{id}/neighbors'].get.summary").value("글 앞뒤 목록"))
         .andExpect(jsonPath("$.paths['/api/posts/highlights'].get.summary").value("메인 하이라이트"))
+        .andExpect(jsonPath("$.paths['/api/sales'].get.summary").value("국내 판매 목록"))
         .andExpect(jsonPath("$.paths['/api/posts'].get.parameters[0].schema.enum").isArray())
         .andExpect(jsonPath("$.paths['/api/posts'].get.parameters[1].name").value("sub"))
         .andExpect(jsonPath("$.paths['/api/posts'].get.parameters[1].schema.enum").isArray())
