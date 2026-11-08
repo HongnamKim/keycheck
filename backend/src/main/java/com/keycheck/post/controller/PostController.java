@@ -4,6 +4,7 @@ import com.keycheck.post.dto.BoardFilter;
 import com.keycheck.post.dto.CategoryFilter;
 import com.keycheck.post.dto.HighlightResponse;
 import com.keycheck.post.dto.PostDetailResponse;
+import com.keycheck.post.dto.PostFeedItemResponse;
 import com.keycheck.post.dto.PostListResponse;
 import com.keycheck.post.dto.PostNeighborsResponse;
 import com.keycheck.post.dto.PostSitemapItemResponse;
@@ -136,13 +137,34 @@ public class PostController {
   @Operation(
       summary = "사이트맵 글 목록",
       description =
-          "검색 엔진 사이트맵에 넣을 글 ID를 글 번호 내림차순으로 모두 돌려준다. geekhack을 호출하지 않는다."
+          "검색 엔진 사이트맵에 넣을 글 ID와 lastModified(요약 완료 시각)를 글 번호 내림차순으로 모두 돌려준다. geekhack을 호출하지 않는다."
               + " 숨기지 않았고 수집 기간(2020년) 이후이며 본문을 읽었고 요약이 끝났고(summaryStatus=DONE)"
-              + " 요약 줄이 하나 이상인 글만 넣는다.")
+              + " 요약 줄이 하나 이상인 글만 넣는다."
+              + " lastModified: 요약을 마지막으로 저장한 시각(ISO-8601, UTC, 다시 요약하면 바뀐다)."
+              + " 이 값을 기록하기 전에 요약한 글이면 null.")
   @ApiResponse(responseCode = "200", description = "성공")
   @GetMapping("/sitemap")
   public List<PostSitemapItemResponse> getSitemap() {
     return postQueryService.getSitemap();
+  }
+
+  @Operation(
+      summary = "RSS 피드 글 목록",
+      description =
+          "RSS 피드에 넣을 글을 최대 "
+              + PostQueryService.FEED_SIZE
+              + "건 돌려준다. geekhack을 호출하지 않는다."
+              + " 사이트맵과 같은 글(숨기지 않았고 수집 기간(2020년) 이후이며 본문을 읽었고 요약이 끝났고 요약 줄이 하나 이상인 글)을"
+              + " 요약을 마지막으로 저장한 시각(summarizedAt) 내림차순으로 주고, 그 시각을 모르는 글은 뒤에 둔다."
+              + " 같으면 글 번호 내림차순이다."
+              + " board: 글을 읽어 온 게시판 코드(IC, GB). productName: 요약기가 뽑은 상품·프로젝트 이름, 모르면 null."
+              + " summaryLines: 요약 줄 전체. 시각은 모두 ISO-8601(UTC)."
+              + " postedAt: 글 페이지에서 읽은 작성일, 모르면 null. summarizedAt: 요약을 마지막으로 저장한 시각,"
+              + " 이 값을 기록하기 전에 요약한 글이면 null.")
+  @ApiResponse(responseCode = "200", description = "성공")
+  @GetMapping("/feed")
+  public List<PostFeedItemResponse> getFeed() {
+    return postQueryService.getFeed();
   }
 
   @Operation(

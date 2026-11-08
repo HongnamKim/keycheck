@@ -13,10 +13,10 @@ import StatsLive from "@/components/StatsLive";
 import SummaryWatcher from "@/components/SummaryWatcher";
 import { getPostForPage, type PostDetail as PostDetailData } from "@/lib/api";
 import { isCrawler } from "@/lib/bot";
-import { postCategoryLabel } from "@/lib/format";
+import { displayTitle, postCategoryLabel } from "@/lib/format";
 import { imageSources } from "@/lib/image";
 import { backHref, parseDetailQuery, parsePostId, postHref } from "@/lib/query";
-import { postMetadata } from "@/lib/seo";
+import { breadcrumbJsonLd, jsonLdHtml, postMetadata } from "@/lib/seo";
 import { vendorLine, vendorSpecRows } from "@/lib/vendor";
 import styles from "./page.module.css";
 
@@ -29,12 +29,16 @@ export async function generateMetadata({ params }: PageProps<"/posts/[id]">): Pr
   const postId = parsePostId((await params).id);
   if (postId === null) notFound();
 
+  const fill = await shouldFill();
   let post: PostDetailData | null;
   try {
-    post = await getPostForPage(postId, await shouldFill());
+    post = await getPostForPage(postId, fill);
   } catch (err) {
     unstable_rethrow(err);
-    // 잠깐의 장애로 색인이 빠지지 않게 robots는 넣지 않는다. 오류는 본문이 남긴다
+    // 봇에게는 오류를 그대로 던진다. 메타데이터를 <head>로 기다리는 봇(Googlebot·Yeti 등)은 HTTP 500을 받아
+    // 장애 화면과 기본 제목을 색인하지 않고, 이미 색인된 주소는 남는다
+    if (!fill) throw err;
+    // 사람에게는 잠깐의 장애로 색인이 빠지지 않게 robots는 넣지 않는다. 오류는 본문이 남긴다
     return { alternates: { canonical: `/posts/${postId}` } };
   }
   if (!post) notFound();
@@ -109,6 +113,13 @@ async function PostDetail({ params, searchParams }: PageProps<"/posts/[id]">) {
 
   return (
     <div className={styles.detail}>
+      {/* 위치 경로 구조화 데이터: 키체크 › IC|공동구매 › 상품 이름 */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: jsonLdHtml(breadcrumbJsonLd(post.board, displayTitle(post.productName, post.title))),
+        }}
+      />
       <div>
         <Link href={backHref(from)} className="outline-button">
           {from ? "목록으로" : "메인으로"}
@@ -231,12 +242,16 @@ async function PostDetail({ params, searchParams }: PageProps<"/posts/[id]">) {
       </div>
 
       {post.detailLoaded && post.images.length > 0 && (
-        <section className={styles.gallery} aria-labelledby="gallery-title">
-          <h3 id="gallery-title" className={styles.sectionTitle}>
-            원문 이미지 {post.images.length}장
-          </h3>
-          <Gallery images={post.images} />
-        </section>
+        // 큰 갤러리를 따로 묶는다. React는 다 그린 영역이라도 약 12.8KB를 넘으면 숨김 영역으로 빼서 보내는데,
+        // 갤러리까지 한 영역이면 JS를 실행하지 않는 봇(Yeti 등)에게 제목·요약·스펙까지 숨김 영역으로 간다
+        <Suspense fallback={null}>
+          <section className={styles.gallery} aria-labelledby="gallery-title">
+            <h3 id="gallery-title" className={styles.sectionTitle}>
+              원문 이미지 {post.images.length}장
+            </h3>
+            <Gallery images={post.images} />
+          </section>
+        </Suspense>
       )}
 
       {/* 보던 목록의 위아래 글. 따로 받아 본문을 막지 않고, 실패하면 섹션만 빠진다 */}

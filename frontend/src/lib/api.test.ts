@@ -6,7 +6,8 @@ import {
   getNeighbors,
   getPost,
   getPosts,
-  getSitemapPostIds,
+  getFeedPosts,
+  getSitemapPosts,
   getStats,
 } from "./api";
 
@@ -86,7 +87,8 @@ describe("백엔드 호출 함수", () => {
     ["getPost", () => getPost(1)],
     ["getStats", () => getStats(1)],
     ["getNeighbors", () => getNeighbors(1, { board: "ic", category: "all", sort: "recent" }, 5)],
-    ["getSitemapPostIds", () => getSitemapPostIds()],
+    ["getSitemapPosts", () => getSitemapPosts()],
+    ["getFeedPosts", () => getFeedPosts()],
   ])("%s는 시간 제한과 X-Keycheck-Server 헤더를 붙여 백엔드를 부른다", async (_, call) => {
     const fetchMock = vi.fn(() => Promise.resolve(new Response("[]")));
     vi.stubGlobal("fetch", fetchMock);
@@ -142,15 +144,42 @@ describe("백엔드 호출 함수", () => {
     await expect(getPost(7, undefined, { fill: false })).resolves.toBeNull();
   });
 
-  it("getSitemapPostIds는 응답의 글 ID만 순서대로 돌려준다", async () => {
-    vi.stubGlobal("fetch", vi.fn(() => Promise.resolve(Response.json([{ id: 30 }, { id: 12 }]))));
+  it("getSitemapPosts는 글 ID와 요약을 마친 시각을 순서대로 돌려준다", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() =>
+        Promise.resolve(
+          Response.json([
+            { id: 30, lastModified: "2026-11-07T12:30:00Z" },
+            { id: 12, lastModified: null },
+          ]),
+        ),
+      ),
+    );
 
-    await expect(getSitemapPostIds()).resolves.toEqual([30, 12]);
+    await expect(getSitemapPosts()).resolves.toEqual([
+      { id: 30, lastModified: "2026-11-07T12:30:00Z" },
+      { id: 12, lastModified: null },
+    ]);
   });
 
-  it("getSitemapPostIds는 백엔드가 실패하면 예외를 던진다", async () => {
+  it("getSitemapPosts는 lastModified가 없는 옛 응답이면 null로 채운다", async () => {
+    vi.stubGlobal("fetch", vi.fn(() => Promise.resolve(Response.json([{ id: 30 }]))));
+
+    await expect(getSitemapPosts()).resolves.toEqual([{ id: 30, lastModified: null }]);
+  });
+
+  it("getSitemapPosts는 백엔드가 실패하면 예외를 던진다", async () => {
     vi.stubGlobal("fetch", vi.fn(() => Promise.resolve(new Response("", { status: 503 }))));
 
-    await expect(getSitemapPostIds()).rejects.toThrow("503");
+    await expect(getSitemapPosts()).rejects.toThrow("503");
+  });
+
+  it("getFeedPosts는 /api/posts/feed를 부르고 백엔드가 실패하면 예외를 던진다", async () => {
+    const fetchMock = vi.fn(() => Promise.resolve(new Response("", { status: 503 })));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(getFeedPosts()).rejects.toThrow("503");
+    expect(fetchMock.mock.calls[0]).toEqual([`${API_BASE_URL}/api/posts/feed`, expect.anything()]);
   });
 });

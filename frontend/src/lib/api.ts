@@ -176,6 +176,25 @@ export interface Highlights {
   slots: HighlightSlot[];
 }
 
+/** 사이트맵 글 한 건(백엔드 PostSitemapItemResponse). lastModified는 요약을 마친 시각이고 모르면 null */
+export interface SitemapPost {
+  id: number;
+  lastModified: string | null;
+}
+
+/** RSS 글 한 건(백엔드 PostFeedItemResponse). summaryLines는 비어 있지 않다 */
+export interface FeedPost {
+  id: number;
+  board: Board;
+  title: string;
+  productName: string | null;
+  category: Category;
+  summaryLines: string[];
+  postedAt: string | null;
+  /** 요약을 마친 시각. 이 열이 생기기 전에 요약한 글은 null */
+  summarizedAt: string | null;
+}
+
 export interface PostStats {
   views: number;
   replies: number;
@@ -265,12 +284,25 @@ export async function getPost(
  */
 export const getPostForPage = cache((id: number, fill: boolean) => getPost(id, undefined, { fill }));
 
-/** 사이트맵에 넣을 글 ID(요약이 끝난 글만, 글 번호 내림차순). 서버에서 부른다 */
-export async function getSitemapPostIds(): Promise<number[]> {
+/**
+ * 사이트맵에 넣을 글(요약이 끝난 글만, 글 번호 내림차순). 서버에서 부른다.
+ * lastModified가 없는 옛 백엔드 응답도 받도록 빠진 값은 null로 채운다
+ */
+export async function getSitemapPosts(): Promise<SitemapPost[]> {
   const res = await apiFetch("/api/posts/sitemap");
   if (!res.ok) throw new Error(`사이트맵 조회 실패: ${res.status}`);
-  const items: { id: number }[] = await res.json();
-  return items.map((item) => item.id);
+  const items: { id: number; lastModified?: string | null }[] = await res.json();
+  return items.map((item) => ({ id: item.id, lastModified: item.lastModified ?? null }));
+}
+
+/** RSS에 넣을 글(사이트맵과 같은 조건, 요약을 마친 순서로 최대 50건). 서버에서 부른다 */
+export async function getFeedPosts(): Promise<FeedPost[]> {
+  const res = await apiFetch("/api/posts/feed");
+  if (!res.ok) throw new Error(`RSS 글 조회 실패: ${res.status}`);
+  const posts: unknown = await res.json();
+  // 모양이 다른 응답은 실패로 본다(RSS 라우트가 503으로 돌려준다)
+  if (!Array.isArray(posts)) throw new Error("RSS 글 조회 실패: 배열이 아닌 응답");
+  return posts as FeedPost[];
 }
 
 /** 조회수·댓글 수. 확인한 지 오래됐으면 백엔드가 geekhack에서 다시 읽는다(설계 4.3). 브라우저에서 호출한다. */

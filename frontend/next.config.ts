@@ -11,9 +11,14 @@ const nextConfig: NextConfig = {
   /* config options here */
   cacheComponents: true,
   partialPrefetching: true,
-  // 메타데이터를 <head>에 받아야 하는 봇(Next 기본 목록)에 다음(Daumoa·Daum/), 텔레그램, 카카오 미리보기를 더한다.
+  // 메타데이터를 <head>에 받아야 하는 봇(Next 기본 목록)에 다음(Daumoa·Daum/), 텔레그램, 카카오 미리보기, Googlebot을 더한다.
+  // Googlebot은 기본 목록에 없어 메타데이터를 <body>로 받는데, 구글은 <body>의 canonical을 받지 않고 없는 글도 200(soft 404)으로 본다.
+  // 넣으면 글 메타데이터가 <head>에 들어가고 없는 글은 404가 된다(대신 CDN 셸 없이 매번 그린다)
   // 설정하면 기본 목록을 통째로 바꾸므로 기본 목록 뒤에 붙인다. Next는 source만 읽어 대소문자 구분 없이 다시 만든다
-  htmlLimitedBots: new RegExp(`${HTML_LIMITED_BOT_UA_RE.source}|Daumoa|Daum\\/|TelegramBot|kakaotalk-scrap`, "i"),
+  htmlLimitedBots: new RegExp(
+    `${HTML_LIMITED_BOT_UA_RE.source}|Daumoa|Daum\\/|TelegramBot|kakaotalk-scrap|Googlebot`,
+    "i",
+  ),
   images: {
     // 이미지는 백엔드가 만든 축소본(R2)이나 원본을 브라우저가 직접 읽는다. Vercel 이미지 변환을 쓰지 않는다(무료 한도 월 5,000건)
     unoptimized: true,

@@ -112,3 +112,33 @@
   - `sitemap.xml`과 `robots.txt`가 맞게 나온다.
   - `api.keycheck.kr/robots.txt`가 전체를 막는다.
   - 틀 글 시험은 배포된 백엔드 커밋을 확인한 뒤에만 한다. 옛 백엔드는 `fill` 파라미터를 무시하고 원문을 읽는다.
+
+## 6. 추가 개선 (2026-11-08)
+
+### 백엔드
+- `V12__post_summarized_at.sql`: `post.summarized_at TIMESTAMPTZ`를 더한다. 백필하지 않으므로 그 전에 요약한 글은 null이다.
+- `Post.summarizedAt`: `SummaryWorker`가 요약 저장(`PostRepository.saveSummary`)에 성공할 때마다 `clock.instant()`로 채운다. 다시 요약(redo-fake·세부 분류·GB 기간·상품 이름)도 새 시각으로 바꾼다. 실패(`FAILED`, `markGbRedoFailed`, 상품 이름 다시 요약 실패)는 바꾸지 않는다.
+- `GET /api/posts/sitemap`은 `[{ "id", "lastModified" }]`을 준다. `lastModified`는 `summarized_at`(ISO-8601, null 가능)이다. 조건과 순서(글 번호 내림차순)는 그대로이고, 엔티티를 읽지 않는 `(id, summarized_at)` 프로젝션(`findSitemapRows`)으로 바꿨다. 3.5의 "lastmod는 넣지 않는다"는 이것으로 바뀐다.
+- `GET /api/posts/feed`(새로 만듦): RSS용 글 최대 50건(`PostQueryService.FEED_SIZE`).
+  - 조건은 사이트맵과 같다.
+  - 순서는 `summarized_at` 내림차순(null은 뒤), 같으면 글 번호 내림차순이다.
+  - 항목은 `id`, `board`, `title`, `productName`, `category`, `summaryLines`(전체), `postedAt`, `summarizedAt`이다.
+  - 쿼리 한 번으로 엔티티 50개를 읽는다. 이미지는 읽지 않는다.
+- 테스트: `PostSitemapApiTest`(lastModified), `PostFeedApiTest`(형식·조건·순서·50건 상한, 51건 저장), `SummaryWorkerTest`(성공·다시 요약 때 시각, 실패 때 그대로).
+
+### 프론트
+- **`htmlLimitedBots`에 `Googlebot`:** 3.3의 목록 끝에 더한다. Googlebot도 글 메타데이터(canonical·제목·noindex)를 `<head>`로 받고, 없는 글은 200(soft 404) 대신 404를 받는다. 대신 Googlebot은 CDN 셸 없이 매번 그린 화면을 받는다.
+- **봇에게 장애는 5xx:** 글 `generateMetadata`는 fill(봇 판별)을 try 밖에서 구하고, 백엔드가 실패하면 봇(fill=false)에게는 오류를 그대로 던진다. 메타데이터를 `<head>`로 기다리는 봇은 HTTP 500을 받아 장애 화면을 색인하지 않는다. 사람은 지금처럼 200과 "불러오지 못했어요"이고, 3.3의 "백엔드 오류 때 robots를 넣지 않는다"는 사람에게만 해당한다.
+- **갤러리를 따로 `Suspense`로:** React는 다 그린 영역이라도 약 12.8KB를 넘으면 숨김 영역(`<div hidden id="S:…">`)으로 빼서 보낸다. 갤러리를 따로 묶어 Yeti 같은 HTML 봇에게 제목·요약·스펙이 숨김 영역 밖에 바로 들어가게 한다.
+- **글 제목에 분류어:** `postTitle(post)`가 `{상품 이름} {키보드|키캡} {IC|공동구매}`를 만든다(기타·미분류는 분류어 없음). 메타 title·og:title·RSS 제목이 함께 쓴다. `ogCardVersion`은 그대로다.
+- **/ic, /gb 메타 제목·설명:** "키보드·키캡 IC(관심 조사) 목록", "키보드·키캡 공동구매 목록"과 geekhack·키보드·키캡이 들어간 설명으로 바꾼다. 화면의 h1·설명(`BOARD_INFO`)은 그대로다.
+- **위치 경로(BreadcrumbList) JSON-LD:** `breadcrumbJsonLd(board, postName?)`. 글은 키체크 › IC|공동구매 › 상품 이름, `/ic`·`/gb`는 키체크 › IC|공동구매다. 주소는 canonical 절대 주소만 쓰고 마지막 항목(지금 페이지)은 주소를 두지 않는다. 목록은 `BoardListPage` 머리(Suspense 밖, 정적 셸), 글은 상세 본문 안에 둔다. `<` 바꾸기는 `jsonLdHtml`로 메인 WebSite JSON-LD와 함께 쓴다.
+- **메인·목록 og:url:** `siteOpenGraph(path)`가 openGraph 전체(type website, url, siteName, locale, 사이트 기본 카드 `/opengraph-image` 1200×630)를 돌려준다. 페이지가 openGraph를 두면 레이아웃 것과 파일로 붙던 기본 카드가 함께 빠지기 때문이다. 기본 카드 주소에는 빌드 해시(`?…`)가 붙지 않는다. 카드 그림을 바꾸면 주소에 버전을 붙여야 미리보기 캐시가 바뀐다.
+- **RSS `/rss.xml`:** 2의 비목표 "RSS"는 이것으로 바뀐다.
+  - `GET /api/posts/feed`를 `getFeedPosts()`로 받아 `lib/rss.ts`의 `rssXml(items, builtAt)`로 만든다(RSS 2.0).
+  - 항목: 제목은 글 제목과 같고, link·guid는 canonical 절대 주소다. description은 요약 줄 전체를 줄바꿈으로 잇고, pubDate는 `summarizedAt ?? postedAt`이다.
+  - `& < > " '`는 바꾸고 XML에 넣을 수 없는 제어문자는 지운다.
+  - 요청 때 만든다(`connection()` 뒤라 `new Date()`를 써도 미리 그리기를 끊지 않는다). 성공하면 `public, max-age=0, s-maxage=600, stale-while-revalidate=3600`, 백엔드가 실패하면 503과 `no-store`다.
+  - 알림 링크는 메인 `alternates.types`에 둔다. 레이아웃에 두면 페이지의 `alternates`(canonical)가 통째로 덮는다.
+- **사이트맵 lastmod:** `getSitemapPosts()`가 `{ id, lastModified }`를 돌려주고, `sitemapEntries`는 값이 있을 때만 `lastModified`를 넣는다. 옛 백엔드처럼 필드가 없으면 null로 본다.
+- **사용자가 할 일:** 배포 뒤 네이버 서치어드바이저에 `https://keycheck.kr/rss.xml`을 RSS로 제출한다.
