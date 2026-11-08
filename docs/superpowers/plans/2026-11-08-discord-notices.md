@@ -384,11 +384,42 @@ notice:
 - [ ] **Step 4: 통과 확인** — `./gradlew test` 전체 PASS
 - [ ] **Step 5: `git add`**
 
+### Task 9b: 사진 크기 저장과 넓은 자리용 2048 주소 (2026-11-08 시안 확인 뒤 추가)
+
+**Files:**
+- Create: `backend/src/main/resources/db/migration/V14__notice_attachment_size.sql` (`notice_attachment`에 `width INTEGER`, `height INTEGER`, 둘 다 NULL 허용, 한국어 주석)
+- Modify: `image/service/ThumbnailMaker.java`(원본 크기 읽기), `notice/domain/NoticeAttachment.java`, `notice/repository/NoticeAttachmentRepository.java`, `notice/service/NoticeArchiver.java`, `notice/dto/SaleCardResponse.java`(+ 상세 응답이 카드 필드를 쓰면 함께), `notice/service/SaleHighlightService.java`, `frontend/src/lib/api.ts`(`SaleCard.imageUrl`)
+- Test: `ThumbnailMakerTest`, `NoticeArchiverTest`, `SaleApiTest`, `SaleHighlightServiceTest`
+
+**Interfaces:**
+- Produces:
+  - `ThumbnailMaker.originalSize(byte[] original): ImageSize`(`ImageSize { int width; int height; }`, `private final` + `@Getter`) — 디코드하지 않고 읽기 도구의 크기를 읽고, JPEG EXIF 방향이 5~8(90°/270° 회전)이면 폭·높이를 바꾼다. 읽을 수 없으면 `UnreadableImageException`.
+  - `NoticeArchiver.store(...)`는 세 크기를 올린 뒤 `DONE`과 함께 원본 폭·높이를 저장한다(`markArchived`와 같은 트랜잭션 또는 하나의 업데이트).
+  - `SaleCardResponse`에 `String imageUrl`(대표 첨부가 DONE이면 `NoticeKeys.archive` 주소, 아니면 null) 추가. 프론트 `SaleCard`에 `imageUrl: string | null`.
+  - `SaleHighlightService`: 대상 조건에 "대표 첨부의 `width`가 1024 이상"(NULL이면 제외)을 더한다. `static final int MIN_HIGHLIGHT_WIDTH = 1024;`
+
+- [ ] **Step 1: 실패하는 테스트 작성**
+  - `ThumbnailMakerTest.원본_크기를_읽는다`: 3000×2000 PNG → 3000, 2000. EXIF 방향 6인 JPEG가 기존 테스트 도구로 만들어지면 폭·높이가 바뀌는지도.
+  - `NoticeArchiverTest.보관하면_원본_크기를_저장한다`: 3000×2000 → width 3000, height 2000.
+  - `SaleApiTest`: 카드 `imageUrl` == `https://img.test/notices/7.webp`, 대표 첨부가 FAILED면 null.
+  - `SaleHighlightServiceTest`: 대표 사진 폭 800 → 고르지 않음, 1024 → 고름, NULL → 고르지 않음.
+- [ ] **Step 2: 실패 확인** — `cd backend && ./gradlew test --tests '*ThumbnailMakerTest' --tests '*NoticeArchiverTest' --tests '*SaleApiTest' --tests '*SaleHighlightServiceTest'`
+- [ ] **Step 3: 구현**
+- [ ] **Step 4: 통과 확인** — 같은 명령과 `./gradlew test` 전체, `cd frontend && npm test && npm run lint`
+- [ ] **Step 5: 커밋**
+
 ---
 
 ## 프론트
 
 ### Task 10: 시안 확인(코드 없음, 사용자 확인 필요)
+
+**결과(2026-11-08, 시안 v4 — `.superpowers/brainstorm/49794-1794108726/content/sales-screens-v4.html`):**
+- 목록 설명은 "Swagkeys·GeonWorks 디스코드 공지에서 판매 소식만 골라 정리했어요."
+- 상세 사진 모음에는 그 판매 건으로 분류된 사진만, 2장 이상일 때만. 위 큰 사진은 `imageUrl`(2048), 없으면 `largeUrl`.
+- 띠는 밝은 카드(A): 왼쪽 3:2 사진(데스크톱 폭 약 420px, `imageUrl`, `loading="lazy"`), 오른쪽 키커(강조색 고정폭 글꼴)·이름(22px 굵게)·배지 + `판매처 · 구분 · 판매 시각`, 오른쪽 끝 "자세히 →". 흰 바탕·테두리·모서리 14~16px. 모바일에서는 사진 위, 글 아래로 쌓는다.
+- 큰 칸(국내 판매)은 `imageUrl`을 쓰고, 배지 줄에 상태 배지와 "국내 판매" 칩, 키커·이름·요약 첫 줄, 장부 두 칸("판매 시작"/마감 시각, "판매처 · 구분").
+- 가로 줄·목록 카드는 시안 그대로(640).
 
 - [ ] **Step 1:** 시각 도구(brainstorming visual companion, `.superpowers/brainstorm/`)에 기존 색·글꼴·배지 크기로 시안을 띄운다: (a) `/sales` 목록(제목·설명·판매처 칩·분류 칩·카드 격자, 카드는 확정된 A안), (b) `/sales/[id]` 상세(사진, 배지·판매처·구분, 이름, 요약, 정보 표, 구매 링크 버튼, 사진 모음, 공지 시각 글자), (c) 메인 하이라이트 아래 국내 판매 띠, (d) 큰 칸이 국내 판매일 때의 모양(판매처·구분·판매 시각이 geekhack 반응 자리에), (e) 메인 "03 국내 판매" 가로 줄 카드. 샘플은 `.superpowers/work/discord/backfill/swagkeys/`의 실제 공지·사진을 쓴다(시안 폴더 안에서만, 저장소에 넣지 않음).
 - [ ] **Step 2:** 사용자 확인을 받고, 바뀐 점을 이 계획의 Task 12~15 해당 단계에 적는다. **확인 전에는 Task 12~15를 시작하지 않는다.**
