@@ -1,7 +1,7 @@
 /** 검색 노출·링크 미리보기용 메타데이터(설계 3.3). 순수 함수만 둔다 */
 
 import type { Metadata, MetadataRoute } from "next";
-import type { PostDetail } from "./api";
+import type { Board, Category, PostDetail, SitemapPost } from "./api";
 import { boardLabel, displayTitle } from "./format";
 
 /** 사이트 주소. 메타데이터의 상대 주소(OG 이미지·canonical) 기준이고, 사이트맵·robots의 절대 주소에 쓴다. 운영 주소가 기본이다 */
@@ -9,6 +9,12 @@ export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://keycheck.kr
 
 /** 사이트 한 줄 설명. 기본 메타 설명과 manifest가 함께 쓴다 */
 export const SITE_DESCRIPTION = "geekhack의 키보드·키캡 IC와 공동구매 글을 한국어 요약으로 먼저 훑어보세요";
+
+/** 사이트 기본 카드(app/opengraph-image)에 들어가는 한 줄 */
+export const SITE_TAGLINE = "geekhack 키보드·키캡 IC·공동구매 한국어 요약";
+
+/** 사이트 기본 카드의 대체 글자 */
+export const SITE_CARD_ALT = `키체크 · ${SITE_TAGLINE}`;
 
 /** 사이트 바탕색(globals.css --color-bg). 모바일 주소창 색과 manifest에 쓴다 */
 export const SITE_BG = "#f3f4f1";
@@ -67,11 +73,28 @@ export function ogCardVersion(post: OgPost): string {
   return (hash >>> 0).toString(36);
 }
 
+/** 제목에 붙이는 한국어 분류어. 키보드·키캡만 붙이고 기타·미분류는 붙이지 않는다 */
+function categoryWord(category: Category): string | null {
+  if (category === "KEYBOARD") return "키보드";
+  if (category === "KEYCAP") return "키캡";
+  return null;
+}
+
+/** 이름에 이미 분류가 들어 있는지(예: "RHINO60 Custom Keyboard", "Mock Keycaps"). 그러면 분류어를 겹쳐 붙이지 않는다 */
+const NAMED_CATEGORY = /keyboard|key ?caps?|키보드|키캡/i;
+
+/** 글 제목(예: GMK Knight 키캡 IC). 글 상세 메타데이터와 RSS가 함께 쓴다. 사이트 이름은 붙이지 않는다 */
+export function postTitle(post: Pick<PostDetail, "board" | "title" | "productName" | "category">): string {
+  const name = displayTitle(post.productName, post.title);
+  const word = NAMED_CATEGORY.test(name) ? null : categoryWord(post.category);
+  return [name, word, boardLabel(post.board)].filter(Boolean).join(" ");
+}
+
 /** 글 상세의 메타데이터. 원문을 읽었고 요약이 끝난 글만 검색에 넣는다 */
 export function postMetadata(post: PostDetail): Metadata {
   const name = displayTitle(post.productName, post.title);
   const board = boardLabel(post.board);
-  const title = `${name} ${board}`;
+  const title = postTitle(post);
   const hasSummary = post.summaryStatus === "DONE" && post.summaryLines.length > 0;
   const description = hasSummary
     ? truncate(post.summaryLines[0], DESCRIPTION_MAX)
@@ -99,12 +122,59 @@ export function postMetadata(post: PostDetail): Metadata {
   };
 }
 
-/** 사이트맵 항목. 메인과 두 목록, 요약이 끝난 글을 절대 주소로 담는다(목록 필터 주소는 canonical과 같이 뺀다) */
-export function sitemapEntries(postIds: number[]): MetadataRoute.Sitemap {
+/**
+ * 메인·목록의 openGraph. 페이지가 openGraph를 두면 레이아웃 것을 통째로 바꿔 파일로 붙던 사이트 기본 카드도 빠지므로,
+ * 사이트 이름·언어와 기본 카드(app/opengraph-image)를 다시 둔다. path는 그 페이지의 canonical 주소다
+ */
+export function siteOpenGraph(path: string): NonNullable<Metadata["openGraph"]> {
+  return {
+    type: "website",
+    url: path,
+    siteName: "키체크",
+    locale: "ko_KR",
+    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: SITE_CARD_ALT, type: "image/png" }],
+  };
+}
+
+/**
+ * 위치 경로(BreadcrumbList) 구조화 데이터. 키체크 › 게시판 목록 › (글이면) 상품 이름.
+ * 주소는 canonical 절대 주소만 쓰고, 마지막 항목(지금 페이지)은 주소를 두지 않는다(검색 엔진이 그 페이지 주소로 본다)
+ */
+export function breadcrumbJsonLd(board: Board, postName?: string) {
+  const trail = [
+    { name: "키체크", url: SITE_URL },
+    { name: boardLabel(board), url: `${SITE_URL}/${board.toLowerCase()}` },
+    ...(postName ? [{ name: postName, url: "" }] : []),
+  ];
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: trail.map((crumb, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: crumb.name,
+      ...(i < trail.length - 1 ? { item: crumb.url } : {}),
+    })),
+  };
+}
+
+/** JSON-LD를 script 태그 안에 넣을 글자. <를 바꿔 글 안의 문자열이 script 태그를 닫지 못하게 한다 */
+export function jsonLdHtml(data: object): string {
+  return JSON.stringify(data).replace(/</g, "\\u003c");
+}
+
+/**
+ * 사이트맵 항목. 메인과 두 목록, 요약이 끝난 글을 절대 주소로 담는다(목록 필터 주소는 canonical과 같이 뺀다).
+ * 글의 lastModified(요약을 마친 시각)는 알 때만 넣는다
+ */
+export function sitemapEntries(posts: SitemapPost[]): MetadataRoute.Sitemap {
   return [
     { url: SITE_URL },
     { url: `${SITE_URL}/ic` },
     { url: `${SITE_URL}/gb` },
-    ...postIds.map((id) => ({ url: `${SITE_URL}/posts/${id}` })),
+    ...posts.map((post) => ({
+      url: `${SITE_URL}/posts/${post.id}`,
+      ...(post.lastModified ? { lastModified: post.lastModified } : {}),
+    })),
   ];
 }

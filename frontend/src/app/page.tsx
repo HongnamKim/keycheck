@@ -3,12 +3,14 @@ import { Suspense } from "react";
 import BoardRail from "@/components/home/BoardRail";
 import Dateline, { DatelineFallback } from "@/components/home/Dateline";
 import HighlightBento, { HighlightBentoFallback } from "@/components/home/HighlightBento";
-import { SITE_URL } from "@/lib/seo";
+import { jsonLdHtml, siteOpenGraph, SITE_URL } from "@/lib/seo";
 import styles from "./page.module.css";
 
 export const metadata: Metadata = {
   title: { absolute: "키체크 · 키보드·키캡 IC·공동구매 한국어 요약" },
-  alternates: { canonical: "/" },
+  // RSS 알림 링크는 여기 둔다. 레이아웃에 두면 페이지의 alternates(canonical)가 통째로 덮어 사라진다
+  alternates: { canonical: "/", types: { "application/rss+xml": "/rss.xml" } },
+  openGraph: siteOpenGraph("/"),
 };
 
 /** 검색 결과의 사이트 이름(WebSite 구조화 데이터) */
@@ -27,11 +29,7 @@ const WEBSITE_JSON_LD = {
 export default function Home() {
   return (
     <div className={styles.home}>
-      <script
-        type="application/ld+json"
-        // <를 바꿔 글 안의 문자열이 script 태그를 닫지 못하게 한다
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(WEBSITE_JSON_LD).replace(/</g, "\\u003c") }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdHtml(WEBSITE_JSON_LD) }} />
       <Suspense fallback={<DatelineFallback />}>
         <Dateline />
       </Suspense>
