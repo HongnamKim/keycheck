@@ -171,13 +171,15 @@ class NoticeImporterTest {
   @DisplayName("파일이 없는 첨부는 실패로 둔다")
   void 파일이_없는_첨부는_실패로_둔다() throws IOException {
     writeFile("8__b.png");
+    // attachments 폴더 밖에 읽을 수 있는 진짜 PNG를 둔다. 폴더 검사가 없으면 보관되어 DONE이 된다
+    Files.write(dir.resolve("outside.png"), png());
     writeMessages(
         "["
             + message(BASE, "local_file 없음", 7, null)
             + ","
             + message(BASE + MINUTE, "파일 없음", 8, "missing.png")
             + ","
-            + message(BASE + 2 * MINUTE, "폴더 밖", 9, "../messages.json")
+            + message(BASE + 2 * MINUTE, "폴더 밖", 9, "../outside.png")
             + "]");
 
     ImportReport report = importer.importDir(dir, KoreanVendor.SWAGKEYS);
@@ -187,6 +189,7 @@ class NoticeImporterTest {
     assertThat(status(7)).isEqualTo(ArchiveStatus.FAILED);
     assertThat(status(8)).isEqualTo(ArchiveStatus.FAILED);
     assertThat(status(9)).isEqualTo(ArchiveStatus.FAILED);
+    assertThat(storage.objects.keySet()).noneMatch(key -> key.startsWith("notices/9"));
   }
 
   @Test
