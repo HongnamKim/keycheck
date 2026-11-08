@@ -104,7 +104,11 @@ class SaleApiTest {
           loaded.addAttachment(attachmentId, position, "a.png", "http://cdn/x");
           noticeRepository.saveAndFlush(loaded);
         });
-    attachmentRepository.markArchived(attachmentId, status);
+    if (status == ArchiveStatus.DONE) {
+      attachmentRepository.markArchivedWithSize(attachmentId, 3000, 2000);
+    } else {
+      attachmentRepository.markArchived(attachmentId, status);
+    }
   }
 
   @Test
@@ -254,6 +258,7 @@ class SaleApiTest {
         .perform(get("/api/sales"))
         .andExpect(jsonPath("$.items[0].thumbUrl").value("https://img.test/notices/7001-640.webp"))
         .andExpect(jsonPath("$.items[0].largeUrl").value("https://img.test/notices/7001-1280.webp"))
+        .andExpect(jsonPath("$.items[0].imageUrl").value("https://img.test/notices/7001.webp"))
         .andExpect(jsonPath("$.items[0].startDate").value("2026-11-10"))
         .andExpect(jsonPath("$.items[0].startTime").value("20:30"))
         .andExpect(jsonPath("$.items[0].endDate").value("2026-11-20"))
@@ -262,6 +267,7 @@ class SaleApiTest {
         .andExpect(jsonPath("$.items[0].postedAt").value("2026-11-01T00:00:00Z"))
         .andExpect(jsonPath("$.items[1].thumbUrl").value(nullValue()))
         .andExpect(jsonPath("$.items[1].largeUrl").value(nullValue()))
+        .andExpect(jsonPath("$.items[1].imageUrl").value(nullValue()))
         .andExpect(jsonPath("$.items[2].thumbUrl").value(nullValue()));
   }
 

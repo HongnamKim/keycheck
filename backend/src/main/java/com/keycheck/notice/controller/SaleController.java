@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class SaleController {
   private static final String TIMES_DESCRIPTION =
       " 시작·마감 날짜는 YYYY-MM-DD, 시각은 HH:mm(모두 한국 시각)이고 모르면 null이다. 날짜만 알면 시각은 null이다."
-          + " postedAt: 공지 시각(ISO-8601, UTC). thumbUrl(640)·largeUrl(1280): 대표 사진, 없거나 아직 보관 전이면 null.";
+          + " postedAt: 공지 시각(ISO-8601, UTC). thumbUrl(640)·largeUrl(1280)·imageUrl(2048): 대표 사진, 없거나 아직 보관 전이면 null.";
 
   private final SaleQueryService saleQueryService;
   private final SaleHighlightService saleHighlightService;

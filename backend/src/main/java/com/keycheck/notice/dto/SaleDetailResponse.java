@@ -31,6 +31,7 @@ public class SaleDetailResponse {
   private final String summaryFirstLine;
   private final String thumbUrl;
   private final String largeUrl;
+  private final String imageUrl;
   private final Instant postedAt;
 
   /** 요약 줄 전부 */
@@ -65,6 +66,7 @@ public class SaleDetailResponse {
         card.getSummaryFirstLine(),
         card.getThumbUrl(),
         card.getLargeUrl(),
+        card.getImageUrl(),
         card.getPostedAt(),
         item.getSummaryLines() == null ? List.of() : item.getSummaryLines(),
         item.getShippingNote(),

@@ -347,6 +347,8 @@ export interface SaleCard {
   thumbUrl: string | null;
   /** 큰 축소본(가로 1280px). 없으면 null */
   largeUrl: string | null;
+  /** 보관본(가로 2048px). 홈 큰 칸·하이라이트·상세 맨 위처럼 넓은 자리용. 없으면 null */
+  imageUrl: string | null;
   /** 디스코드 공지 시각(ISO) */
   postedAt: string;
 }

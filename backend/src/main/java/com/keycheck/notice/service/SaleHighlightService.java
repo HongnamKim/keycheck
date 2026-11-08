@@ -35,6 +35,10 @@ public class SaleHighlightService {
   private static final ZoneId SEOUL = ZoneId.of("Asia/Seoul");
   private static final int MAX_PICKS = 2;
   private static final Duration SOON = Duration.ofDays(7);
+
+  /** 넓은 자리에 키워 보여도 흐려 보이지 않는 대표 사진의 최소 폭(px) */
+  static final int MIN_HIGHLIGHT_WIDTH = 1024;
+
   private static final Duration RECENT = Duration.ofDays(14);
 
   /** 후보로 읽는 공지 기간 (최근 소식 14일보다 넉넉히) */
@@ -108,7 +112,7 @@ public class SaleHighlightService {
     }
   }
 
-  /** 대표 사진(imageIds 첫째)의 보관이 끝난 건만 */
+  /** 대표 사진(imageIds 첫째)의 보관이 끝났고 폭이 MIN_HIGHLIGHT_WIDTH 이상인 건만 */
   private List<SaleItem> withReadyImage(List<SaleItem> items) {
     List<Long> firstIds =
         items.stream()
@@ -121,6 +125,7 @@ public class SaleHighlightService {
     Set<Long> done =
         attachmentRepository.findAllById(firstIds).stream()
             .filter(a -> a.getArchiveStatus() == ArchiveStatus.DONE)
+            .filter(a -> a.getWidth() != null && a.getWidth() >= MIN_HIGHLIGHT_WIDTH)
             .map(NoticeAttachment::getId)
             .collect(Collectors.toSet());
     return items.stream()

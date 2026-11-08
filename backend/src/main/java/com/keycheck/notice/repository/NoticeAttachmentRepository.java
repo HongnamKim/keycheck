@@ -33,6 +33,14 @@ public interface NoticeAttachmentRepository extends JpaRepository<NoticeAttachme
   @Query("update NoticeAttachment a set a.archiveStatus = :status where a.id = :id")
   void markArchived(Long id, ArchiveStatus status);
 
+  /** 보관을 끝내며(DONE) 원본 크기를 같은 업데이트로 저장한다 */
+  @Transactional
+  @Modifying
+  @Query(
+      "update NoticeAttachment a set a.archiveStatus = com.keycheck.notice.domain.ArchiveStatus.DONE,"
+          + " a.width = :width, a.height = :height where a.id = :id")
+  void markArchivedWithSize(Long id, int width, int height);
+
   @Transactional
   @Modifying
   @Query("update NoticeAttachment a set a.sourceUrl = :url where a.id = :id")

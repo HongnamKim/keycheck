@@ -104,6 +104,40 @@ public class ThumbnailMaker {
   }
 
   /**
+   * 원본의 보이는 폭·높이. 디코드하지 않고 읽기 도구가 머리에서 읽은 크기를 쓰며, EXIF 방향이 5~8이면 가로세로를 바꾼다.
+   *
+   * @throws UnreadableImageException 읽을 수 없는 형식
+   */
+  public ImageSize originalSize(byte[] original) {
+    try (ImageInputStream input =
+        new MemoryCacheImageInputStream(new ByteArrayInputStream(original))) {
+      Iterator<ImageReader> readers = ImageIO.getImageReaders(input);
+      if (!readers.hasNext()) {
+        throw new UnreadableImageException("이미지 형식을 알 수 없다");
+      }
+      ImageReader reader = readers.next();
+      try {
+        if (!FORMATS.contains(reader.getFormatName().toLowerCase(Locale.ROOT))) {
+          throw new UnreadableImageException("지원하지 않는 형식: " + reader.getFormatName());
+        }
+        reader.setInput(input, true, true);
+        return oriented(reader.getWidth(0), reader.getHeight(0), orientation(original));
+      } finally {
+        reader.dispose();
+      }
+    } catch (UnreadableImageException e) {
+      throw e;
+    } catch (IOException | RuntimeException e) {
+      throw new UnreadableImageException("크기를 읽을 수 없는 이미지", e);
+    }
+  }
+
+  /** 저장된 크기를 EXIF 방향대로 세운 보이는 크기로. 5~8은 눕혀 저장한 사진이다. */
+  static ImageSize oriented(int width, int height, int orientation) {
+    return orientation >= 5 ? new ImageSize(height, width) : new ImageSize(width, height);
+  }
+
+  /**
    * 가로가 maxWidth의 2배 이상 남는 가장 큰 정수 배율. 아주 큰 이미지를 줄여 읽어 메모리를 지킨다.
    *
    * <p>세로로 아주 긴 이미지는 그래도 크게 읽히므로, 줄여 읽은 장면이 MAX_DECODED_BYTES 안에 들 때까지 더 줄인다. 다만 가로가

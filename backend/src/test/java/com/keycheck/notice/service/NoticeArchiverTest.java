@@ -141,6 +141,18 @@ class NoticeArchiverTest {
   }
 
   @Test
+  @DisplayName("보관하면 원본 크기를 저장한다")
+  void 보관하면_원본_크기를_저장한다() throws IOException {
+    save(NoticeOrigin.BOT, 11L, "https://cdn/11.png");
+    originals.put("https://cdn/11.png", png(3000, 2000));
+
+    archiver.archiveNext();
+
+    assertThat(reload(11L).getWidth()).isEqualTo(3000);
+    assertThat(reload(11L).getHeight()).isEqualTo(2000);
+  }
+
+  @Test
   @DisplayName("작은 원본은 키우지 않는다")
   void 작은_원본은_키우지_않는다() throws IOException {
     save(NoticeOrigin.BOT, 8L, "https://cdn/8.png");

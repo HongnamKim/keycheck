@@ -38,6 +38,12 @@ public class NoticeAttachment {
   @Column(length = 20)
   private ArchiveStatus archiveStatus = ArchiveStatus.PENDING;
 
+  /** 원본 사진의 보이는 폭(px). 모르면 null */
+  private Integer width;
+
+  /** 원본 사진의 보이는 높이(px). 모르면 null */
+  private Integer height;
+
   /** 보관에 실패한 횟수 */
   private int failures;
 

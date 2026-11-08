@@ -47,6 +47,9 @@ public class SaleCardResponse {
   /** 대표 사진 1280. 사진이 없거나 아직 보관 전이면 null */
   private final String largeUrl;
 
+  /** 대표 사진 2048(넓은 자리용). 사진이 없거나 아직 보관 전이면 null */
+  private final String imageUrl;
+
   /** 공지 시각(ISO-8601, UTC) */
   private final Instant postedAt;
 
@@ -71,6 +74,7 @@ public class SaleCardResponse {
             : item.getSummaryLines().getFirst(),
         ready ? urls.url(NoticeKeys.thumb(first.getId())) : null,
         ready ? urls.url(NoticeKeys.large(first.getId())) : null,
+        ready ? urls.url(NoticeKeys.archive(first.getId())) : null,
         item.getPostedAt());
   }
 

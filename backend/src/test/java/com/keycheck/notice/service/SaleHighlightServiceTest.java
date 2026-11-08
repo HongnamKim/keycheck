@@ -90,7 +90,7 @@ class SaleHighlightServiceTest {
             loaded.addAttachment(id, 0, "a.png", "http://cdn/x");
             noticeRepository.saveAndFlush(loaded);
           });
-      attachmentRepository.markArchived(id, ArchiveStatus.DONE);
+      attachmentRepository.markArchivedWithSize(id, 2000, 1500);
     }
     return saleItemRepository.save(
         SaleItem.create(
@@ -220,6 +220,21 @@ class SaleHighlightServiceTest {
     attachmentRepository.markArchived(item.getImageIds().getFirst(), ArchiveStatus.FAILED);
 
     assertThat(service.pick(NOW)).isEmpty();
+  }
+
+  @Test
+  @DisplayName("대표 사진 폭이 1024 미만이거나 모르면 고르지 않는다")
+  void skipsNarrowOrUnknownWidth() {
+    SaleItem narrow = item("좁음", ago(Duration.ofHours(1)), SalePhase.OPEN, null, null, null, null);
+    SaleItem exact = item("딱 1024", ago(Duration.ofHours(2)), SalePhase.OPEN, null, null, null, null);
+    SaleItem unknown = item("크기 모름", ago(Duration.ofHours(3)), SalePhase.OPEN, null, null, null, null);
+    attachmentRepository.markArchivedWithSize(narrow.getImageIds().getFirst(), 800, 600);
+    attachmentRepository.markArchivedWithSize(exact.getImageIds().getFirst(), 1024, 768);
+    jdbcTemplate.update(
+        "update notice_attachment set width = null, height = null where id = ?",
+        unknown.getImageIds().getFirst());
+
+    assertThat(names(service.pick(NOW))).containsExactly("딱 1024");
   }
 
   @Test

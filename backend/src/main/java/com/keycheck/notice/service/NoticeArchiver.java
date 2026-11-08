@@ -3,6 +3,7 @@ package com.keycheck.notice.service;
 import com.keycheck.image.client.ImageDownloader;
 import com.keycheck.image.client.ImageFetchException;
 import com.keycheck.image.config.StorageConfig;
+import com.keycheck.image.service.ImageSize;
 import com.keycheck.image.service.ThumbnailMaker;
 import com.keycheck.image.service.UnreadableImageException;
 import com.keycheck.image.storage.StorageUnavailableException;
@@ -104,7 +105,9 @@ public class NoticeArchiver {
    * FAILED로 끝낸다. 저장소 장애는 그대로 던진다.
    */
   public void store(long attachmentId, byte[] original) {
+    ImageSize size;
     try {
+      size = maker.originalSize(original);
       String[] keys = {
         NoticeKeys.archive(attachmentId),
         NoticeKeys.large(attachmentId),
@@ -118,7 +121,7 @@ public class NoticeArchiver {
       attachmentRepository.markArchived(attachmentId, ArchiveStatus.FAILED);
       return;
     }
-    attachmentRepository.markArchived(attachmentId, ArchiveStatus.DONE);
+    attachmentRepository.markArchivedWithSize(attachmentId, size.getWidth(), size.getHeight());
   }
 
   /** 봇이 받은 공지면 디스코드에서 새 첨부 주소를 받아 둔다. 못 받으면 그대로 실패로 센다. */
