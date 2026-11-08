@@ -1,6 +1,19 @@
 import { describe, expect, it } from "vitest";
 import type { PostDetail } from "./api";
-import { cardPhotoType, isCompleteCard, ogCardVersion, ogPhotoUrl, postMetadata, SITE_URL, sitemapEntries } from "./seo";
+import {
+  breadcrumbJsonLd,
+  cardPhotoType,
+  isCompleteCard,
+  jsonLdHtml,
+  ogCardVersion,
+  ogPhotoUrl,
+  postMetadata,
+  postTitle,
+  SITE_CARD_ALT,
+  SITE_URL,
+  siteOpenGraph,
+  sitemapEntries,
+} from "./seo";
 
 const LARGE = "https://img.test/thumbs/5-1280.webp";
 const THUMB = "https://img.test/thumbs/5.webp";
@@ -34,12 +47,32 @@ function post(overrides: Partial<PostDetail> = {}): PostDetail {
   };
 }
 
-describe("postMetadata", () => {
-  it("제목은 상품 이름과 게시판이다(사이트 이름은 레이아웃 템플릿이 붙인다)", () => {
-    expect(postMetadata(post()).title).toBe("Space66% Spaceforge 공동구매");
-    expect(postMetadata(post({ board: "IC", productName: null, title: "[IC] Nightshift | 2026" })).title).toBe(
-      "Nightshift IC",
+describe("postTitle", () => {
+  it("상품 이름, 한국어 분류어(키보드·키캡), 게시판 순서다", () => {
+    expect(postTitle(post())).toBe("Space66% Spaceforge 키보드 공동구매");
+    expect(postTitle(post({ board: "IC", category: "KEYCAP", productName: "GMK Knight" }))).toBe("GMK Knight 키캡 IC");
+    // 이름에 이미 분류가 들어 있으면 분류어를 겹쳐 붙이지 않는다
+    expect(postTitle(post({ board: "IC", category: "KEYBOARD", productName: "RHINO60 Custom Keyboard" }))).toBe(
+      "RHINO60 Custom Keyboard IC",
     );
+    expect(postTitle(post({ board: "GB", category: "KEYCAP", productName: "Mock Keycaps" }))).toBe("Mock Keycaps 공동구매");
+  });
+
+  it("기타·미분류 글은 분류어를 넣지 않는다", () => {
+    expect(postTitle(post({ category: "OTHER" }))).toBe("Space66% Spaceforge 공동구매");
+    expect(
+      postTitle(post({ board: "IC", category: "UNCLASSIFIED", productName: null, title: "[IC] Nightshift | 2026" })),
+    ).toBe("Nightshift IC");
+  });
+});
+
+describe("postMetadata", () => {
+  it("제목은 상품 이름, 분류어, 게시판이다(사이트 이름은 레이아웃 템플릿이 붙인다)", () => {
+    expect(postMetadata(post()).title).toBe("Space66% Spaceforge 키보드 공동구매");
+    expect(
+      postMetadata(post({ board: "IC", category: "UNCLASSIFIED", productName: null, title: "[IC] Nightshift | 2026" }))
+        .title,
+    ).toBe("Nightshift IC");
   });
 
   it("요약이 끝났으면 설명은 요약 첫 줄이다", () => {
@@ -89,7 +122,7 @@ describe("postMetadata", () => {
       url: "/posts/5",
       siteName: "키체크",
       locale: "ko_KR",
-      title: "Space66% Spaceforge 공동구매",
+      title: "Space66% Spaceforge 키보드 공동구매",
       description: "65% 알루미늄 키보드 공동구매예요",
       publishedTime: "2026-11-01T00:00:00Z",
       images: [
@@ -134,6 +167,10 @@ describe("ogCardVersion", () => {
     expect(ogCardVersion(post())).toBe(ogCardVersion(post({ views: 999, summaryLines: [] })));
   });
 
+  it("분류가 바뀌어도(제목의 분류어) 값은 그대로다", () => {
+    expect(ogCardVersion(post({ category: "KEYCAP" }))).toBe(ogCardVersion(post()));
+  });
+
   it("사진, 이름, 게시판이 바뀌면 값이 바뀐다", () => {
     const base = ogCardVersion(post());
 
@@ -149,7 +186,12 @@ describe("ogCardVersion", () => {
 
 describe("sitemapEntries", () => {
   it("메인과 두 목록을 먼저, 글은 받은 순서대로 절대 주소로 담는다", () => {
-    expect(sitemapEntries([30, 12])).toEqual([
+    expect(
+      sitemapEntries([
+        { id: 30, lastModified: null },
+        { id: 12, lastModified: null },
+      ]),
+    ).toEqual([
       { url: SITE_URL },
       { url: `${SITE_URL}/ic` },
       { url: `${SITE_URL}/gb` },
@@ -158,10 +200,68 @@ describe("sitemapEntries", () => {
     ]);
   });
 
+  it("요약을 마친 시각을 아는 글만 lastModified를 넣는다", () => {
+    expect(
+      sitemapEntries([
+        { id: 30, lastModified: "2026-11-07T12:30:00Z" },
+        { id: 12, lastModified: null },
+      ]).slice(3),
+    ).toEqual([{ url: `${SITE_URL}/posts/30`, lastModified: "2026-11-07T12:30:00Z" }, { url: `${SITE_URL}/posts/12` }]);
+  });
+
   it("요약이 끝난 글이 없어도 메인과 두 목록은 담는다", () => {
     expect(sitemapEntries([]).map((entry) => entry.url)).toEqual([SITE_URL, `${SITE_URL}/ic`, `${SITE_URL}/gb`]);
   });
 
+});
+
+describe("siteOpenGraph", () => {
+  it("사이트 이름·언어·주소와 사이트 기본 카드를 둔다(레이아웃 openGraph를 바꿔도 카드가 빠지지 않게)", () => {
+    expect(siteOpenGraph("/ic")).toEqual({
+      type: "website",
+      url: "/ic",
+      siteName: "키체크",
+      locale: "ko_KR",
+      images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: SITE_CARD_ALT, type: "image/png" }],
+    });
+  });
+
+  it("제목·설명은 두지 않아 페이지의 title·description을 물려받는다", () => {
+    const openGraph = siteOpenGraph("/") as { title?: string; description?: string };
+
+    expect(openGraph.title).toBeUndefined();
+    expect(openGraph.description).toBeUndefined();
+  });
+});
+
+describe("breadcrumbJsonLd", () => {
+  it("글은 키체크 › 게시판 목록 › 상품 이름이고, 마지막 항목은 주소를 두지 않는다", () => {
+    expect(breadcrumbJsonLd("GB", "Space66% Spaceforge")).toEqual({
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "키체크", item: SITE_URL },
+        { "@type": "ListItem", position: 2, name: "공동구매", item: `${SITE_URL}/gb` },
+        { "@type": "ListItem", position: 3, name: "Space66% Spaceforge" },
+      ],
+    });
+  });
+
+  it("목록은 키체크 › 게시판이다", () => {
+    expect(breadcrumbJsonLd("IC").itemListElement).toEqual([
+      { "@type": "ListItem", position: 1, name: "키체크", item: SITE_URL },
+      { "@type": "ListItem", position: 2, name: "IC" },
+    ]);
+  });
+});
+
+describe("jsonLdHtml", () => {
+  it("<를 바꿔 문자열이 script 태그를 닫지 못하게 한다", () => {
+    const html = jsonLdHtml({ name: "</script><script>alert(1)</script>" });
+
+    expect(html).not.toContain("<");
+    expect(JSON.parse(html)).toEqual({ name: "</script><script>alert(1)</script>" });
+  });
 });
 
 describe("cardPhotoType", () => {

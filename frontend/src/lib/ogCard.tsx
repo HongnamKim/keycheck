@@ -6,6 +6,7 @@ import { ImageResponse } from "next/og";
 import type { Board } from "./api";
 import { boardLabel } from "./format";
 import { loadOgFonts } from "./ogFont";
+import { SITE_TAGLINE } from "./seo";
 
 export const OG_COLORS = {
   bg: "#f3f4f1",
@@ -19,8 +20,6 @@ export const OG_FONT_FAMILY = "IBM Plex Sans KR";
 
 /** 카드 맨 아래 출처 줄 */
 export const OG_SITE_LINE = "키체크 · keycheck.kr";
-
-export const SITE_TAGLINE = "geekhack 키보드·키캡 IC·공동구매 한국어 요약";
 
 /** 게시판 배지. 공동구매는 강조색으로 채우고, IC는 사진 위면 흰 바탕, 밝은 바탕이면 테두리만 둔다(사이트 배지와 같은 규칙) */
 export function OgBoardBadge({ board, onPhoto }: { board: Board; onPhoto: boolean }) {

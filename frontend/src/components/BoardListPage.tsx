@@ -4,6 +4,7 @@ import type { BoardFilter } from "@/lib/api";
 import { getFirstBatch } from "@/lib/cachedApi";
 import { BOARD_INFO } from "@/lib/format";
 import { listHref, parseListQuery } from "@/lib/query";
+import { breadcrumbJsonLd, jsonLdHtml } from "@/lib/seo";
 import FilterBar from "./FilterBar";
 import LoadFailed from "./LoadFailed";
 import PostFeed from "./PostFeed";
@@ -18,6 +19,11 @@ export default function BoardListPage({ board, searchParams }: { board: BoardFil
   return (
     <div className={styles.page}>
       <div className={styles.head}>
+        {/* 위치 경로 구조화 데이터: 키체크 › IC|공동구매. 쿼리를 읽기 전에 그려 정적 셸에 들어간다 */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: jsonLdHtml(breadcrumbJsonLd(board === "gb" ? "GB" : "IC")) }}
+        />
         <h1 className={styles.title}>{info.title}</h1>
         <p className={styles.desc}>{info.desc}</p>
       </div>

@@ -9,8 +9,11 @@
   --color-accent-hover: #8f2c07;
   --color-border: #d5d7d2;
   --color-divider: #e4e5e1;
-  --font-body: var(--font-sans), system-ui, sans-serif;
-  --font-code: var(--font-mono), monospace;
+  /* 한글 웹 글꼴(IBM Plex Sans KR)이 오기 전에는 운영체제 한글 글꼴(맥 애플 SD 고딕 Neo, 윈도우 맑은 고딕)로 보인다 */
+  --font-body: var(--font-sans), "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  /* IBM Plex Mono에는 한글이 없다. 작은 글씨("최근 30일 새 공동구매" 등)의 한글이 고정폭 기본 글꼴(윈도우는 굴림체·돋움체)로
+     떨어지지 않게 한글은 본문 글꼴로 이어 그린다 */
+  --font-code: var(--font-mono), var(--font-sans), "Apple SD Gothic Neo", "Malgun Gothic", monospace;
 }
 
 * {

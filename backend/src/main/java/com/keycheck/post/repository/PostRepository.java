@@ -7,6 +7,7 @@ import com.keycheck.post.domain.SpecItem;
 import com.keycheck.post.domain.Subcategory;
 import com.keycheck.post.domain.SummaryStatus;
 import com.keycheck.post.domain.VendorItem;
+import com.keycheck.post.dto.PostSitemapRow;
 import com.keycheck.post.dto.PostedAtAnchor;
 import jakarta.persistence.LockModeType;
 import java.time.Instant;
@@ -200,18 +201,33 @@ public interface PostRepository extends JpaRepository<Post, Long> {
   List<PostedAtAnchor> findPostedAtAnchors(Collection<Long> topicIds);
 
   /**
-   * 사이트맵에 넣을 글 ID, 글 번호 내림차순. 숨기지 않았고 수집 기간 안(글 번호가 sinceTopicId 이상)이며 본문을 읽었고 요약이 끝났고
-   * 요약 줄이 하나 이상인 글. 화면이 상세를 검색에 노출하는 조건과 같다. 요약 줄(JSONB 배열)의 길이를 보려고 네이티브 쿼리로 쓴다.
+   * 사이트맵에 넣을 글 ID와 요약 저장 시각, 글 번호 내림차순. 숨기지 않았고 수집 기간 안(글 번호가 sinceTopicId 이상)이며 본문을 읽었고
+   * 요약이 끝났고 요약 줄이 하나 이상인 글. 화면이 상세를 검색에 노출하는 조건과 같다. 요약 줄(JSONB 배열)의 길이를 보려고 네이티브 쿼리로
+   * 쓴다.
    */
   @Query(
       nativeQuery = true,
       value =
-          "select p.id from post p where p.hidden = false and p.topic_id >= :sinceTopicId"
+          "select p.id as id, p.summarized_at as summarizedAt from post p"
+              + " where p.hidden = false and p.topic_id >= :sinceTopicId"
               + " and p.detail_fetched_at is not null and p.summary_status = 'DONE'"
               // jsonb_array_length는 배열이 아닌 값에서 오류를 내고 AND는 앞에서 끊긴다는 보장이 없어, 오류를 낼 수 없는 식으로 본다
               + " and jsonb_typeof(p.summary_lines) = 'array' and p.summary_lines <> '[]'::jsonb"
               + " order by p.topic_id desc")
-  List<Long> findSitemapIds(long sinceTopicId);
+  List<PostSitemapRow> findSitemapRows(long sinceTopicId);
+
+  /**
+   * RSS 피드에 넣을 글. findSitemapRows와 같은 조건의 글을 요약 저장 시각 내림차순(모르면 뒤로), 같으면 글 번호 내림차순으로 최대 limit개.
+   */
+  @Query(
+      nativeQuery = true,
+      value =
+          "select p.* from post p where p.hidden = false and p.topic_id >= :sinceTopicId"
+              + " and p.detail_fetched_at is not null and p.summary_status = 'DONE'"
+              // findSitemapRows와 같은 이유로 오류를 낼 수 없는 식으로 본다
+              + " and jsonb_typeof(p.summary_lines) = 'array' and p.summary_lines <> '[]'::jsonb"
+              + " order by p.summarized_at desc nulls last, p.topic_id desc limit :limit")
+  List<Post> findFeed(long sinceTopicId, int limit);
 
   /** 상세용. 이미지까지 함께 읽어 트랜잭션 밖에서도 쓸 수 있다. */
   @EntityGraph(attributePaths = "images")
@@ -268,13 +284,15 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
   /**
    * 요약을 넣고 DONE으로 바꾼다. category가 null이면(가짜 요약기) 분류와 세부 분류를 그대로 두고, 아니면 둘 다 결과로 바꾼다(세부 분류가
-   * 없으면 null). 공동구매 기간, 상품 이름, 기간을 뽑아 본 요약인지, 요약기에 넘긴 제목, 벤더 목록도 결과로 바꾼다. 다른 컬럼은 건드리지 않는다.
+   * 없으면 null). 공동구매 기간, 상품 이름, 기간을 뽑아 본 요약인지, 요약기에 넘긴 제목, 벤더 목록도 결과로 바꾸고, 요약 저장 시각을
+   * summarizedAt으로 남긴다. 다른 컬럼은 건드리지 않는다.
    */
   @Transactional
   @Modifying
   @Query(
       "update Post p set p.summaryStatus = com.keycheck.post.domain.SummaryStatus.DONE,"
           + " p.summaryLines = :lines, p.specs = :specs, p.summarizedBy = :summarizedBy,"
+          + " p.summarizedAt = :summarizedAt,"
           + " p.subcategory = case when :category is null then p.subcategory else :subcategory end,"
           + " p.category = coalesce(:category, p.category),"
           + " p.gbStartDate = :gbStartDate, p.gbEndDate = :gbEndDate, p.productName = :productName,"
@@ -288,6 +306,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
       Category category,
       Subcategory subcategory,
       String summarizedBy,
+      Instant summarizedAt,
       LocalDate gbStartDate,
       LocalDate gbEndDate,
       String productName,
