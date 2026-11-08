@@ -16,6 +16,8 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.core.JacksonException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -80,14 +82,22 @@ public class NoticeCollector {
       String after = cursor == null ? null : String.valueOf(cursor.getLastMessageId());
       List<DiscordMessage> batch = client.messagesAfter(channelIdText, after);
       long max = 0;
+      boolean stop = false;
       for (DiscordMessage message : batch) {
         try {
           ingestService.ingest(vendor, channelId, message, NoticeOrigin.BOT);
           max = Math.max(max, Long.parseLong(message.getId()));
-        } catch (RuntimeException e) {
-          // 문제 메시지 하나가 채널 수집을 막지 않게 건너뛴다. 받은 최대 id로 커서는 전진한다.
+        } catch (IllegalArgumentException
+            | DataIntegrityViolationException
+            | JacksonException e) {
+          // 메시지 자체의 문제는 건너뛴다. 받은 최대 id로 커서는 전진한다.
           log.warn("공지 메시지 {} 저장 실패, 건너뛰어요: {}", message.getId(), e.toString());
           max = Math.max(max, idOrZero(message.getId()));
+        } catch (RuntimeException e) {
+          // DB 장애 같은 일시적 실패는 커서를 넘기지 않아 다음 실행에서 다시 받는다.
+          log.warn("공지 메시지 {} 저장 중 오류, 이 채널은 다음 실행에서 이어요: {}", message.getId(), e.toString());
+          stop = true;
+          break;
         }
       }
       if (max > 0) {
@@ -97,6 +107,9 @@ public class NoticeCollector {
           cursor.advance(max);
         }
         cursor = cursorRepository.save(cursor);
+      }
+      if (stop) {
+        return;
       }
       if (batch.size() < PAGE_SIZE) {
         return;

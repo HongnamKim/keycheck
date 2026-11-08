@@ -26,6 +26,9 @@ import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -33,6 +36,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import tools.jackson.databind.json.JsonMapper;
 
+@ExtendWith(OutputCaptureExtension.class)
 @SpringBootTest
 @Import(TestcontainersConfiguration.class)
 class NoticeCollectorTest {
@@ -154,25 +158,47 @@ class NoticeCollectorTest {
 
   @Test
   @DisplayName("토큰이 비면 디스코드를 부르지 않는다")
-  void 토큰이_비면_디스코드를_부르지_않는다() {
+  void 토큰이_비면_디스코드를_부르지_않는다(CapturedOutput output) {
     NoticeCollector collector = collector(ingestService, both(), "");
 
     collector.collect();
     collector.collect();
 
     verify(client, never()).messagesAfter(any(), any());
+    assertThat(output.getAll().split("디스코드 봇 토큰이 없어", -1).length - 1).isEqualTo(1);
+  }
+
+  @Test
+  @DisplayName("일시적 오류면 커서를 넘기지 않고 다음 실행에서 다시 받는다")
+  void 일시적_오류면_커서를_넘기지_않고_다음_실행에서_다시_받는다() {
+    DiscordMessage first = msg(BASE + 1);
+    DiscordMessage second = msg(BASE + 2);
+    NoticeIngestService failing = Mockito.mock(NoticeIngestService.class);
+    when(failing.ingest(any(), Mockito.anyLong(), eq(second), any()))
+        .thenThrow(new org.springframework.dao.DataAccessResourceFailureException("DB 장애"));
+    // GEONWORKS가 먼저 순회된다. 여기서 멈춰도 SWAGKEYS는 받아야 한다
+    when(client.messagesAfter(eq(GEON), isNull())).thenReturn(List.of(first, second));
+    when(client.messagesAfter(eq(SWAG), isNull())).thenReturn(List.of());
+
+    collector(failing, both(), "token").collect();
+
+    assertThat(cursorRepository.findById(9002L).orElseThrow().getLastMessageId())
+        .isEqualTo(BASE + 1);
+    verify(client).messagesAfter(SWAG, null);
   }
 
   @Test
   @DisplayName("한 채널이 장애여도 다음 채널을 받는다")
   void 한_채널이_장애여도_다음_채널을_받는다() {
-    when(client.messagesAfter(eq(SWAG), any()))
+    // GEONWORKS가 SWAGKEYS보다 먼저 순회된다
+    when(client.messagesAfter(eq(GEON), any()))
         .thenThrow(new com.keycheck.notice.client.DiscordUnavailableException("장애", null));
-    when(client.messagesAfter(eq(GEON), any())).thenReturn(List.of(msg(BASE + 1)));
+    when(client.messagesAfter(eq(SWAG), any())).thenReturn(List.of(msg(BASE + 1)));
 
     collector(ingestService, both(), "token").collect();
 
     assertThat(noticeRepository.count()).isEqualTo(1);
+    assertThat(cursorRepository.findById(9001L)).isPresent();
   }
 
   @Test
@@ -200,16 +226,18 @@ class NoticeCollectorTest {
             mapper.readTree(
                 "{\"id\":\"" + (BASE + 2) + "\",\"type\":0,\"content\":\"글\","
                     + "\"attachments\":[{\"id\":\"x\",\"filename\":\"a.png\",\"url\":\"u\"}]}"));
-    when(client.messagesAfter(eq(SWAG), isNull()))
+    // GEONWORKS(9002)가 먼저 순회되고, 그 뒤 SWAGKEYS(9001)를 받아야 한다
+    when(client.messagesAfter(eq(GEON), isNull()))
         .thenReturn(List.of(msg(BASE + 1), bad, msg(BASE + 3)));
-    when(client.messagesAfter(eq(GEON), isNull())).thenReturn(List.of(msg(BASE + 10)));
+    when(client.messagesAfter(eq(SWAG), isNull())).thenReturn(List.of(msg(BASE + 10)));
 
     collector(ingestService, both(), "token").collect();
 
     assertThat(noticeRepository.count()).isEqualTo(3);
-    assertThat(cursorRepository.findById(9001L).orElseThrow().getLastMessageId())
+    assertThat(cursorRepository.findById(9002L).orElseThrow().getLastMessageId())
         .isEqualTo(BASE + 3);
-    assertThat(cursorRepository.findById(9002L)).isPresent();
+    assertThat(cursorRepository.findById(9001L).orElseThrow().getLastMessageId())
+        .isEqualTo(BASE + 10);
   }
 
   @Test
