@@ -37,4 +37,11 @@ public interface NoticeAttachmentRepository extends JpaRepository<NoticeAttachme
   @Modifying
   @Query("update NoticeAttachment a set a.sourceUrl = :url where a.id = :id")
   void updateSourceUrl(Long id, String url);
+
+  /** 글 공지의 첨부 뒤에 딸린 메시지의 첨부(시간 순)를 붙여 모든 상태로 */
+  @Query(
+      "select a from NoticeAttachment a join a.notice n where n.id = :noticeId or n.parent.id ="
+          + " :noticeId order by case when n.id = :noticeId then 0 else 1 end, n.postedAt, n.id,"
+          + " a.position")
+  List<NoticeAttachment> findWithChildren(Long noticeId);
 }
