@@ -556,6 +556,44 @@ notice:
 - [ ] **Step 2: 실패 확인 → 구현 → 통과 확인** — `npm test && npm run lint && npm run build`
 - [ ] **Step 3: `git add`**
 
+### Task 19: 타임라인용 API — 카드의 공지 id와 판매 일정 목록 (2026-11-08 샘플 요약 뒤 추가)
+
+**Files:**
+- Modify: `notice/dto/SaleCardResponse.java`(+ 상세가 카드 필드를 쓰면 함께), `notice/repository/SaleItemRepository.java`, `notice/service/SaleQueryService.java`, `notice/controller/SaleController.java`, `frontend/src/lib/api.ts`(`SaleCard.noticeId`, `getSaleSchedule`), `frontend/src/lib/cachedApi.ts`(`getCachedSaleSchedule`), `frontend/src/lib/api.test.ts`
+- Create: `notice/dto/SaleScheduleResponse.java`
+- Test: `SaleApiTest`, `OpenApiTest`
+
+**Interfaces:**
+- Produces:
+  - `SaleCardResponse.noticeId: Long`; 프론트 `SaleCard.noticeId: number`.
+  - `GET /api/sales/schedule?vendor=all|swagkeys|geonworks&category=all|keyboard|keycap|switch|parts` → `SaleScheduleResponse { List<SaleCardResponse> items; }`(최대 300, 공지 시각 최근 순). 제외 규칙은 목록과 같고(숨김·OTHER·요약 전), 지금(`Clock`, Asia/Seoul) 기준으로 끝나지 않은 판매만: ① 마감이 있으면 마감(날짜만이면 그날 23:59:59) > 지금, ② 마감이 없고 시작 날짜가 지금 이후면 포함, ③ 마감이 없고 `phase != ANNOUNCE`면 시작(없으면 공지 시각) 뒤 7일 안, ④ 시작·마감이 없고 `ANNOUNCE`면 공지 30일 안. 잘못된 필터는 400(목록과 같은 문구).
+  - 프론트: `getSaleSchedule(vendor, category): Promise<SaleCard[]>`, `getCachedSaleSchedule(vendor, category): Promise<{ items: SaleCard[]; fetchedAt: string } | null>`(목록과 같은 cacheLife).
+
+- [ ] **Step 1: 실패하는 테스트** — `SaleApiTest`: 카드 `noticeId`; schedule이 ①~④ 경계(어제 마감 제외, 오늘 날짜만 마감 포함, 8일 전 시작·마감 없음 제외, 6일 전 시작 포함, 31일 전 일정 미정 제외, 29일 전 포함), 필터, 300 상한, 잘못된 필터 400. `OpenApiTest`에 `/api/sales/schedule`. `api.test.ts` 표에 `getSaleSchedule`.
+- [ ] **Step 2: 실패 확인 → 구현 → 통과 확인** — `cd backend && ./gradlew test`, `cd frontend && npm test && npm run lint`
+- [ ] **Step 3: 커밋**
+
+### Task 20: `/sales` 타임라인 두 보기와 전환 탭 (Task 12 목록 화면을 바꾼다)
+
+**Files:**
+- Create: `frontend/src/lib/saleTimeline.ts` + `saleTimeline.test.ts`, `components/sale/SaleRow.tsx`(+ css), `components/sale/SaleViewTabs.tsx`(+ css), `components/sale/SaleSchedule.tsx`(+ css)
+- Modify: `lib/saleQuery.ts`(+ test: `view`), `components/sale/SaleFeed.tsx`(격자 → 공지 타임라인), `components/sale/SalesListPage.tsx`(탭, 보기별 본문), `app/sales/[id]/page.tsx`(돌아가기 주소에 보기), 쓰지 않게 되면 `components/sale/SaleCard.tsx` 제거
+
+**Interfaces:**
+- Consumes: Task 19 `noticeId`, `getCachedSaleSchedule`; Task 11 `saleBadge`, `saleKindLabel`, `saleWhenText`, `vendorLabel`, `kstDateKey`.
+- Produces:
+  - `SaleListQuery`에 `view: "notices" | "schedule"`(기본 notices, 주소에서 뺀다). `saleListHref`, `parseSaleListQuery`, `saleHref`(목록에서 열면 `list=1`과 함께 `view`도), `parseSaleDetailQuery`, `saleBackHref`가 `view`를 오가게.
+  - `groupByNotice(items: SaleCard[]): { day: string; notices: { noticeId: number; vendor: SaleVendor; postedAt: string; items: SaleCard[] }[] }[]` — 입력 순서(공지 최근 순) 유지, 같은 날(KST)·같은 공지 묶기, 페이지가 이어져도 같은 공지는 한 묶음.
+  - `dayLabel(day: string, today: string): string` — "오늘", "어제", 그 밖에는 "11월 6일 금요일".
+  - `scheduleBuckets(items: SaleCard[], now: Date): { key: "closing" | "today" | "tomorrow" | "week" | "later" | "onSale" | "tbd"; label: string; items: SaleCard[] }[]` — 라벨 "곧 마감"·"오늘"·"내일"·"이번 주"·"다음 주 이후"·"판매 중"·"일정 미정", 빈 구간은 빼고, 구간 안은 해당 시각(마감 또는 시작) 이른 순, 끝난 건 제외(서버가 이미 거르지만 렌더 시각 기준으로 한 번 더).
+  - `SaleRow({ sale, href, now, showVendor })` — 시안 줄 모양(사진 있으면 64×48 썸네일, 배지 + 구분(+판매처), 이름, 판매 시각 글), 줄 전체 링크.
+  - `SaleViewTabs({ query })` — "공지 순 | 판매 일정 순", `aria-current`, 필터 유지.
+
+- [ ] **Step 1: 실패하는 테스트** — `saleTimeline.test.ts`: 묶기(같은 날 두 공지, 페이지 이어 붙이기), `dayLabel`, 구간 나누기(경계: 마감 7일, 오늘/내일/6일/7일, 일정 미정, 끝난 건 제외), 정렬. `saleQuery.test.ts`: `view` 왕복.
+- [ ] **Step 2: 실패 확인 → 구현(시안 `.superpowers/brainstorm/49794-1794108726/content/timeline-options.html`의 A·B) → 통과 확인** — `cd frontend && npm test && npm run lint && npm run build`
+- [ ] **Step 3: 로컬 확인** — 로컬 백엔드(요약된 샘플)로 `/sales`, `/sales?view=schedule`, 필터, 더 불러오기, 상세 → 목록으로.
+- [ ] **Step 4: 커밋**
+
 ---
 
 ## 마무리
