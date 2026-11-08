@@ -7,7 +7,7 @@ import { HTML_LIMITED_BOT_UA_RE } from "next/dist/shared/lib/router/utils/html-b
  * 카카오톡 인앱 브라우저(KAKAOTALK x.y)는 사람이라 걸리지 않는다. 미리보기 수집기는 kakaotalk-scrap이다.
  * 다음 검색 로봇의 지금 UA는 Daum/4.1이다(Daumoa는 옛 UA, 다음 앱 DaumApps/는 사람). GoogleOther는 UA에 bot이 없다.
  */
-const CRAWLER_UA =
+export const CRAWLER_UA =
   /bot|crawl|spider|slurp|scrap|facebookexternalhit|Yeti|Daumoa|Daum\/|GoogleOther|HeadlessChrome|Lighthouse|curl|wget|python|Go-http-client|okhttp|axios|node-fetch/i;
 
 /** 봇이면 true. UA가 없으면 봇으로 본다. 메타데이터를 <head>로 받는 Next 기본 봇 목록(WhatsApp·BingPreview 등)도 봇이다 */

@@ -444,6 +444,34 @@ class ThumbnailMakerTest {
   }
 
   @Test
+  @DisplayName("원본 크기를 디코드 없이 읽는다")
+  void readsOriginalSize() throws IOException {
+    ImageSize size = maker.originalSize(png(3000, 2000));
+
+    assertThat(size.getWidth()).isEqualTo(3000);
+    assertThat(size.getHeight()).isEqualTo(2000);
+  }
+
+  @Test
+  @DisplayName("EXIF 방향이 눕힌 사진이면 보이는 폭·높이로 준다")
+  void originalSizeFollowsExifOrientation() throws IOException {
+    ImageSize turned = maker.originalSize(jpegWithOrientation(ByteOrder.BIG_ENDIAN, 6, false));
+    ImageSize upright = maker.originalSize(jpegWithOrientation(ByteOrder.BIG_ENDIAN, 1, false));
+
+    assertThat(turned.getWidth()).isEqualTo(200);
+    assertThat(turned.getHeight()).isEqualTo(400);
+    assertThat(upright.getWidth()).isEqualTo(400);
+    assertThat(upright.getHeight()).isEqualTo(200);
+  }
+
+  @Test
+  @DisplayName("읽을 수 없는 원본의 크기는 UnreadableImageException")
+  void originalSizeOfGarbageFails() {
+    assertThatThrownBy(() -> maker.originalSize(new byte[] {1, 2, 3}))
+        .isInstanceOf(UnreadableImageException.class);
+  }
+
+  @Test
   @DisplayName("JPEG의 EXIF 방향대로 바로 세운다(시계 방향 90도, 빅 엔디언)")
   void followsExifOrientation() throws IOException {
     byte[] original = jpegWithOrientation(ByteOrder.BIG_ENDIAN, 6, false);

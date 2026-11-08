@@ -83,6 +83,10 @@ class SummaryWorkerTest {
         new SummaryProperties(
             redoFake, redoMissingSubcategory, redoMissingProductName, dailyLimit),
         new CollectProperties(0),
+        new DailySummaryBudget(
+            new SummaryProperties(
+                redoFake, redoMissingSubcategory, redoMissingProductName, dailyLimit),
+            clock),
         clock);
   }
 
@@ -277,6 +281,7 @@ class SummaryWorkerTest {
             summarizer,
             new SummaryProperties(false, false, false, 2),
             new CollectProperties(0),
+            new DailySummaryBudget(new SummaryProperties(false, false, false, 2), clock),
             clock);
 
     assertThat(worker.summarizeNext()).isTrue();
@@ -335,6 +340,7 @@ class SummaryWorkerTest {
             new FakeSummarizer(),
             new SummaryProperties(false, false, false, 1),
             new CollectProperties(0),
+            new DailySummaryBudget(new SummaryProperties(false, false, false, 1), clock),
             clock);
 
     assertThat(worker.summarizeNext()).isTrue();
@@ -429,6 +435,7 @@ class SummaryWorkerTest {
             summarizer,
             new SummaryProperties(false, false, false, 300),
             new CollectProperties(2500),
+            new DailySummaryBudget(new SummaryProperties(false, false, false, 300), clock),
             clock);
 
     while (worker.summarizeNext()) {
@@ -603,6 +610,7 @@ class SummaryWorkerTest {
             new FakeSummarizer(),
             new SummaryProperties(false, true, false, 300),
             new CollectProperties(0),
+            new DailySummaryBudget(new SummaryProperties(false, true, false, 300), clock),
             clock);
 
     assertThat(worker.summarizeNext()).isFalse();
@@ -759,6 +767,7 @@ class SummaryWorkerTest {
             new FakeSummarizer(),
             new SummaryProperties(false, false, true, 300),
             new CollectProperties(0),
+            new DailySummaryBudget(new SummaryProperties(false, false, true, 300), clock),
             clock);
 
     assertThat(worker.summarizeNext()).isFalse();
@@ -995,6 +1004,7 @@ class SummaryWorkerTest {
             new FakeSummarizer(),
             new SummaryProperties(false, false, false, 300),
             new CollectProperties(0),
+            new DailySummaryBudget(new SummaryProperties(false, false, false, 300), clock),
             clock);
 
     assertThat(worker.summarizeNext()).isTrue();
@@ -1016,6 +1026,7 @@ class SummaryWorkerTest {
             new FakeSummarizer(),
             new SummaryProperties(true, false, false, 300),
             new CollectProperties(0),
+            new DailySummaryBudget(new SummaryProperties(true, false, false, 300), clock),
             clock);
 
     assertThat(worker.summarizeNext()).isTrue();

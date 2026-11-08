@@ -73,4 +73,10 @@ tasks.named('test') {
     systemProperty 'keycheck.storage.secret-access-key', ''
     systemProperty 'keycheck.storage.public-url', 'https://img.test'
     systemProperty 'keycheck.thumbnail.enabled', 'false'
+    // backend/.env에 디스코드 토큰·채널이 있어도 테스트는 디스코드를 부르지 않는다. 공지 작업도 테스트가 직접 실행한다.
+    systemProperty 'keycheck.notice.enabled', 'false'
+    systemProperty 'keycheck.notice.summary.enabled', 'false'
+    systemProperty 'keycheck.notice.bot-token', ''
+    systemProperty 'keycheck.notice.channels.SWAGKEYS', ''
+    systemProperty 'keycheck.notice.channels.GEONWORKS', ''
 }

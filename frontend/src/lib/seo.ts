@@ -1,8 +1,9 @@
 /** 검색 노출·링크 미리보기용 메타데이터(설계 3.3). 순수 함수만 둔다 */
 
 import type { Metadata, MetadataRoute } from "next";
-import type { Board, Category, PostDetail, SitemapPost } from "./api";
+import type { Board, Category, PostDetail, SaleDetail, SitemapPost } from "./api";
 import { boardLabel, displayTitle } from "./format";
+import { vendorLabel } from "./saleStatus";
 
 /** 사이트 주소. 메타데이터의 상대 주소(OG 이미지·canonical) 기준이고, 사이트맵·robots의 절대 주소에 쓴다. 운영 주소가 기본이다 */
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://keycheck.kr";
@@ -122,6 +123,19 @@ export function postMetadata(post: PostDetail): Metadata {
   };
 }
 
+/** 국내 판매 상세의 메타데이터. 제목은 상품 이름, 설명은 요약 첫 줄 */
+export function saleMetadata(sale: SaleDetail): Metadata {
+  const path = `/sales/${sale.id}`;
+  return {
+    title: sale.productName,
+    description: sale.summaryLines[0]
+      ? truncate(sale.summaryLines[0], DESCRIPTION_MAX)
+      : `${vendorLabel(sale.vendor)} 디스코드 공지에서 정리한 국내 판매 소식 "${sale.productName}"를 키체크에서 확인해 보세요`,
+    alternates: { canonical: path },
+    openGraph: siteOpenGraph(path),
+  };
+}
+
 /**
  * 메인·목록의 openGraph. 페이지가 openGraph를 두면 레이아웃 것을 통째로 바꿔 파일로 붙던 사이트 기본 카드도 빠지므로,
  * 사이트 이름·언어와 기본 카드(app/opengraph-image)를 다시 둔다. path는 그 페이지의 canonical 주소다
@@ -164,17 +178,22 @@ export function jsonLdHtml(data: object): string {
 }
 
 /**
- * 사이트맵 항목. 메인과 두 목록, 요약이 끝난 글을 절대 주소로 담는다(목록 필터 주소는 canonical과 같이 뺀다).
- * 글의 lastModified(요약을 마친 시각)는 알 때만 넣는다
+ * 사이트맵 항목. 메인과 두 목록, 국내 판매 목록, 요약이 끝난 글과 판매 글을 절대 주소로 담는다(목록 필터 주소는 canonical과 같이 뺀다).
+ * 글과 판매 글의 lastModified(요약을 마친 시각, 판매 글의 갱신 시각)는 알 때만 넣는다
  */
-export function sitemapEntries(posts: SitemapPost[]): MetadataRoute.Sitemap {
+export function sitemapEntries(posts: SitemapPost[], sales: SitemapPost[]): MetadataRoute.Sitemap {
   return [
     { url: SITE_URL },
     { url: `${SITE_URL}/ic` },
     { url: `${SITE_URL}/gb` },
+    { url: `${SITE_URL}/sales` },
     ...posts.map((post) => ({
       url: `${SITE_URL}/posts/${post.id}`,
       ...(post.lastModified ? { lastModified: post.lastModified } : {}),
+    })),
+    ...sales.map((sale) => ({
+      url: `${SITE_URL}/sales/${sale.id}`,
+      ...(sale.lastModified ? { lastModified: sale.lastModified } : {}),
     })),
   ];
 }

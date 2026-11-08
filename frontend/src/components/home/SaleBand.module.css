@@ -1,0 +1,118 @@
+/*
+ * 하이라이트 아래 국내 판매 띠(시안 c, 띠 A). 어두운 벤토 칸과 구별되는 흰 카드.
+ * 왼쪽 3:2 사진은 데스크톱에서 420px, 좁아지면 띠 폭의 42%까지 줄인다. 모서리는 벤토 칸과 같다
+ */
+.band {
+  display: grid;
+  grid-template-columns: min(420px, 42%) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+  margin-top: 12px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.band:hover {
+  color: var(--color-text);
+}
+
+.media {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  aspect-ratio: 3 / 2;
+  background-color: var(--color-divider);
+}
+
+.img {
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.band:hover .img {
+  transform: scale(1.04);
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 0;
+}
+
+.kicker {
+  margin-bottom: 4px;
+  font-family: var(--font-code);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--color-accent);
+}
+
+.title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: 6px;
+  font-size: 22px;
+  line-height: 1.3;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.band:hover .title {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  font-size: 14px;
+  color: var(--color-muted);
+  word-break: keep-all;
+}
+
+.go {
+  padding-right: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .img {
+    transition: none;
+  }
+}
+
+/* 모바일: 사진 위, 글 아래로 쌓는다 */
+@media (max-width: 599px) {
+  .band {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+    gap: 0;
+    margin-top: 10px;
+    border-radius: 14px;
+  }
+
+  .text {
+    padding: 14px 16px 0;
+  }
+
+  .title {
+    font-size: 19px;
+  }
+
+  .go {
+    padding: 10px 16px 14px;
+  }
+}

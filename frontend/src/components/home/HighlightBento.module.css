@@ -34,6 +34,20 @@
   grid-area: f;
 }
 
+/*
+ * 큰 칸·띠의 두 모양(설계 3.7). 인라인 스크립트가 .pick의 data-pick을 정하고, 보이지 않는 쪽만 숨긴다.
+ * 감싼 요소는 상자를 만들지 않아 큰 칸이 벤토 자리(a)를 그대로 받는다
+ */
+.gkOnly,
+.krOnly {
+  display: contents;
+}
+
+.pick[data-pick="gk"] .krOnly,
+.pick[data-pick="kr"] .gkOnly {
+  display: none;
+}
+
 /* 칸이 모자랄 때: 남은 칸을 같은 크기로 */
 .grid {
   display: grid;

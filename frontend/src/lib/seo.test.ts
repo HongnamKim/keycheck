@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { PostDetail } from "./api";
+import type { PostDetail, SaleDetail } from "./api";
 import {
   breadcrumbJsonLd,
   cardPhotoType,
@@ -8,6 +8,7 @@ import {
   ogCardVersion,
   ogPhotoUrl,
   postMetadata,
+  saleMetadata,
   postTitle,
   SITE_CARD_ALT,
   SITE_URL,
@@ -185,34 +186,52 @@ describe("ogCardVersion", () => {
 });
 
 describe("sitemapEntries", () => {
-  it("메인과 두 목록을 먼저, 글은 받은 순서대로 절대 주소로 담는다", () => {
+  it("메인과 두 목록, 국내 판매 목록을 먼저, 글과 판매 글은 받은 순서대로 절대 주소로 담는다", () => {
     expect(
-      sitemapEntries([
-        { id: 30, lastModified: null },
-        { id: 12, lastModified: null },
-      ]),
+      sitemapEntries(
+        [
+          { id: 30, lastModified: null },
+          { id: 12, lastModified: null },
+        ],
+        [{ id: 3, lastModified: null }],
+      ),
     ).toEqual([
       { url: SITE_URL },
       { url: `${SITE_URL}/ic` },
       { url: `${SITE_URL}/gb` },
+      { url: `${SITE_URL}/sales` },
       { url: `${SITE_URL}/posts/30` },
       { url: `${SITE_URL}/posts/12` },
+      { url: `${SITE_URL}/sales/3` },
     ]);
   });
 
   it("요약을 마친 시각을 아는 글만 lastModified를 넣는다", () => {
     expect(
-      sitemapEntries([
-        { id: 30, lastModified: "2026-11-07T12:30:00Z" },
-        { id: 12, lastModified: null },
-      ]).slice(3),
+      sitemapEntries(
+        [
+          { id: 30, lastModified: "2026-11-07T12:30:00Z" },
+          { id: 12, lastModified: null },
+        ],
+        [],
+      ).slice(4),
     ).toEqual([{ url: `${SITE_URL}/posts/30`, lastModified: "2026-11-07T12:30:00Z" }, { url: `${SITE_URL}/posts/12` }]);
   });
 
-  it("요약이 끝난 글이 없어도 메인과 두 목록은 담는다", () => {
-    expect(sitemapEntries([]).map((entry) => entry.url)).toEqual([SITE_URL, `${SITE_URL}/ic`, `${SITE_URL}/gb`]);
+  it("판매 글도 lastModified를 알 때만 넣는다", () => {
+    expect(sitemapEntries([], [{ id: 3, lastModified: "2026-11-08T00:00:00Z" }]).slice(4)).toEqual([
+      { url: `${SITE_URL}/sales/3`, lastModified: "2026-11-08T00:00:00Z" },
+    ]);
   });
 
+  it("글이 없어도 메인과 두 목록, 판매 목록은 담는다", () => {
+    expect(sitemapEntries([], []).map((entry) => entry.url)).toEqual([
+      SITE_URL,
+      `${SITE_URL}/ic`,
+      `${SITE_URL}/gb`,
+      `${SITE_URL}/sales`,
+    ]);
+  });
 });
 
 describe("siteOpenGraph", () => {
@@ -288,5 +307,56 @@ describe("isCompleteCard", () => {
     expect(isCompleteCard(true, false, true)).toBe(false);
     expect(isCompleteCard(true, true, false)).toBe(false);
     expect(isCompleteCard(false, false, false)).toBe(false);
+  });
+});
+
+function sale(overrides: Partial<SaleDetail> = {}): SaleDetail {
+  return {
+    id: 7,
+    noticeId: 70,
+    vendor: "SWAGKEYS",
+    productName: "Neo80 Cu",
+    category: "KEYBOARD",
+    saleType: "RESTOCK",
+    phase: "OPEN",
+    startDate: "2026-11-06",
+    startTime: "19:30",
+    endDate: null,
+    endTime: null,
+    summaryFirstLine: null,
+    thumbUrl: null,
+    largeUrl: null,
+    imageUrl: null,
+    postedAt: "2026-11-06T09:42:00Z",
+    summaryLines: ["Neo80 Cu 6가지 색 조합이 다시 들어왔어요."],
+    shippingNote: null,
+    links: [],
+    images: [],
+    ...overrides,
+  };
+}
+
+describe("saleMetadata", () => {
+  it("제목은 상품 이름, canonical은 판매 상세 주소다", () => {
+    const meta = saleMetadata(sale());
+
+    expect(meta.title).toBe("Neo80 Cu");
+    expect(meta.alternates).toEqual({ canonical: "/sales/7" });
+  });
+
+  it("설명은 요약 첫 줄이고, 120자를 넘으면 자르고 …를 붙인다", () => {
+    expect(saleMetadata(sale()).description).toBe("Neo80 Cu 6가지 색 조합이 다시 들어왔어요.");
+    expect(saleMetadata(sale({ summaryLines: ["가".repeat(130)] })).description).toBe(`${"가".repeat(120)}…`);
+    expect(saleMetadata(sale({ summaryLines: ["나".repeat(120)] })).description).toBe("나".repeat(120));
+  });
+
+  it("요약 줄이 없으면 기본 문구다", () => {
+    expect(saleMetadata(sale({ summaryLines: [] })).description).toBe(
+      "Swagkeys 디스코드 공지에서 정리한 국내 판매 소식 \"Neo80 Cu\"를 키체크에서 확인해 보세요",
+    );
+  });
+
+  it("openGraph는 사이트 기본 카드에 판매 상세 주소를 둔다", () => {
+    expect(saleMetadata(sale()).openGraph).toEqual(siteOpenGraph("/sales/7"));
   });
 });

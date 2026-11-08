@@ -48,6 +48,11 @@ export function kstDateKey(now: Date): string {
   return new Date(now.getTime() + KST_OFFSET_MS).toISOString().slice(0, 10);
 }
 
+/** 시각을 한국 시간 HH:mm으로 표기 (예: 18:52). 공지 시각 표시용 */
+export function formatKstTime(iso: string): string {
+  return new Date(new Date(iso).getTime() + KST_OFFSET_MS).toISOString().slice(11, 16);
+}
+
 /** 시각을 한국 시간 짧은 월/일로 표기 (예: 11/1). 카드 메타의 날짜 */
 export function formatShortDate(iso: string): string {
   const kst = new Date(new Date(iso).getTime() + KST_OFFSET_MS);
@@ -175,6 +180,12 @@ export function boardLabel(board: Board): string {
 export const BOARD_INFO: Record<BoardFilter, { title: string; desc: string }> = {
   ic: { title: "IC", desc: "관심 조사 글이에요. 아직 판매 전이라 의견을 모으는 단계예요." },
   gb: { title: "공동구매", desc: "주문을 받는 중이거나 곧 받을 글이에요. 기간과 벤더를 확인해 보세요." },
+};
+
+/** 국내 판매 목록(/sales)의 제목과 설명. 화면과 검색 결과용 설명이 같다 */
+export const SALE_LIST_INFO = {
+  title: "국내 판매",
+  desc: "Swagkeys·GeonWorks 디스코드 공지에서 판매 소식만 골라 정리했어요.",
 };
 
 /** 보던 목록의 이름 (예: 공동구매 목록, IC · 키보드 · 65% · 조회순 목록). 상세 하단 주변 글 목록의 제목 */

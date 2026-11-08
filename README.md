@@ -54,6 +54,11 @@ CRAWL_ENABLED=true ./gradlew bootRun
 | `R2_SECRET_ACCESS_KEY` | (없음) | R2 API 토큰의 Secret Access Key |
 | `R2_PUBLIC_URL` | (없음) | 브라우저가 축소본을 받는 공개 주소 앞부분. 로컬은 버킷의 `r2.dev` 주소, 배포는 연결한 도메인. DB에는 객체 이름만 두고 응답할 때 이 주소를 붙인다. 비어 있으면 축소본을 만들어도 화면은 원본을 쓴다(축소본 작업을 켜면 경고를 남긴다) |
 | `THUMBNAIL_ENABLED` | `false` | 이미지 축소본 작업. 축소본이 없는 이미지를 3초에 한 장씩 원본 호스트에서 받아 WebP(가로 640px, 대표 이미지는 1280px도)로 줄여 R2에 올린다. geekhack 첨부는 요청 간격이 비어 있을 때만 받는다. R2 값이 없으면 돌지 않는다 |
+| `NOTICE_ENABLED` | `false` | 디스코드 판매 공지 수집·첨부 보관 작업. 5분마다 채널의 새 메시지를 읽어 저장하고 첨부를 R2에 올린다. 봇 토큰과 채널 id, R2 값이 있어야 한다 |
+| `DISCORD_BOT_TOKEN` | (없음) | 판매 공지 채널을 읽는 디스코드 봇 토큰. 비밀값이라 `backend/.env`에만 넣는다 |
+| `SWAGKEY_CHANNEL_ID` | (없음) | Swagkeys 공지 채널 id. 비면 그 판매처는 수집하지 않는다 |
+| `GEONWORKS_CHANNEL_ID` | (없음) | GeonWorks 공지 채널 id. 비면 그 판매처는 수집하지 않는다 |
+| `NOTICE_SUMMARY_ENABLED` | `false` | 공지 요약 작업. `SUMMARIZER=claude`면 공지마다 Claude 비용이 든다. 로컬에서 가져온 공지를 확인 없이 요약하지 않도록 기본은 끈다 |
 
 새 글은 요약 대기로 저장되고, 백그라운드 작업이 몇 초마다 한 건씩 요약합니다. 실제 요약을 쓰려면 `backend/.env.example`을 `backend/.env`로 복사해 키를 넣고 `SUMMARIZER=claude`를 지정합니다. `backend/.env`는 커밋하지 않습니다.
 
@@ -68,7 +73,7 @@ cd backend && SUMMARIZER=claude ./gradlew bootRun
 update post set prefetch_failures = 0 where detail_fetched_at is null;
 ```
 
-이미지 축소본은 R2 버킷의 `thumbs/` 아래에 올립니다. 로컬 개발도 실제 R2 버킷에 연결합니다(R2 값은 `backend/.env`에 넣고 커밋하지 않습니다). 자동 테스트는 이 값이 있어도 R2를 부르지 않습니다.
+이미지 축소본은 R2 버킷의 `thumbs/` 아래에, 디스코드 공지 첨부는 `notices/` 아래에 올립니다. 로컬 개발도 실제 R2 버킷에 연결합니다(R2 값은 `backend/.env`에 넣고 커밋하지 않습니다). 자동 테스트는 이 값이 있어도 R2를 부르지 않습니다.
 
 축소본 작업은 이미지 한 장을 처리하는 동안 메모리를 많이 씁니다. 힙을 많게는 300MB 가까이(원본 25MB, 줄여 읽은 장면, 축소본과 인코딩 사본), 점진적 JPEG이면 힙 밖에 계수 버퍼를 128MB까지 더 씁니다. JVM 기본 최대 힙은 서버 메모리의 1/4이므로, 메모리가 작은 서버에서 켤 때는 힙을 늘립니다(예: `-XX:MaxRAMPercentage=60`).
 
@@ -89,6 +94,18 @@ update post_image set thumb_failures = 0 where thumb_key is null and thumb_failu
 update post_image set thumb_key = null, thumb_large_key = null, thumb_failures = 0;
 ```
 
+### 지난 디스코드 공지 가져오기 (일회성)
+
+봇이 켜지기 전의 공지는 디스코드에서 손으로 옮겨 `messages.json`과 `attachments/` 폴더가 있는 묶음으로 바꿔 둡니다(변환 스크립트는 저장소에 없습니다). 묶음은 봇과 같은 길(저장 + 첨부 보관)로 넣고, 요약은 평소 요약 작업이 나중에 합니다. R2 값이 있어야 하며, 이미 있는 공지는 건너뛰고 보관이 덜 끝난 첨부만 이어서 끝내므로 여러 번 실행해도 안전합니다. 실행 중에는 수집·요약 작업이 모두 꺼집니다.
+
+```bash
+cd backend
+NOTICE_IMPORT_DIR=/path/to/swagkeys NOTICE_IMPORT_VENDOR=SWAGKEYS \
+  ./gradlew bootRun --args='--spring.profiles.active=notice-import'
+```
+
+끝나면 가져온 건수, 건너뛴 건수, 보관한 첨부와 실패한 첨부 수를 로그로 남기고 종료합니다(공지 내용은 남기지 않습니다). 운영 서버에서 한 번 실행하는 절차는 [deploy/README.md](deploy/README.md#지난-디스코드-공지-가져오기)입니다.
+
 ### 3. 프론트
 
 ```bash
@@ -106,7 +123,7 @@ cd backend && ./gradlew test                          # Docker 필요 (Testconta
 cd frontend && npm test && npm run lint && npm run build
 ```
 
-자동 테스트는 실제 geekhack과 Claude API를 호출하지 않습니다.
+자동 테스트는 실제 geekhack, 디스코드, Claude API, R2를 호출하지 않습니다.
 
 ## 배포
 
