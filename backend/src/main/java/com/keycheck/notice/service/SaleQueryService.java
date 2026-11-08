@@ -20,7 +20,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -88,8 +87,9 @@ public class SaleQueryService {
   }
 
   /**
-   * 지금 기준으로 끝나지 않은 판매(설계 3.9): ① 마감이 있으면 마감이 지금 뒤, ② 마감이 없고 시작이 지금 뒤, ③ 마감이 없고 예고가 아니면
-   * 시작(없으면 공지 시각) 뒤 7일 안, ④ 시작·마감이 없고 예고면 공지 30일 안. 공지 시각 최근 순으로 300건까지.
+   * 지금 기준으로 끝나지 않은 판매(설계 3.9, 화면 배지와 같은 기준). 마감이 있으면 마감(날짜만이면 23:59:59)이 지금 뒤. 마감이 없으면 시작이
+   * 있을 때 시작이 아직 안 왔거나 시작 뒤 7일 안(예고 여부와 상관없이), 시작이 없을 때 예고가 아니면 공지 뒤 7일 안·예고면 공지 뒤 30일 안.
+   * 공지 시각 최근 순으로 300건까지.
    */
   public SaleScheduleResponse getSchedule(String vendor, String category) {
     String vendorName = parseVendor(vendor);
@@ -102,6 +102,7 @@ public class SaleQueryService {
                 vendorName,
                 categoryName,
                 now.minus(SCHEDULE_CANDIDATE_POSTED),
+                today.minusDays(8),
                 today.minusDays(1))
             .stream()
             .filter(i -> notEnded(i, now))
@@ -115,19 +116,13 @@ public class SaleQueryService {
       LocalTime time = item.getEndTime() == null ? LocalTime.of(23, 59, 59) : item.getEndTime();
       return item.getEndDate().atTime(time).atZone(SEOUL).toInstant().isAfter(now);
     }
-    ZonedDateTime start = null;
     if (item.getStartDate() != null) {
       LocalTime time = item.getStartTime() == null ? LocalTime.MIDNIGHT : item.getStartTime();
-      start = item.getStartDate().atTime(time).atZone(SEOUL);
-      if (start.toInstant().isAfter(now)) {
-        return true;
-      }
+      Instant start = item.getStartDate().atTime(time).atZone(SEOUL).toInstant();
+      return start.isAfter(now) || start.plus(ON_SALE_WINDOW).isAfter(now);
     }
-    if (item.getPhase() != SalePhase.ANNOUNCE) {
-      Instant from = start != null ? start.toInstant() : item.getPostedAt();
-      return from.plus(ON_SALE_WINDOW).isAfter(now);
-    }
-    return start == null && item.getPostedAt().plus(ANNOUNCE_WINDOW).isAfter(now);
+    Duration window = item.getPhase() == SalePhase.ANNOUNCE ? ANNOUNCE_WINDOW : ON_SALE_WINDOW;
+    return item.getPostedAt().plus(window).isAfter(now);
   }
 
   public SaleDetailResponse getSale(Long id) {

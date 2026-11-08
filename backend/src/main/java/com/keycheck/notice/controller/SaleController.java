@@ -64,8 +64,8 @@ public class SaleController {
       summary = "국내 판매 일정",
       description =
           "지금(한국 시각) 기준으로 끝나지 않은 판매 건을 쪽 나눔 없이 최대 300건, 공지 시각 최근 순(같으면 공지 안 순서)으로 돌려준다."
-              + " 마감이 있으면 마감이 지나지 않은 건, 마감이 없으면 시작이 아직 안 왔거나 예고가 아닌 건은 시작(없으면 공지) 뒤 7일 안,"
-              + " 시작·마감이 없는 예고는 공지 30일 안이다. 숨김·분류 OTHER·요약 전 공지의 건은 뺀다."
+              + " 마감이 있으면 마감이 지나지 않은 건이다. 마감이 없으면 시작이 있을 때 시작이 아직 안 왔거나 시작 뒤 7일 안인 건(예고 포함),"
+              + " 시작이 없을 때 예고가 아니면 공지 뒤 7일 안, 예고면 공지 뒤 30일 안인 건이다. 숨김·분류 OTHER·요약 전 공지의 건은 뺀다."
               + TIMES_DESCRIPTION)
   @ApiResponse(responseCode = "200", description = "성공")
   @ApiResponse(responseCode = "400", description = "허용되지 않는 vendor·category 값")

@@ -60,7 +60,7 @@ public interface SaleItemRepository extends JpaRepository<SaleItem, Long> {
   List<SaleItem> findHighlightCandidates(Instant postedFrom, LocalDate from, LocalDate to);
 
   /**
-   * 판매 일정 후보: 내보내는 판매 건 중 공지가 postedFrom 이후이거나 시작·마감 날짜가 from 이후인 것. 끝났는지는 서비스가 한국 시각으로 가린다.
+   * 판매 일정 후보: 내보내는 판매 건 중 공지가 postedFrom 이후이거나 시작 날짜가 startFrom 이후이거나 마감 날짜가 from 이후인 것. 끝났는지는 서비스가 한국 시각으로 가린다.
    *
    * @param vendor null이면 모든 판매처 (이름 문자열)
    * @param category null이면 모든 분류 (이름 문자열)
@@ -73,10 +73,10 @@ public interface SaleItemRepository extends JpaRepository<SaleItem, Long> {
               + " and (cast(:vendor as text) is null or s.vendor = cast(:vendor as text))"
               + " and (cast(:category as text) is null or s.category = cast(:category as text))"
               + " and (s.posted_at >= cast(:postedFrom as timestamptz)"
-              + " or s.start_date >= cast(:from as date) or s.end_date >= cast(:from as date))"
+              + " or s.start_date >= cast(:startFrom as date) or s.end_date >= cast(:from as date))"
               + " order by s.posted_at desc, s.id asc")
   List<SaleItem> findScheduleCandidates(
-      String vendor, String category, Instant postedFrom, LocalDate from);
+      String vendor, String category, Instant postedFrom, LocalDate startFrom, LocalDate from);
 
   /** 사이트맵: 내보내는 판매 건의 id와 공지 요약 시각, 목록과 같은 순서 */
   @Query(

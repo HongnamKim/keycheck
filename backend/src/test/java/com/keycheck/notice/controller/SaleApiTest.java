@@ -396,6 +396,23 @@ class SaleApiTest {
   }
 
   @Test
+  @DisplayName("일정 목록은 시작이 지난 예고도 시작 뒤 7일 안이면 넣고, 공지가 120일보다 옛이어도 넣는다")
+  void scheduleIncludesAnnounceWithPassedStart() throws Exception {
+    clock.set(NOW);
+    LocalDate today = LocalDate.of(2026, 11, 13);
+    scheduled("예고 3일 전 시작", SalePhase.ANNOUNCE, daysAgo(10), today.minusDays(3), null);
+    scheduled("예고 8일 전 시작", SalePhase.ANNOUNCE, daysAgo(10), today.minusDays(8), null);
+    scheduled("옛 공지 3일 전 시작", SalePhase.OPEN, daysAgo(130), today.minusDays(3), null);
+
+    mockMvc
+        .perform(get("/api/sales/schedule"))
+        .andExpect(
+            jsonPath(
+                "$.items[*].productName",
+                org.hamcrest.Matchers.containsInAnyOrder("예고 3일 전 시작", "옛 공지 3일 전 시작")));
+  }
+
+  @Test
   @DisplayName("일정 목록은 오래전에 올라왔어도 마감이 남았으면 포함하고 최근 공지 순이다")
   void scheduleKeepsOldPostWithFutureEnd() throws Exception {
     clock.set(NOW);
