@@ -78,7 +78,7 @@ export function otherSnapshotKeys(keys: string[], current: string): string[] {
 }
 
 /** 저장본을 읽는다. 없거나 깨졌거나 30분이 지났으면 null */
-export function readSnapshot(raw: string | null, now: number): FeedSnapshot | null {
+export function readSnapshot<T extends { id: number } = PostCard>(raw: string | null, now: number): FeedSnapshot<T> | null {
   if (raw === null) return null;
   let value: unknown;
   try {
@@ -88,7 +88,7 @@ export function readSnapshot(raw: string | null, now: number): FeedSnapshot | nu
   }
   if (typeof value !== "object" || value === null) return null;
 
-  const s = value as FeedSnapshot;
+  const s = value as FeedSnapshot<T>;
   const valid =
     Array.isArray(s.items) &&
     (s.nextCursor === null || typeof s.nextCursor === "string") &&

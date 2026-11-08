@@ -1,0 +1,38 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.title {
+  font-size: 28px;
+  line-height: 1.25;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.desc {
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--color-muted);
+}
+
+.feed {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.message {
+  padding: 48px 0;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--color-muted);
+  text-align: center;
+}

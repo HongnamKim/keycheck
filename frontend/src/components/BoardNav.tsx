@@ -2,7 +2,7 @@
 
 import { usePathname, useSearchParams } from "next/navigation";
 import type { BoardFilter } from "@/lib/api";
-import { navCurrent } from "@/lib/query";
+import { navCurrent, salesNavCurrent } from "@/lib/query";
 import FreshListLink from "./FreshListLink";
 import styles from "./BoardNav.module.css";
 
@@ -32,6 +32,9 @@ export function BoardNavLinks({ pathname = "", boardParam = null }: { pathname?:
           {label}
         </FreshListLink>
       ))}
+      <FreshListLink href="/sales" className={styles.link} aria-current={salesNavCurrent(pathname)}>
+        국내 판매
+      </FreshListLink>
     </nav>
   );
 }

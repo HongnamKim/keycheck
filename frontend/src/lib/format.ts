@@ -182,6 +182,12 @@ export const BOARD_INFO: Record<BoardFilter, { title: string; desc: string }> = 
   gb: { title: "공동구매", desc: "주문을 받는 중이거나 곧 받을 글이에요. 기간과 벤더를 확인해 보세요." },
 };
 
+/** 국내 판매 목록(/sales)의 제목과 설명. 화면과 검색 결과용 설명이 같다 */
+export const SALE_LIST_INFO = {
+  title: "국내 판매",
+  desc: "Swagkeys·GeonWorks 디스코드 공지에서 판매 소식만 골라 정리했어요.",
+};
+
 /** 보던 목록의 이름 (예: 공동구매 목록, IC · 키보드 · 65% · 조회순 목록). 상세 하단 주변 글 목록의 제목 */
 export function listTitle(query: ListQuery): string {
   const parts = [BOARD_INFO[query.board].title];
