@@ -1,0 +1,42 @@
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+}
+
+.group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.label {
+  margin-right: 2px;
+  color: var(--color-muted);
+  font-size: 13px;
+}
+
+.filter {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid var(--color-text);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.filter:hover {
+  color: var(--color-text);
+  background: var(--color-surface);
+}
+
+.filter[aria-current] {
+  background: var(--color-text);
+  color: #ffffff;
+}

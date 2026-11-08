@@ -16,8 +16,8 @@ spring:
   task:
     scheduling:
       pool:
-        # 정기 수집·요약·미리 읽기·축소본 작업이 서로 기다리지 않게 한다
-        size: 4
+        # 정기 수집·요약·미리 읽기·축소본 작업과 공지 작업 셋(수집·보관·요약)이 서로 기다리지 않게 한다
+        size: 7
   jpa:
     hibernate:
       ddl-auto: validate
@@ -118,3 +118,25 @@ keycheck:
     user-agent: "keycheck/0.1 (+https://github.com/HongnamKim/keycheck)"
     min-interval: 2s
     time-zone: America/Chicago
+  notice:
+    # 디스코드 판매 공지 수집·보관 작업
+    enabled: ${NOTICE_ENABLED:false}
+    interval: 5m
+    bot-token: ${DISCORD_BOT_TOKEN:}
+    api-base-url: https://discord.com/api/v10
+    user-agent: "DiscordBot (https://github.com/HongnamKim/keycheck, 0.1)"
+    # 판매처별 채널 id. 비면 그 판매처는 수집하지 않는다
+    channels:
+      SWAGKEYS: ${SWAGKEY_CHANNEL_ID:}
+      GEONWORKS: ${GEONWORKS_CHANNEL_ID:}
+    attach-window: 24h
+    archive:
+      interval: 3s
+    summary:
+      # 로컬에서 가져온 샘플을 확인 없이 Claude로 요약하지 않게 기본은 끔. 운영 env에서 true
+      enabled: ${NOTICE_SUMMARY_ENABLED:false}
+      interval: 5s
+      wait: 10m
+    import:
+      dir: ${NOTICE_IMPORT_DIR:}
+      vendor: ${NOTICE_IMPORT_VENDOR:}

@@ -11,11 +11,20 @@ import { unstable_rethrow } from "next/navigation";
 import {
   getHighlights,
   getPosts,
+  getSaleHighlights,
+  getSalePast,
+  getSales,
+  getSaleSchedule,
   type BoardFilter,
   type CategoryFilter,
   type Highlights,
   type PostBatch,
   type PostSort,
+  type SaleBatch,
+  type SaleCard,
+  type SaleCategoryFilter,
+  type SalePick,
+  type SaleVendorFilter,
   type SubFilter,
 } from "./api";
 
@@ -62,6 +71,86 @@ export async function getCachedHighlights(): Promise<Highlights | null> {
     const highlights = await getHighlights();
     cacheLife({ stale: 300, revalidate: 60, expire: 900 });
     return highlights;
+  } catch (err) {
+    unstable_rethrow(err);
+    console.error(err);
+    cacheLife(NO_CACHE);
+    return null;
+  }
+}
+
+/** 국내 판매 첫 묶음과 받은 시각. 배지 계산은 받은 시각을 기준으로 한다 */
+export interface FirstSaleBatch {
+  batch: SaleBatch;
+  fetchedAt: string;
+}
+
+/**
+ * 국내 판매 목록 첫 묶음. cursor를 주면 그 위치부터 받은 첫 묶음(상세 아래 이어서 보기).
+ * getFirstBatch와 같은 캐시 수명. 실패하면 null
+ */
+export async function getFirstSaleBatch(
+  vendor: SaleVendorFilter,
+  category: SaleCategoryFilter,
+  cursor: string | null = null,
+): Promise<FirstSaleBatch | null> {
+  "use cache";
+  try {
+    const batch = await getSales(vendor, category, cursor);
+    cacheLife({ stale: 900, revalidate: 60, expire: 3600 });
+    return { batch, fetchedAt: new Date().toISOString() };
+  } catch (err) {
+    unstable_rethrow(err);
+    console.error(err);
+    cacheLife(NO_CACHE);
+    return null;
+  }
+}
+
+/** 국내 판매 일정 순 목록. getFirstSaleBatch와 같은 캐시 수명. 실패하면 null */
+export async function getCachedSaleSchedule(
+  vendor: SaleVendorFilter,
+  category: SaleCategoryFilter,
+): Promise<{ items: SaleCard[]; fetchedAt: string } | null> {
+  "use cache";
+  try {
+    const items = await getSaleSchedule(vendor, category);
+    cacheLife({ stale: 900, revalidate: 60, expire: 3600 });
+    return { items, fetchedAt: new Date().toISOString() };
+  } catch (err) {
+    unstable_rethrow(err);
+    console.error(err);
+    cacheLife(NO_CACHE);
+    return null;
+  }
+}
+
+/** 국내 지난 판매 첫 쪽. cursor를 주면 그 위치부터 받은 쪽(상세 아래 이어서 보기). getFirstSaleBatch와 같은 캐시 수명. 실패하면 null */
+export async function getCachedSalePast(
+  vendor: SaleVendorFilter,
+  category: SaleCategoryFilter,
+  cursor: string | null = null,
+): Promise<FirstSaleBatch | null> {
+  "use cache";
+  try {
+    const batch = await getSalePast(vendor, category, cursor);
+    cacheLife({ stale: 900, revalidate: 60, expire: 3600 });
+    return { batch, fetchedAt: new Date().toISOString() };
+  } catch (err) {
+    unstable_rethrow(err);
+    console.error(err);
+    cacheLife(NO_CACHE);
+    return null;
+  }
+}
+
+/** 메인 국내 판매 칸. getCachedHighlights와 같은 캐시 수명. 실패하면 null */
+export async function getCachedSaleHighlights(): Promise<{ picks: SalePick[]; fetchedAt: string } | null> {
+  "use cache";
+  try {
+    const picks = await getSaleHighlights();
+    cacheLife({ stale: 300, revalidate: 60, expire: 900 });
+    return { picks, fetchedAt: new Date().toISOString() };
   } catch (err) {
     unstable_rethrow(err);
     console.error(err);
