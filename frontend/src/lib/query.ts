@@ -139,6 +139,13 @@ export function navCurrent(board: BoardFilter, pathname: string, boardParam: str
   return undefined;
 }
 
+/** 헤더 "국내 판매" 메뉴의 aria-current. /sales면 "page", 상세(/sales/…)면 "true" */
+export function salesNavCurrent(pathname: string): "page" | "true" | undefined {
+  if (pathname === "/sales") return "page";
+  if (pathname.startsWith("/sales/")) return "true";
+  return undefined;
+}
+
 /** 상세 주소의 글 ID. 양의 정수가 아니면 null */
 export function parsePostId(id: string): number | null {
   return parsePositiveInt(id);

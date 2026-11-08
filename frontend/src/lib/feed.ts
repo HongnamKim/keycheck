@@ -1,4 +1,11 @@
-import type { PostBatch, PostCard } from "./api";
+import type { PostCard } from "./api";
+
+/** 한 묶음. PostBatch, SaleBatch가 모두 맞는다 */
+interface FeedBatch<T> {
+  items: T[];
+  nextCursor: string | null;
+  hasMore: boolean;
+}
 
 /**
  * 무한 스크롤 목록의 상태.
@@ -10,8 +17,8 @@ import type { PostBatch, PostCard } from "./api";
  */
 export type FeedStatus = "idle" | "loading" | "waiting" | "failed" | "end";
 
-export interface FeedState {
-  items: PostCard[];
+export interface FeedState<T extends { id: number } = PostCard> {
+  items: T[];
   nextCursor: string | null;
   hasMore: boolean;
   /** 연속으로 0건을 받은 횟수 */
@@ -23,7 +30,7 @@ export interface FeedState {
 const MAX_EMPTY_STREAK = 3;
 
 /** 받은 묶음을 붙인다. 이미 있는 id는 뺀다. 다음 요청은 늘 받은 nextCursor로 한다. */
-export function applyBatch(state: FeedState, batch: PostBatch): FeedState {
+export function applyBatch<T extends { id: number }>(state: FeedState<T>, batch: FeedBatch<T>): FeedState<T> {
   const seen = new Set(state.items.map((p) => p.id));
   const items = [...state.items, ...batch.items.filter((p) => !seen.has(p.id))];
   const emptyStreak = batch.items.length === 0 && batch.hasMore ? state.emptyStreak + 1 : 0;
@@ -37,13 +44,13 @@ export function applyBatch(state: FeedState, batch: PostBatch): FeedState {
 }
 
 /** 서버가 받은 첫 묶음으로 시작한다 */
-export function startFeed(batch: PostBatch): FeedState {
+export function startFeed<T extends { id: number }>(batch: FeedBatch<T>): FeedState<T> {
   return applyBatch({ items: [], nextCursor: null, hasMore: true, emptyStreak: 0, status: "idle" }, batch);
 }
 
 /** 상세에 갔다 돌아올 때 이어 보도록 sessionStorage에 남기는 목록 */
-export interface FeedSnapshot {
-  items: PostCard[];
+export interface FeedSnapshot<T extends { id: number } = PostCard> {
+  items: T[];
   nextCursor: string | null;
   hasMore: boolean;
   scrollY: number;
@@ -93,7 +100,7 @@ export function readSnapshot(raw: string | null, now: number): FeedSnapshot | nu
 }
 
 /** 저장본으로 이어서 시작한다 */
-export function fromSnapshot(snapshot: FeedSnapshot): FeedState {
+export function fromSnapshot<T extends { id: number }>(snapshot: FeedSnapshot<T>): FeedState<T> {
   return {
     items: snapshot.items,
     nextCursor: snapshot.nextCursor,

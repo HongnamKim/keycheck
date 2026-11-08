@@ -8,6 +8,7 @@ import {
   parseListQuery,
   parsePostId,
   postHref,
+  salesNavCurrent,
   subOptions,
   withCategory,
 } from "./query";
@@ -248,5 +249,13 @@ describe("neighborsQuery", () => {
     expect(listHref(neighborsQuery(null, "IC"))).toBe("/ic");
     const from = { board: "gb", category: "keycap", sort: "views" } as const;
     expect(listHref(neighborsQuery(from, "GB"))).toBe(backHref(from));
+  });
+});
+
+describe("salesNavCurrent", () => {
+  it("/sales는 page, 상세는 true, 그 밖은 undefined", () => {
+    expect(salesNavCurrent("/sales")).toBe("page");
+    expect(salesNavCurrent("/sales/12")).toBe("true");
+    expect(salesNavCurrent("/ic")).toBeUndefined();
   });
 });

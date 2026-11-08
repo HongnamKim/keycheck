@@ -48,6 +48,11 @@ export function kstDateKey(now: Date): string {
   return new Date(now.getTime() + KST_OFFSET_MS).toISOString().slice(0, 10);
 }
 
+/** 시각을 한국 시간 HH:mm으로 표기 (예: 18:52). 공지 시각 표시용 */
+export function formatKstTime(iso: string): string {
+  return new Date(new Date(iso).getTime() + KST_OFFSET_MS).toISOString().slice(11, 16);
+}
+
 /** 시각을 한국 시간 짧은 월/일로 표기 (예: 11/1). 카드 메타의 날짜 */
 export function formatShortDate(iso: string): string {
   const kst = new Date(new Date(iso).getTime() + KST_OFFSET_MS);

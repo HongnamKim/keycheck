@@ -320,3 +320,97 @@ export async function getNeighbors(id: number, query: ListQuery, size: number): 
   if (!res.ok) throw new Error(`주변 글 조회 실패: ${res.status}`);
   return res.json();
 }
+
+/** 국내 판매처. 글의 Vendor(요약기가 뽑은 판매처)와 다르다 */
+export type SaleVendor = "SWAGKEYS" | "GEONWORKS";
+export type SaleCategory = "KEYBOARD" | "KEYCAP" | "SWITCH" | "PARTS";
+export type SaleType = "SALE" | "PREORDER" | "RESTOCK" | "DROP" | "RAFFLE";
+/** ANNOUNCE: 예고, OPEN: 판매 시작, CHANGE: 일정 변경 */
+export type SalePhase = "ANNOUNCE" | "OPEN" | "CHANGE";
+export type SaleVendorFilter = "all" | "swagkeys" | "geonworks";
+export type SaleCategoryFilter = "all" | "keyboard" | "keycap" | "switch" | "parts";
+
+/** 국내 판매 건(백엔드 SaleCardResponse). 날짜는 한국 날짜 "YYYY-MM-DD", 시각은 "HH:mm"(시간대 없음), 모르면 null */
+export interface SaleCard {
+  id: number;
+  vendor: SaleVendor;
+  productName: string;
+  category: SaleCategory;
+  saleType: SaleType;
+  phase: SalePhase;
+  startDate: string | null;
+  startTime: string | null;
+  endDate: string | null;
+  endTime: string | null;
+  summaryFirstLine: string | null;
+  /** 축소본(가로 640px). 사진이 없으면 null */
+  thumbUrl: string | null;
+  /** 큰 축소본(가로 1280px). 없으면 null */
+  largeUrl: string | null;
+  /** 디스코드 공지 시각(ISO) */
+  postedAt: string;
+}
+
+export interface SaleBatch {
+  items: SaleCard[];
+  nextCursor: string | null;
+  hasMore: boolean;
+}
+
+export interface SaleImage {
+  url: string;
+  largeUrl: string | null;
+  thumbUrl: string | null;
+}
+
+export interface SaleDetail extends SaleCard {
+  summaryLines: string[];
+  shippingNote: string | null;
+  links: { text: string; url: string }[];
+  images: SaleImage[];
+}
+
+export interface SalePick {
+  reason: "UPCOMING" | "CLOSING" | "RECENT";
+  sale: SaleCard;
+}
+
+/** 국내 판매 목록. cursor 없이 부르면 첫 묶음. 서버와 브라우저 모두에서 부른다 */
+export async function getSales(
+  vendor: SaleVendorFilter,
+  category: SaleCategoryFilter,
+  cursor?: string | null,
+): Promise<SaleBatch> {
+  const query = new URLSearchParams({ vendor, category });
+  if (cursor) query.set("cursor", cursor);
+  const res = await apiFetch(`/api/sales?${query}`);
+  if (!res.ok) throw new Error(`국내 판매 목록 조회 실패: ${res.status}`);
+  return res.json();
+}
+
+/** 없거나 숨김인 판매 건이면 null */
+export async function getSale(id: number, signal?: AbortSignal): Promise<SaleDetail | null> {
+  const res = await apiFetch(`/api/sales/${id}`, signal);
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`국내 판매 상세 조회 실패: ${res.status}`);
+  return res.json();
+}
+
+/** 상세 페이지와 generateMetadata가 함께 쓰는 서버 호출. 한 요청에서 한 번만 부른다 */
+export const getSaleForPage = cache((id: number) => getSale(id));
+
+/** 메인 국내 판매 칸에 쓸 건들(곧 시작·곧 마감·최근 순). 서버에서 부른다 */
+export async function getSaleHighlights(): Promise<SalePick[]> {
+  const res = await apiFetch("/api/sales/highlights");
+  if (!res.ok) throw new Error(`국내 판매 하이라이트 조회 실패: ${res.status}`);
+  const body: { picks: SalePick[] } = await res.json();
+  return body.picks;
+}
+
+/** 사이트맵에 넣을 판매 건. 서버에서 부른다 */
+export async function getSaleSitemap(): Promise<SitemapPost[]> {
+  const res = await apiFetch("/api/sales/sitemap");
+  if (!res.ok) throw new Error(`국내 판매 사이트맵 조회 실패: ${res.status}`);
+  const items: { id: number; lastModified?: string | null }[] = await res.json();
+  return items.map((item) => ({ id: item.id, lastModified: item.lastModified ?? null }));
+}
