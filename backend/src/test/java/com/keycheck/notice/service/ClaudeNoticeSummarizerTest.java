@@ -503,6 +503,20 @@ class ClaudeNoticeSummarizerTest {
         .contains("KEYBOARD", "KEYCAP", "SWITCH", "PARTS", "OTHER", "마우스", "윤활제")
         .contains("<links>", "<images>", "첨부 id", "순번이 아니다")
         .contains("<posted_at>", "금일", "차주", "시각만 null")
-        .contains("해요체", "해외");
+        .contains("해요체", "해외")
+        // 연도 없는 날짜는 공지 시각에 가장 가까운 해(해 넘김), 래플 응모 링크도 받는다
+        .contains("<posted_at>에 가장 가까워지는 해", "2027-01-03")
+        .contains("구매·응모 페이지");
+  }
+
+  @Test
+  @DisplayName("지시문은 공지 시각에 아직 시작하지 않은 판매를 같은 날이라도 예고(ANNOUNCE)로, 지금 살 수 있는 판매를 OPEN으로 본다")
+  void 지시문은_공지_시각에_시작_전인_판매를_예고로_본다() {
+    assertThat(ClaudeNoticeSummarizer.SYSTEM_PROMPT)
+        .contains("아직 판매가 시작되지 않은 예고(일정 미정 포함)")
+        .contains("10:00 공지의 \"금일 21시 드랍 예정\"")
+        .contains("바로 살 수 있다", "구매 가능", "시작 일정이 적혀 있지 않아도 OPEN")
+        .contains("마감 안내")
+        .doesNotContain("공지한 날 시작한다", "시작일이 정해지지 않았다");
   }
 }
