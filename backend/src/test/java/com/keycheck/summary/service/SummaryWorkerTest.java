@@ -145,6 +145,7 @@ class SummaryWorkerTest {
     assertThat(saved.getSummarizedBy()).isEqualTo("claude-opus-5-5");
     assertThat(saved.getCategory()).isEqualTo(Category.KEYCAP);
     assertThat(saved.getSubcategory()).isEqualTo(Subcategory.KC_GMK);
+    assertThat(saved.getSummarizedAt()).isEqualTo(CHECKED_AT);
     assertThat(summarizer.sources)
         .extracting(
             PostSource::getBoard,
@@ -448,6 +449,7 @@ class SummaryWorkerTest {
     Post saved = reload(post);
     assertThat(saved.getSummaryStatus()).isEqualTo(SummaryStatus.FAILED);
     assertThat(saved.getSummaryLines()).isNull();
+    assertThat(saved.getSummarizedAt()).isNull();
     assertThat(worker(false).summarizeNext()).isFalse();
     assertThat(summarizer.sources).hasSize(1);
   }
@@ -525,6 +527,19 @@ class SummaryWorkerTest {
     assertThat(saved.getSummarizedBy()).isEqualTo("claude-opus-5-5");
     assertThat(saved.getSummaryLines()).containsExactly("다시 쓴 요약");
     assertThat(saved.getCategory()).isEqualTo(Category.OTHER);
+  }
+
+  @Test
+  @DisplayName("다시 요약하면 요약 저장 시각을 그때로 바꾼다")
+  void resummaryUpdatesSummarizedAt() {
+    Post post = saveLoaded(2000);
+    worker(false).summarizeNext();
+    assertThat(reload(post).getSummarizedAt()).isEqualTo(CHECKED_AT);
+    clock.advance(Duration.ofHours(3));
+
+    assertThat(worker(true).summarizeNext()).isTrue();
+
+    assertThat(reload(post).getSummarizedAt()).isEqualTo(CHECKED_AT.plus(Duration.ofHours(3)));
   }
 
   /** Claude로 요약했지만 세부 분류가 없는 글 */
@@ -1036,6 +1051,11 @@ class SummaryWorkerTest {
   @DisplayName("GB 글을 다시 요약하다 글 때문에 실패하면 요약은 두고 기간만 비우며, 재시작해도 그 제목으로는 다시 요약하지 않는다")
   void failedGbRedoKeepsSummary() {
     Post post = saveRenamedGb(2000);
+    Instant summarizedAt = Instant.parse("2026-10-31T00:00:00Z");
+    jdbcTemplate.update(
+        "update post set summarized_at = ? where id = ?",
+        Timestamp.from(summarizedAt),
+        post.getId());
     Post pending = saveLoadedGb(3000);
     summarizer.fail = true;
     SummaryWorker worker = worker(false);
@@ -1052,6 +1072,8 @@ class SummaryWorkerTest {
     assertThat(saved.getGbEndDate()).isNull();
     assertThat(saved.isGbDatesExtracted()).isTrue();
     assertThat(saved.getSummarizedTitle()).isEqualTo("새 제목");
+    assertThat(saved.getSummarizedAt()).isEqualTo(summarizedAt);
+    assertThat(reload(pending).getSummarizedAt()).isNull();
     assertThat(worker(false).summarizeNext()).isFalse();
   }
 

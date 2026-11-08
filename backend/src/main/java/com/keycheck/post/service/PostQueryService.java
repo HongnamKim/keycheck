@@ -13,6 +13,7 @@ import com.keycheck.post.domain.Subcategory;
 import com.keycheck.post.dto.CategoryFilter;
 import com.keycheck.post.dto.PostCardResponse;
 import com.keycheck.post.dto.PostDetailResponse;
+import com.keycheck.post.dto.PostFeedItemResponse;
 import com.keycheck.post.dto.PostListResponse;
 import com.keycheck.post.dto.PostNeighborsResponse;
 import com.keycheck.post.dto.PostSitemapItemResponse;
@@ -53,6 +54,9 @@ public class PostQueryService {
   private static final Duration BACKFILL_WAIT = Duration.ofSeconds(3);
   private static final Duration FILL_WAIT = Duration.ofSeconds(5);
   public static final int NEIGHBOR_MAX_SIZE = 10;
+
+  /** RSS 피드에 넣는 최대 글 수 */
+  public static final int FEED_SIZE = 50;
 
   private final PostRepository postRepository;
   private final PostImageRepository postImageRepository;
@@ -298,10 +302,17 @@ public class PostQueryService {
         post, representative, estimatedPostedAts(List.of(post)).get(post.getId()), thumbUrls);
   }
 
-  /** 사이트맵에 넣을 글(PostRepository.findSitemapIds), 글 번호 내림차순. geekhack을 호출하지 않는다. */
+  /** 사이트맵에 넣을 글(PostRepository.findSitemapRows), 글 번호 내림차순. geekhack을 호출하지 않는다. */
   public List<PostSitemapItemResponse> getSitemap() {
-    return postRepository.findSitemapIds(collectProperties.getSinceTopicId()).stream()
-        .map(PostSitemapItemResponse::new)
+    return postRepository.findSitemapRows(collectProperties.getSinceTopicId()).stream()
+        .map(PostSitemapItemResponse::from)
+        .toList();
+  }
+
+  /** RSS 피드에 넣을 글(PostRepository.findFeed) 최대 FEED_SIZE개. geekhack을 호출하지 않는다. */
+  public List<PostFeedItemResponse> getFeed() {
+    return postRepository.findFeed(collectProperties.getSinceTopicId(), FEED_SIZE).stream()
+        .map(PostFeedItemResponse::from)
         .toList();
   }
 

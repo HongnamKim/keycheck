@@ -13,6 +13,7 @@ import com.keycheck.post.domain.Category;
 import com.keycheck.post.domain.Post;
 import com.keycheck.post.domain.SummaryStatus;
 import com.keycheck.post.repository.PostRepository;
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
 import java.util.function.Consumer;
@@ -24,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.json.JsonCompareMode;
 import org.springframework.test.web.servlet.MockMvc;
@@ -37,6 +39,7 @@ class PostSitemapApiTest {
 
   @Autowired private MockMvc mockMvc;
   @Autowired private PostRepository postRepository;
+  @Autowired private JdbcTemplate jdbcTemplate;
 
   // 실제 geekhack을 호출하지 않는다
   @MockitoBean private GeekhackClient client;
@@ -87,7 +90,8 @@ class PostSitemapApiTest {
         .andExpect(
             content()
                 .json(
-                    "[{\"id\": %d}, {\"id\": %d}, {\"id\": %d}]"
+                    ("[{\"id\": %d, \"lastModified\": null}, {\"id\": %d, \"lastModified\": null},"
+                            + " {\"id\": %d, \"lastModified\": null}]")
                         .formatted(newest.getId(), middle.getId(), oldest.getId()),
                     JsonCompareMode.STRICT));
   }
@@ -121,6 +125,39 @@ class PostSitemapApiTest {
         .perform(get("/api/posts/sitemap"))
         .andExpect(status().isOk())
         .andExpect(
-            content().json("[{\"id\": %d}]".formatted(atSince.getId()), JsonCompareMode.STRICT));
+            content()
+                .json(
+                    "[{\"id\": %d, \"lastModified\": null}]".formatted(atSince.getId()),
+                    JsonCompareMode.STRICT));
+  }
+
+  @Test
+  @DisplayName("lastModified는 요약을 마지막으로 저장한 시각이고, 모르면 null이며, 순서는 그대로 글 번호 내림차순이다")
+  void lastModifiedIsSummarizedAt() throws Exception {
+    Post older = save(1001, post -> {});
+    Post unknown = save(1002, post -> {});
+    Post newer = save(1003, post -> {});
+    // 글 번호가 작은 글을 더 늦게 요약했다
+    setSummarizedAt(older, Instant.parse("2026-11-05T09:30:00Z"));
+    setSummarizedAt(newer, Instant.parse("2026-11-02T01:00:00Z"));
+
+    mockMvc
+        .perform(get("/api/posts/sitemap"))
+        .andExpect(status().isOk())
+        .andExpect(
+            content()
+                .json(
+                    ("[{\"id\": %d, \"lastModified\": \"2026-11-02T01:00:00Z\"},"
+                            + " {\"id\": %d, \"lastModified\": null},"
+                            + " {\"id\": %d, \"lastModified\": \"2026-11-05T09:30:00Z\"}]")
+                        .formatted(newer.getId(), unknown.getId(), older.getId()),
+                    JsonCompareMode.STRICT));
+  }
+
+  private void setSummarizedAt(Post post, Instant summarizedAt) {
+    jdbcTemplate.update(
+        "update post set summarized_at = ? where id = ?",
+        Timestamp.from(summarizedAt),
+        post.getId());
   }
 }

@@ -142,6 +142,7 @@ public class SummaryWorker {
         result.getCategory(),
         result.getSubcategory(),
         result.getSummarizedBy(),
+        clock.instant(),
         result.getGbStartDate(),
         result.getGbEndDate(),
         result.getProductName(),

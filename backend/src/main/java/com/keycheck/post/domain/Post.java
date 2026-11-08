@@ -114,6 +114,9 @@ public class Post {
   @Column(length = 100)
   private String summarizedBy;
 
+  /** 요약을 마지막으로 저장한 시각. 다시 요약하면 바뀌고 실패하면 그대로다. 요약이 없거나 이 값을 기록하기 전에 요약했으면 null. */
+  private Instant summarizedAt;
+
   /** 공동구매 시작일. 요약기가 GB 글의 제목·본문에서 뽑는다. IC 글이거나 모르면 null. */
   private LocalDate gbStartDate;
 
