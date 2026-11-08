@@ -173,6 +173,31 @@ sudo systemctl start keycheck-update.service
 
 `SUMMARIZER=claude`를 빠뜨린 채 기동했으면 IC 글에 가짜 요약(`summarized_by = 'fake'`)이 남습니다. 환경변수 파일에서 `SUMMARIZER=claude`를 고치고 `KEYCHECK_SUMMARY_REDOFAKE=true` 줄을 더한 뒤 `sudo docker compose up -d --force-recreate app`. 위 SQL에서 `fake`가 0이 되면 그 줄을 지우고 같은 명령으로 다시 띄웁니다. 다시 요약도 하루 요약 상한에 들어갑니다.
 
+## 지난 디스코드 공지 가져오기
+
+봇을 켜기 전의 공지를 한 번 넣는 절차입니다. 묶음(`messages.json` + `attachments/`)은 로컬에서 미리 만들어 둡니다. 서버 이미지의 ENTRYPOINT는 실행 인자를 버리므로 설정은 모두 `-e` 환경변수로 줍니다. 가져오기 컨테이너는 서버 환경변수 파일의 `CRAWL_ENABLED=true` 등이 있어도 모든 수집·요약 작업을 끈 채 뜹니다. 서버 메모리가 2GB라 `app`을 잠깐 멈추고 실행합니다(그동안 사이트가 응답하지 않습니다).
+
+```bash
+cd /opt/keycheck
+sudo systemctl stop keycheck-update.timer
+# 묶음을 /opt/keycheck/notice-import/swagkeys/ 에 복사한다(다른 사용자도 읽을 수 있게)
+sudo chmod -R a+rX /opt/keycheck/notice-import
+sudo docker compose stop app
+sudo docker compose run --rm \
+  -e SPRING_PROFILES_ACTIVE=notice-import \
+  -e NOTICE_IMPORT_DIR=/import \
+  -e NOTICE_IMPORT_VENDOR=SWAGKEYS \
+  -v /opt/keycheck/notice-import/swagkeys:/import:ro \
+  app
+sudo docker compose start app
+sudo systemctl start keycheck-update.timer
+```
+
+- 결과는 마지막 로그 한 줄(`공지 가져오기 결과: imported=..., skipped=..., attachmentsStored=..., attachmentsFailed=..., aborted=...`)로 봅니다. `aborted=true`나 오류로 끝났으면(저장소 장애, 환경변수 누락) 원인을 고친 뒤 같은 명령을 다시 실행합니다. 이어서 끝냅니다.
+- `NOTICE_SUMMARY_ENABLED=true`인 서버에서는 가져온 공지를 `app`이 다시 뜬 뒤 요약 작업이 요약하므로 건수만큼 Claude 비용이 듭니다. 실행 전에 건수를 확인합니다.
+- 다른 판매처는 폴더와 `NOTICE_IMPORT_VENDOR`(`GEONWORKS`)를 바꿔 같은 방식으로 실행합니다.
+- 끝난 뒤 묶음은 지워도 됩니다(`sudo rm -rf /opt/keycheck/notice-import`).
+
 ## 운영 중
 
 - 로그: `sudo docker compose logs -f app` (`/opt/keycheck`에서). 갱신 기록은 `journalctl -u keycheck-update`.

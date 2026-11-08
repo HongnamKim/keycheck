@@ -25,7 +25,7 @@ jobs:
           cache-dependency-path: |
             backend/*.gradle
             backend/gradle/wrapper/gradle-wrapper.properties
-      # Testcontainers가 러너의 Docker로 PostgreSQL을 띄운다. 실제 geekhack·Claude·R2는 부르지 않는다
+      # Testcontainers가 러너의 Docker로 PostgreSQL을 띄운다. 실제 geekhack·디스코드·Claude·R2는 부르지 않는다
       - run: ./gradlew test
 
   frontend:
