@@ -33,8 +33,11 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.dao.TransientDataAccessException;
 import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.CannotCreateTransactionException;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
@@ -113,9 +116,20 @@ public class NoticeSummaryWorker {
       }
       return true;
     }
-    Boolean saved = transaction.execute(status -> save(notice.getId(), attachmentIds, result));
-    if (!Boolean.TRUE.equals(saved)) {
-      log.info("요약하는 사이 사진이 더해져 저장하지 않고 다시 요약한다: notice={}", notice.getId());
+    try {
+      Boolean saved = transaction.execute(status -> save(notice.getId(), attachmentIds, result));
+      if (!Boolean.TRUE.equals(saved)) {
+        log.info("요약하는 사이 사진이 더해져 저장하지 않고 다시 요약한다: notice={}", notice.getId());
+      }
+    } catch (RuntimeException e) {
+      if (isTransient(e)) {
+        // 저장소 문제는 공지 탓이 아니니 요약 대기로 두고 쉰다 (같은 공지를 매번 다시 요약해 한도를 쓰지 않게)
+        log.error("공지 요약 결과를 저장하지 못해 {} 쉰다: notice={}", ERROR_PAUSE, notice.getId(), e);
+        pausedUntil = clock.instant().plus(ERROR_PAUSE);
+      } else {
+        log.warn("공지 요약 결과를 저장하지 못해 실패로 둔다: notice={}", notice.getId(), e);
+        noticeRepository.updateSummaryStatus(notice.getId(), SummaryStatus.FAILED);
+      }
     }
     return true;
   }
@@ -165,6 +179,13 @@ public class NoticeSummaryWorker {
       }
     }
     return new ArrayList<>(links.values());
+  }
+
+  /** 저장소 연결·일시 장애. 그 밖의 저장 오류는 요약 결과(데이터) 탓으로 본다. */
+  private static boolean isTransient(RuntimeException e) {
+    return e instanceof TransientDataAccessException
+        || e instanceof DataAccessResourceFailureException
+        || e instanceof CannotCreateTransactionException;
   }
 
   /** 글과 상관없는 SDK 오류. 응답을 읽지 못한 경우는 글 탓으로 본다. */

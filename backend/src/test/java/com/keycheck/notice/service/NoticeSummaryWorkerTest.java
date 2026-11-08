@@ -1,6 +1,9 @@
 package com.keycheck.notice.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.anthropic.core.JsonValue;
 import com.anthropic.core.http.Headers;
@@ -47,6 +50,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Limit;
+import org.springframework.transaction.CannotCreateTransactionException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -75,6 +80,15 @@ class NoticeSummaryWorkerTest {
   }
 
   private NoticeSummaryWorker worker(NoticeSummarizer notice, DailySummaryBudget budget) {
+    return worker(notice, budget, transaction);
+  }
+
+  private NoticeSummaryWorker workerWith(TransactionTemplate template) {
+    return worker(summarizer, budget(300), template);
+  }
+
+  private NoticeSummaryWorker worker(
+      NoticeSummarizer notice, DailySummaryBudget budget, TransactionTemplate template) {
     NoticeProperties properties =
         new NoticeProperties(
             "token",
@@ -92,7 +106,7 @@ class NoticeSummaryWorkerTest {
         properties,
         budget,
         thumbUrls,
-        transaction,
+        template,
         clock);
   }
 
@@ -412,6 +426,56 @@ class NoticeSummaryWorkerTest {
     assertThat(itemsOf(notice)).hasSize(1);
     assertThat(summarizer.sources.get(1).getImages().stream().map(NoticeImage::getAttachmentId))
         .containsExactly(3001L);
+  }
+
+  @Test
+  @DisplayName("저장이 데이터 오류로 실패하면 FAILED로 두고 다음 공지로 넘어간다")
+  void 저장이_데이터_오류로_실패하면_FAILED로_두고_다음_공지로_넘어간다() {
+    Notice first = saveNotice(Instant.parse("2026-11-08T00:00:00Z"));
+    Notice second = saveNotice(Instant.parse("2026-11-08T00:01:00Z"));
+    summarizer.result = new NoticeSummaryResult(List.of(draft("가".repeat(300))), "claude-x");
+    NoticeSummaryWorker worker = worker();
+
+    assertThat(worker.summarizeNext()).isTrue();
+
+    assertThat(statusOf(first)).isEqualTo(SummaryStatus.FAILED);
+    assertThat(itemsOf(first)).isEmpty();
+    summarizer.result = new NoticeSummaryResult(List.of(draft("B")), "claude-x");
+    assertThat(worker.summarizeNext()).isTrue();
+    assertThat(statusOf(second)).isEqualTo(SummaryStatus.DONE);
+    assertThat(summarizer.sources).hasSize(2);
+  }
+
+  @Test
+  @DisplayName("저장소 일시 오류로 저장이 실패하면 요약 대기로 두고 쉰다")
+  void 저장소_일시_오류로_저장이_실패하면_요약_대기로_두고_쉰다() {
+    Notice notice = saveNotice(Instant.parse("2026-11-08T00:00:00Z"));
+    TransactionTemplate broken = mock(TransactionTemplate.class);
+    when(broken.execute(any())).thenThrow(new CannotCreateTransactionException("db down"));
+    NoticeSummaryWorker worker = workerWith(broken);
+
+    assertThat(worker.summarizeNext()).isTrue();
+
+    assertThat(statusOf(notice)).isEqualTo(SummaryStatus.PENDING);
+    clock.advance(NoticeSummaryWorker.ERROR_PAUSE.minusSeconds(1));
+    assertThat(worker.summarizeNext()).isFalse();
+    assertThat(summarizer.sources).hasSize(1);
+    clock.advance(Duration.ofSeconds(1));
+    assertThat(worker.summarizeNext()).isTrue();
+    assertThat(summarizer.sources).hasSize(2);
+  }
+
+  @Test
+  @DisplayName("요약 대상은 글이 있는 글 공지만, 오래된 순으로")
+  void 요약_대상은_글이_있는_글_공지만_오래된_순으로() {
+    Notice newer = saveNotice(Instant.parse("2026-11-08T00:20:00Z"));
+    Notice older = saveNotice(Instant.parse("2026-11-08T00:10:00Z"));
+    saveNotice(Instant.parse("2026-11-08T00:05:00Z"), false, null);
+    saveNotice(Instant.parse("2026-11-08T00:06:00Z"), true, older);
+
+    List<Notice> targets = noticeRepository.findSummaryTargets(NOW, Limit.of(10));
+
+    assertThat(targets).extracting(Notice::getId).containsExactly(older.getId(), newer.getId());
   }
 
   static class RecordingSummarizer implements NoticeSummarizer {
