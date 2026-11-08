@@ -404,6 +404,19 @@ export async function getSaleSchedule(
   return body.items;
 }
 
+/** 끝난 판매 목록(판매 일정에 들지 않는 건 전부, 지난 시각 최근 순). cursor 없이 부르면 첫 쪽. 서버와 브라우저 모두에서 부른다 */
+export async function getSalePast(
+  vendor: SaleVendorFilter,
+  category: SaleCategoryFilter,
+  cursor?: string | null,
+): Promise<SaleBatch> {
+  const query = new URLSearchParams({ vendor, category });
+  if (cursor) query.set("cursor", cursor);
+  const res = await apiFetch(`/api/sales/past?${query}`);
+  if (!res.ok) throw new Error(`국내 지난 판매 조회 실패: ${res.status}`);
+  return res.json();
+}
+
 /** 없거나 숨김인 판매 건이면 null */
 export async function getSale(id: number, signal?: AbortSignal): Promise<SaleDetail | null> {
   const res = await apiFetch(`/api/sales/${id}`, signal);

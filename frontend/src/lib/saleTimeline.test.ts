@@ -49,6 +49,16 @@ describe("groupByNotice", () => {
     ]);
   });
 
+  it("noticeId가 없는 다른 공지는 같은 날이어도 따로 묶는다", () => {
+    const base = { noticeId: undefined as unknown as number };
+    const a = card(1, { ...base, vendor: "SWAGKEYS", postedAt: "2026-11-06T09:00:00Z" });
+    const b = card(2, { ...base, vendor: "GEONWORKS", postedAt: "2026-11-06T08:00:00Z" });
+    const c = card(3, { ...base, vendor: "GEONWORKS", postedAt: "2026-11-06T08:00:00Z" });
+
+    const notices = groupByNotice([a, b, c])[0].notices;
+    expect(notices.map((n) => ids(n.items))).toEqual([[1], [2, 3]]);
+  });
+
   it("페이지를 이어 붙여도 같은 공지는 한 묶음", () => {
     const page1 = [card(1, { noticeId: 20 }), card(2, { noticeId: 20 })];
     const page2 = [card(3, { noticeId: 20 }), card(4, { noticeId: 19 })];

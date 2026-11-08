@@ -468,6 +468,137 @@ class SaleApiTest {
     mockMvc.perform(get("/api/sales/schedule").param("category", "other")).andExpect(status().isBadRequest());
   }
 
+  @Test
+  @DisplayName("지난 판매는 일정 목록에 들지 않는 건 전부이고, 두 목록을 합치면 전체가 된다")
+  void pastIsComplementOfSchedule() throws Exception {
+    clock.set(NOW);
+    LocalDate today = LocalDate.of(2026, 11, 13);
+    scheduled("어제 마감", SalePhase.OPEN, daysAgo(3), today.minusDays(5), today.minusDays(1));
+    scheduled("오늘 날짜만 마감", SalePhase.OPEN, daysAgo(3), today.minusDays(5), today);
+    scheduled("마감 없고 미래 시작", SalePhase.ANNOUNCE, daysAgo(40), today.plusDays(3), null);
+    scheduled("8일 전 시작", SalePhase.OPEN, daysAgo(20), today.minusDays(8), null);
+    scheduled("6일 전 시작", SalePhase.OPEN, daysAgo(20), today.minusDays(6), null);
+    scheduled("공지 8일 전 시작 없음", SalePhase.OPEN, daysAgo(8), null, null);
+    scheduled("공지 6일 전 시작 없음", SalePhase.OPEN, daysAgo(6), null, null);
+    scheduled("31일 전 일정 미정", SalePhase.ANNOUNCE, daysAgo(31), null, null);
+    scheduled("29일 전 일정 미정", SalePhase.ANNOUNCE, daysAgo(29), null, null);
+    scheduled("아주 옛 공지", SalePhase.OPEN, daysAgo(400), null, null);
+
+    mockMvc
+        .perform(get("/api/sales/past"))
+        .andExpect(status().isOk())
+        .andExpect(
+            jsonPath(
+                "$.items[*].productName",
+                org.hamcrest.Matchers.containsInAnyOrder(
+                    "어제 마감", "8일 전 시작", "공지 8일 전 시작 없음", "31일 전 일정 미정", "아주 옛 공지")))
+        .andExpect(jsonPath("$.hasMore").value(false))
+        .andExpect(jsonPath("$.nextCursor").value(nullValue()));
+
+    List<String> past = names(mockMvc.perform(get("/api/sales/past")).andReturn().getResponse().getContentAsString());
+    List<String> schedule = names(mockMvc.perform(get("/api/sales/schedule")).andReturn().getResponse().getContentAsString());
+    org.assertj.core.api.Assertions.assertThat(past).doesNotContainAnyElementsOf(schedule);
+    org.assertj.core.api.Assertions.assertThat(past.size() + schedule.size()).isEqualTo(10);
+  }
+
+  private static List<String> names(String json) {
+    java.util.regex.Matcher m =
+        java.util.regex.Pattern.compile("\"productName\":\"([^\"]*)\"").matcher(json);
+    List<String> out = new java.util.ArrayList<>();
+    while (m.find()) {
+      out.add(m.group(1));
+    }
+    return out;
+  }
+
+  @Test
+  @DisplayName("지난 판매는 마감, 시작, 공지 시각 순서로 기준을 잡아 지난 시각 내림차순")
+  void pastOrdering() throws Exception {
+    clock.set(NOW);
+    LocalDate today = LocalDate.of(2026, 11, 13);
+    // 지난 시각: 마감 어제 23:59:59 KST
+    scheduled("마감 어제", SalePhase.OPEN, daysAgo(50), today.minusDays(30), today.minusDays(1));
+    // 시작 10일 전 00:00 KST (마감 없음)
+    scheduled("시작 10일 전", SalePhase.OPEN, daysAgo(60), today.minusDays(10), null);
+    // 마감 20일 전 (시작이 더 늦어도 마감이 기준)
+    scheduled("마감 20일 전", SalePhase.OPEN, daysAgo(70), today.minusDays(40), today.minusDays(20));
+    // 공지 40일 전 (시작·마감 없음)
+    scheduled("공지 40일 전", SalePhase.ANNOUNCE, daysAgo(40), null, null);
+
+    mockMvc
+        .perform(get("/api/sales/past"))
+        .andExpect(
+            jsonPath("$.items[*].productName")
+                .value(contains("마감 어제", "시작 10일 전", "마감 20일 전", "공지 40일 전")));
+  }
+
+  @Test
+  @DisplayName("지난 판매는 30건씩 커서로 이어 받고 겹치거나 빠지지 않는다")
+  void pastPaging() throws Exception {
+    clock.set(NOW);
+    for (int i = 0; i < 35; i++) {
+      scheduled("건 " + i, SalePhase.OPEN, daysAgo(100 + i), null, null);
+    }
+    // 공지 시각이 같은 두 건: id 내림차순
+    scheduled("같은 시각 A", SalePhase.OPEN, daysAgo(200), null, null);
+
+    String first =
+        mockMvc
+            .perform(get("/api/sales/past"))
+            .andExpect(jsonPath("$.items", hasSize(30)))
+            .andExpect(jsonPath("$.hasMore").value(true))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    java.util.regex.Matcher m =
+        java.util.regex.Pattern.compile("\"nextCursor\":\"([^\"]+)\"").matcher(first);
+    org.assertj.core.api.Assertions.assertThat(m.find()).isTrue();
+    String cursor = m.group(1);
+
+    String second =
+        mockMvc
+            .perform(get("/api/sales/past").param("cursor", cursor))
+            .andExpect(jsonPath("$.items", hasSize(6)))
+            .andExpect(jsonPath("$.hasMore").value(false))
+            .andExpect(jsonPath("$.nextCursor").value(nullValue()))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    List<String> all = new java.util.ArrayList<>(names(first));
+    all.addAll(names(second));
+    org.assertj.core.api.Assertions.assertThat(all).hasSize(36).doesNotHaveDuplicates();
+    org.assertj.core.api.Assertions.assertThat(all.getFirst()).isEqualTo("건 0");
+    org.assertj.core.api.Assertions.assertThat(all.getLast()).isEqualTo("같은 시각 A");
+  }
+
+  @Test
+  @DisplayName("지난 판매에도 필터가 적용되고 숨김·OTHER·요약 전은 뺀다")
+  void pastFiltersAndExcludes() throws Exception {
+    clock.set(NOW);
+    scheduled("스웩 키보드", SalePhase.OPEN, daysAgo(50), null, null);
+    scheduled("건 키캡", SalePhase.OPEN, daysAgo(51), null, null, SaleCategory.KEYCAP, KoreanVendor.GEONWORKS);
+    scheduled("기타", SalePhase.OPEN, daysAgo(52), null, null, SaleCategory.OTHER, KoreanVendor.GEONWORKS);
+    SaleItem hidden = scheduled("숨김", SalePhase.OPEN, daysAgo(53), null, null);
+    jdbcTemplate.update("update sale_item set hidden = true where id = ?", hidden.getId());
+    Notice pending = notice(KoreanVendor.SWAGKEYS, daysAgo(54), SummaryStatus.PENDING);
+    item(pending, 0, "요약 전", SaleCategory.KEYBOARD);
+
+    mockMvc
+        .perform(get("/api/sales/past").param("vendor", "geonworks").param("category", "keycap"))
+        .andExpect(jsonPath("$.items[*].productName").value(contains("건 키캡")));
+    mockMvc
+        .perform(get("/api/sales/past"))
+        .andExpect(jsonPath("$.items[*].productName").value(contains("스웩 키보드", "건 키캡")));
+  }
+
+  @Test
+  @DisplayName("지난 판매의 잘못된 필터·커서는 400")
+  void pastRejectsBadParams() throws Exception {
+    mockMvc.perform(get("/api/sales/past").param("vendor", "foo")).andExpect(status().isBadRequest());
+    mockMvc.perform(get("/api/sales/past").param("category", "other")).andExpect(status().isBadRequest());
+    mockMvc.perform(get("/api/sales/past").param("cursor", "abc")).andExpect(status().isBadRequest());
+  }
+
   @TestConfiguration(proxyBeanMethods = false)
   static class ClockConfig {
     @Bean

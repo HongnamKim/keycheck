@@ -5,7 +5,6 @@ import com.keycheck.notice.domain.ArchiveStatus;
 import com.keycheck.notice.domain.NoticeAttachment;
 import com.keycheck.notice.domain.SaleCategory;
 import com.keycheck.notice.domain.SaleItem;
-import com.keycheck.notice.domain.SalePhase;
 import com.keycheck.notice.dto.SaleCardResponse;
 import com.keycheck.notice.dto.SaleDetailResponse;
 import com.keycheck.notice.dto.SaleListResponse;
@@ -18,8 +17,8 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.time.ZoneId;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,8 +41,7 @@ public class SaleQueryService {
 
   private static final ZoneId SEOUL = ZoneId.of("Asia/Seoul");
   private static final int SCHEDULE_MAX = 300;
-  private static final Duration ON_SALE_WINDOW = Duration.ofDays(7);
-  private static final Duration ANNOUNCE_WINDOW = Duration.ofDays(30);
+  private static final int PAST_PAGE_SIZE = 30;
 
   /** 후보로 읽는 공지 기간 (일정 미정 30일, 시작 뒤 7일보다 넉넉히) */
   private static final Duration SCHEDULE_CANDIDATE_POSTED = Duration.ofDays(120);
@@ -105,24 +103,52 @@ public class SaleQueryService {
                 today.minusDays(8),
                 today.minusDays(1))
             .stream()
-            .filter(i -> notEnded(i, now))
+            .filter(i -> SaleTimes.isActive(i, now))
             .limit(SCHEDULE_MAX)
             .toList();
     return new SaleScheduleResponse(cards(active));
   }
 
-  private static boolean notEnded(SaleItem item, Instant now) {
-    if (item.getEndDate() != null) {
-      LocalTime time = item.getEndTime() == null ? LocalTime.of(23, 59, 59) : item.getEndTime();
-      return item.getEndDate().atTime(time).atZone(SEOUL).toInstant().isAfter(now);
+  /**
+   * 지난 판매: 보이는 판매 건 중 판매 일정 목록에 들지 않는 건 전부(같은 SaleTimes 규칙). 지난 시각 내림차순, 같으면 id 내림차순으로 30건씩.
+   * 쪽 나눔은 걸러 낸 전체를 자바에서 정렬해 자른다. 데이터가 수백~수천 건일 때만 맞는 방식이라, 더 늘면 DB에서 정렬·커서로 바꾼다.
+   *
+   * @param cursor 이전 응답의 nextCursor("지난 시각 밀리초_id"). 첫 요청이면 null
+   */
+  public SaleListResponse getPast(String vendor, String category, String cursor) {
+    String vendorName = parseVendor(vendor);
+    String categoryName = parseCategory(category);
+    long[] parsed = cursor == null ? null : parseCursor(cursor);
+    Instant now = clock.instant();
+
+    List<SaleItem> sorted =
+        saleItemRepository.findAllVisible(vendorName, categoryName).stream()
+            .filter(i -> !SaleTimes.isActive(i, now))
+            .sorted(
+                Comparator.comparing(SaleTimes::pastAt)
+                    .thenComparing(SaleItem::getId)
+                    .reversed())
+            .toList();
+    List<SaleItem> page =
+        sorted.stream()
+            .filter(i -> parsed == null || isBefore(i, parsed[0], parsed[1]))
+            .limit(PAST_PAGE_SIZE + 1L)
+            .toList();
+    boolean hasMore = page.size() > PAST_PAGE_SIZE;
+    if (hasMore) {
+      page = page.subList(0, PAST_PAGE_SIZE);
     }
-    if (item.getStartDate() != null) {
-      LocalTime time = item.getStartTime() == null ? LocalTime.MIDNIGHT : item.getStartTime();
-      Instant start = item.getStartDate().atTime(time).atZone(SEOUL).toInstant();
-      return start.isAfter(now) || start.plus(ON_SALE_WINDOW).isAfter(now);
-    }
-    Duration window = item.getPhase() == SalePhase.ANNOUNCE ? ANNOUNCE_WINDOW : ON_SALE_WINDOW;
-    return item.getPostedAt().plus(window).isAfter(now);
+    String nextCursor =
+        hasMore
+            ? SaleTimes.pastAt(page.getLast()).toEpochMilli() + "_" + page.getLast().getId()
+            : null;
+    return new SaleListResponse(cards(page), nextCursor, hasMore);
+  }
+
+  /** 내림차순에서 커서 뒤인가 (지난 시각은 밀리초로 비교) */
+  private static boolean isBefore(SaleItem item, long cursorMillis, long cursorId) {
+    long millis = SaleTimes.pastAt(item).toEpochMilli();
+    return millis < cursorMillis || (millis == cursorMillis && item.getId() < cursorId);
   }
 
   public SaleDetailResponse getSale(Long id) {

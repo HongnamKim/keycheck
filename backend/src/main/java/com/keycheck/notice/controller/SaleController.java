@@ -85,6 +85,33 @@ public class SaleController {
   }
 
   @Operation(
+      summary = "국내 지난 판매",
+      description =
+          "국내 판매 일정에 들지 않는(지금 기준 끝난) 판매 건 전부를 지난 시각 최근 순(같으면 id 큰 순)으로 30건씩 이어서 돌려준다."
+              + " 지난 시각은 마감(날짜만이면 23:59:59), 없으면 시작(날짜만이면 00:00), 없으면 공지 시각이다(한국 시각)."
+              + " hasMore가 true면 nextCursor를 cursor로 넘겨 다음을 요청한다."
+              + " 숨김·분류 OTHER·요약 전 공지의 건은 뺀다."
+              + TIMES_DESCRIPTION)
+  @ApiResponse(responseCode = "200", description = "성공")
+  @ApiResponse(responseCode = "400", description = "허용되지 않는 vendor·category·cursor 값")
+  @GetMapping("/past")
+  public SaleListResponse getPast(
+      @Parameter(
+              description = "판매처 필터",
+              schema = @Schema(allowableValues = {"all", "swagkeys", "geonworks"}))
+          @RequestParam(defaultValue = "all")
+          String vendor,
+      @Parameter(
+              description = "분류 필터",
+              schema = @Schema(allowableValues = {"all", "keyboard", "keycap", "switch", "parts"}))
+          @RequestParam(defaultValue = "all")
+          String category,
+      @Parameter(description = "이전 응답의 nextCursor. 첫 요청은 생략") @RequestParam(required = false)
+          String cursor) {
+    return saleQueryService.getPast(vendor, category, cursor);
+  }
+
+  @Operation(
       summary = "국내 판매 하이라이트",
       description =
           "메인에 올릴 국내 판매 건을 최대 2개 돌려준다. 대표 사진이 보관된 건만 고르고,"

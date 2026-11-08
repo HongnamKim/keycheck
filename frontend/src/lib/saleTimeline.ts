@@ -17,6 +17,11 @@ export interface DayGroup {
   notices: NoticeGroup[];
 }
 
+/** 같은 공지인지 가르는 키. noticeId가 없으면 판매처와 공지 시각으로 대신한다 */
+function noticeKey(item: SaleCard): string {
+  return String(item.noticeId ?? `${item.vendor}|${item.postedAt}`);
+}
+
 /**
  * 공지 순 보기(설계 3.7 A). 입력 순서(공지 최근 순)를 지키며 한국 날짜별로, 그 안에서 같은 공지끼리 묶는다.
  * 이어 받은 페이지를 붙인 목록을 넣으면 페이지 경계에서 이어지는 같은 공지도 한 묶음이 된다.
@@ -31,7 +36,7 @@ export function groupByNotice(items: SaleCard[]): DayGroup[] {
       days.push(current);
     }
     const notice = current.notices.at(-1);
-    if (notice && notice.noticeId === item.noticeId) {
+    if (notice && noticeKey(notice.items[0]) === noticeKey(item)) {
       notice.items.push(item);
     } else {
       current.notices.push({ noticeId: item.noticeId, vendor: item.vendor, postedAt: item.postedAt, items: [item] });

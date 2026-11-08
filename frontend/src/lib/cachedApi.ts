@@ -12,6 +12,7 @@ import {
   getHighlights,
   getPosts,
   getSaleHighlights,
+  getSalePast,
   getSales,
   getSaleSchedule,
   type BoardFilter,
@@ -112,6 +113,24 @@ export async function getCachedSaleSchedule(
     const items = await getSaleSchedule(vendor, category);
     cacheLife({ stale: 900, revalidate: 60, expire: 3600 });
     return { items, fetchedAt: new Date().toISOString() };
+  } catch (err) {
+    unstable_rethrow(err);
+    console.error(err);
+    cacheLife(NO_CACHE);
+    return null;
+  }
+}
+
+/** 국내 지난 판매 첫 쪽. getFirstSaleBatch와 같은 캐시 수명. 실패하면 null */
+export async function getCachedSalePast(
+  vendor: SaleVendorFilter,
+  category: SaleCategoryFilter,
+): Promise<FirstSaleBatch | null> {
+  "use cache";
+  try {
+    const batch = await getSalePast(vendor, category, null);
+    cacheLife({ stale: 900, revalidate: 60, expire: 3600 });
+    return { batch, fetchedAt: new Date().toISOString() };
   } catch (err) {
     unstable_rethrow(err);
     console.error(err);

@@ -11,6 +11,7 @@ import {
   getSaleSitemap,
   getSales,
   getSaleSchedule,
+  getSalePast,
   getFeedPosts,
   getSitemapPosts,
   getStats,
@@ -96,6 +97,7 @@ describe("백엔드 호출 함수", () => {
     ["getFeedPosts", () => getFeedPosts()],
     ["getSales", () => getSales("all", "all")],
     ["getSaleSchedule", () => getSaleSchedule("all", "all")],
+    ["getSalePast", () => getSalePast("all", "all")],
     ["getSale", () => getSale(1)],
     ["getSaleHighlights", () => getSaleHighlights()],
     ["getSaleSitemap", () => getSaleSitemap()],
@@ -175,6 +177,15 @@ describe("백엔드 호출 함수", () => {
 
     await expect(getSaleSchedule("geonworks", "keycap")).resolves.toEqual([{ id: 1, noticeId: 9 }]);
     expect((fetchMock.mock.calls[0] as unknown as [string])[0]).toBe(`${API_BASE_URL}/api/sales/schedule?vendor=geonworks&category=keycap`);
+  });
+
+  it("getSalePast는 필터와 cursor를 쿼리에 싣는다", async () => {
+    const fetchMock = vi.fn(() => Promise.resolve(new Response("{}")));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await getSalePast("geonworks", "keycap", "c1");
+
+    expect((fetchMock.mock.calls[0] as unknown as [string])[0]).toBe(`${API_BASE_URL}/api/sales/past?vendor=geonworks&category=keycap&cursor=c1`);
   });
 
   it("getSaleHighlights는 picks를 풀어 돌려준다", async () => {

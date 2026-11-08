@@ -1,6 +1,6 @@
 import { connection } from "next/server";
 import { Suspense, type ReactNode } from "react";
-import { getCachedSaleSchedule, getFirstSaleBatch } from "@/lib/cachedApi";
+import { getCachedSalePast, getCachedSaleSchedule, getFirstSaleBatch } from "@/lib/cachedApi";
 import { SALE_LIST_INFO } from "@/lib/format";
 import { parseSaleListQuery, saleListHref } from "@/lib/saleQuery";
 import LoadFailed from "../LoadFailed";
@@ -31,8 +31,12 @@ async function SaleList({ searchParams }: { searchParams: SearchParams }) {
   const query = parseSaleListQuery(await searchParams);
   let body: ReactNode = null;
   if (query.view === "schedule") {
-    const schedule = await getCachedSaleSchedule(query.vendor, query.category);
-    if (schedule) body = <SaleSchedule query={query} items={schedule.items} fetchedAt={schedule.fetchedAt} />;
+    // 지난 판매만 실패해도 다가오는 판매는 보여준다
+    const [schedule, past] = await Promise.all([
+      getCachedSaleSchedule(query.vendor, query.category),
+      getCachedSalePast(query.vendor, query.category),
+    ]);
+    if (schedule) body = <SaleSchedule query={query} items={schedule.items} fetchedAt={schedule.fetchedAt} past={past} />;
   } else {
     const first = await getFirstSaleBatch(query.vendor, query.category);
     // 필터가 바뀌면(다른 주소) 목록을 새로 시작한다

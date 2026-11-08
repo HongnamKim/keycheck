@@ -78,6 +78,21 @@ public interface SaleItemRepository extends JpaRepository<SaleItem, Long> {
   List<SaleItem> findScheduleCandidates(
       String vendor, String category, Instant postedFrom, LocalDate startFrom, LocalDate from);
 
+  /**
+   * 보이는 판매 건 전부(지난 판매용). 끝났는지와 정렬·쪽 나눔은 서비스가 한다.
+   *
+   * @param vendor null이면 모든 판매처 (이름 문자열)
+   * @param category null이면 모든 분류 (이름 문자열)
+   */
+  @Query(
+      nativeQuery = true,
+      value =
+          "select s.* from sale_item s join notice n on n.id = s.notice_id"
+              + " where s.hidden = false and s.category <> 'OTHER' and n.summary_status = 'DONE'"
+              + " and (cast(:vendor as text) is null or s.vendor = cast(:vendor as text))"
+              + " and (cast(:category as text) is null or s.category = cast(:category as text))")
+  List<SaleItem> findAllVisible(String vendor, String category);
+
   /** 사이트맵: 내보내는 판매 건의 id와 공지 요약 시각, 목록과 같은 순서 */
   @Query(
       "select s.id as id, n.summarizedAt as summarizedAt from SaleItem s join s.notice n"

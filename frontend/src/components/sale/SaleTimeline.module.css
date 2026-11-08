@@ -74,3 +74,8 @@
   color: var(--color-muted);
   text-align: center;
 }
+
+/* 지난 판매에서 더 보기로 이어 붙인 줄 */
+.moreRows {
+  margin-top: 6px;
+}
