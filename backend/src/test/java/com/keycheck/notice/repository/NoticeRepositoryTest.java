@@ -9,6 +9,7 @@ import com.keycheck.notice.domain.NoticeAttachment;
 import com.keycheck.notice.domain.NoticeOrigin;
 import com.keycheck.notice.domain.SaleCategory;
 import com.keycheck.notice.domain.SaleItem;
+import com.keycheck.notice.domain.SaleLink;
 import com.keycheck.notice.domain.SalePhase;
 import com.keycheck.notice.domain.SaleType;
 import com.keycheck.notice.dto.SaleItemDraft;
@@ -124,6 +125,51 @@ class NoticeRepositoryTest {
     em.clear();
 
     assertThat(saleItemRepository.count()).isZero();
+  }
+
+  @Test
+  @DisplayName("판매 건의 jsonb와 날짜·시각, 공지 원문 JSON을 저장하고 다시 읽는다")
+  void 판매_건_jsonb를_다시_읽는다() {
+    Notice notice =
+        Notice.create(
+            1L, null, 1L, KoreanVendor.SWAGKEYS, NoticeOrigin.BOT,
+            Instant.parse("2026-11-06T10:00:00Z"), "본문", true, "{\"a\": [1, \"가\"]}");
+    noticeRepository.saveAndFlush(notice);
+    SaleItem saved =
+        saleItemRepository.saveAndFlush(
+            SaleItem.create(
+                notice,
+                0,
+                new SaleItemDraft(
+                    "상품",
+                    SaleCategory.KEYCAP,
+                    SaleType.PREORDER,
+                    SalePhase.ANNOUNCE,
+                    java.time.LocalDate.of(2026, 11, 10),
+                    java.time.LocalTime.of(20, 0),
+                    java.time.LocalDate.of(2026, 11, 20),
+                    java.time.LocalTime.of(23, 59),
+                    "배송 안내",
+                    List.of("첫째 줄", "둘째 줄"),
+                    List.of(new SaleLink("구매", "https://example.com/a")),
+                    List.of(10L, 11L))));
+    em.clear();
+
+    SaleItem read = saleItemRepository.findById(saved.getId()).orElseThrow();
+
+    assertThat(read.getSummaryLines()).containsExactly("첫째 줄", "둘째 줄");
+    assertThat(read.getLinks()).containsExactly(new SaleLink("구매", "https://example.com/a"));
+    assertThat(read.getImageIds()).containsExactly(10L, 11L);
+    assertThat(read.getImageIds().get(0)).isInstanceOf(Long.class);
+    assertThat(read.getStartDate()).isEqualTo(java.time.LocalDate.of(2026, 11, 10));
+    assertThat(read.getStartTime()).isEqualTo(java.time.LocalTime.of(20, 0));
+    assertThat(read.getEndDate()).isEqualTo(java.time.LocalDate.of(2026, 11, 20));
+    assertThat(read.getEndTime()).isEqualTo(java.time.LocalTime.of(23, 59));
+    assertThat(read.getShippingNote()).isEqualTo("배송 안내");
+    assertThat(read.getVendor()).isEqualTo(KoreanVendor.SWAGKEYS);
+    assertThat(read.getPostedAt()).isEqualTo(Instant.parse("2026-11-06T10:00:00Z"));
+    Notice readNotice = noticeRepository.findById(notice.getId()).orElseThrow();
+    assertThat(readNotice.getRaw()).contains("\"a\"").contains("가");
   }
 
   @Test
