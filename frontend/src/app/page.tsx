@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import BoardRail from "@/components/home/BoardRail";
 import Dateline, { DatelineFallback } from "@/components/home/Dateline";
 import HighlightBento, { HighlightBentoFallback } from "@/components/home/HighlightBento";
+import SaleRail from "@/components/home/SaleRail";
 import { jsonLdHtml, siteOpenGraph, SITE_URL } from "@/lib/seo";
 import styles from "./page.module.css";
 
@@ -23,8 +24,8 @@ const WEBSITE_JSON_LD = {
 };
 
 /**
- * 메인. 날짜 줄 → 하이라이트(벤토) → IC 가로 줄 → 공동구매 가로 줄.
- * 머리 글은 바로 그리고, 날짜 줄·하이라이트·두 줄은 각자 받아 한쪽이 느려도 다른 칸을 막지 않는다.
+ * 메인. 날짜 줄 → 하이라이트(벤토) → IC 가로 줄 → 공동구매 가로 줄 → 국내 판매 가로 줄.
+ * 머리 글은 바로 그리고, 날짜 줄·하이라이트·세 줄은 각자 받아 한쪽이 느려도 다른 칸을 막지 않는다.
  */
 export default function Home() {
   return (
@@ -45,7 +46,7 @@ export default function Home() {
             </h1>
           </div>
           <p className={styles.hlLead}>
-            geekhack IC·공동구매 글에서 지금 볼 만한 글을 골랐어요. 아래로 내리면 게시판별 목록이 이어져요.
+            geekhack IC·공동구매 글과 국내 판매 소식에서 지금 볼 만한 것을 골랐어요. 아래로 내리면 목록이 이어져요.
           </p>
         </div>
 
@@ -61,11 +62,15 @@ export default function Home() {
           <a href="#home-gb" className={styles.jumpLink}>
             공동구매
           </a>
+          <a href="#home-sales" className={styles.jumpLink}>
+            국내 판매
+          </a>
         </nav>
       </section>
 
       <BoardRail board="ic" />
       <BoardRail board="gb" />
+      <SaleRail />
     </div>
   );
 }
