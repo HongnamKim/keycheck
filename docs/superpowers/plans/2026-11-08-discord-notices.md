@@ -611,6 +611,18 @@ notice:
 - [ ] **Step 3: 로컬 확인** — `/sales?view=schedule`에서 지난 판매 첫 쪽과 더 보기.
 - [ ] **Step 4: 커밋**
 
+### Task 22: 판매 건 줄에 분류 칩 (2026-11-08 사용자 요청)
+
+**Files:** Modify `frontend/src/lib/saleStatus.ts`(+ test), `components/sale/SaleRow.tsx`, `components/sale/SaleTimeline.module.css`(또는 SaleRow css)
+
+**Interfaces:**
+- Produces: `saleCategoryLabel(category: SaleCategory): string` — KEYBOARD "키보드", KEYCAP "키캡", SWITCH "스위치", PARTS "기타". 필터 칩 이름과 같은 표를 쓴다(한 곳에서 정의).
+- `SaleRow`의 배지 줄: 상태 배지 → 분류 칩(회색 채움: `--color-divider` 바탕, `--color-muted` 글자, 배지와 같은 크기) → 구분 글(판매 일정 순은 `판매처 · 구분`). 두 보기 모두.
+
+- [ ] **Step 1:** `saleStatus.test.ts`에 `saleCategoryLabel` 네 값 테스트(실패 확인).
+- [ ] **Step 2:** 구현, `cd frontend && npm test && npm run lint && npm run build`.
+- [ ] **Step 3:** 커밋.
+
 ---
 
 ## 마무리
