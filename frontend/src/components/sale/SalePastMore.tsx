@@ -32,7 +32,10 @@ export default function SalePastMore({
     setStatus("loading");
     getSalePast(query.vendor, query.category, cursor)
       .then((batch) => {
-        setItems((prev) => [...prev, ...batch.items]);
+        setItems((prev) => {
+          const seen = new Set(prev.map((p) => p.id));
+          return [...prev, ...batch.items.filter((i) => !seen.has(i.id))];
+        });
         setCursor(batch.nextCursor);
         setMore(batch.hasMore);
         setStatus("idle");

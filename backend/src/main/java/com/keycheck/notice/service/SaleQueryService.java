@@ -125,7 +125,7 @@ public class SaleQueryService {
         saleItemRepository.findAllVisible(vendorName, categoryName).stream()
             .filter(i -> !SaleTimes.isActive(i, now))
             .sorted(
-                Comparator.comparing(SaleTimes::pastAt)
+                Comparator.comparingLong((SaleItem i) -> SaleTimes.pastAt(i).toEpochMilli())
                     .thenComparing(SaleItem::getId)
                     .reversed())
             .toList();

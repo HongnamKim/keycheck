@@ -1,6 +1,6 @@
 import type { SaleCard } from "@/lib/api";
 import type { FirstSaleBatch } from "@/lib/cachedApi";
-import { saleHref, type SaleListQuery } from "@/lib/saleQuery";
+import { saleHref, saleListHref, type SaleListQuery } from "@/lib/saleQuery";
 import { scheduleBuckets } from "@/lib/saleTimeline";
 import SalePastMore from "./SalePastMore";
 import SaleRow from "./SaleRow";
@@ -61,7 +61,7 @@ export default function SaleSchedule({
                 </li>
               ))}
             </ul>
-            <SalePastMore query={query} nextCursor={past.batch.nextCursor} hasMore={past.batch.hasMore} fetchedAt={past.fetchedAt} />
+            <SalePastMore key={saleListHref(query)} query={query} nextCursor={past.batch.nextCursor} hasMore={past.batch.hasMore} fetchedAt={past.fetchedAt} />
           </div>
         </section>
       )}

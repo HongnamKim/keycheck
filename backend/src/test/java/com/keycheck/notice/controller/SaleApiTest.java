@@ -245,6 +245,7 @@ class SaleApiTest {
         .andExpect(status().isBadRequest());
     mockMvc.perform(get("/api/sales").param("category", "other")).andExpect(status().isBadRequest());
     mockMvc.perform(get("/api/sales").param("cursor", "abc")).andExpect(status().isBadRequest());
+    mockMvc.perform(get("/api/sales/past").param("cursor", "1_abc")).andExpect(status().isBadRequest());
     mockMvc.perform(get("/api/sales").param("cursor", "1_x")).andExpect(status().isBadRequest());
     mockMvc.perform(get("/api/sales").param("cursor", "1_2_3")).andExpect(status().isBadRequest());
   }
@@ -536,11 +537,16 @@ class SaleApiTest {
   @DisplayName("지난 판매는 30건씩 커서로 이어 받고 겹치거나 빠지지 않는다")
   void pastPaging() throws Exception {
     clock.set(NOW);
-    for (int i = 0; i < 35; i++) {
+    for (int i = 0; i < 29; i++) {
       scheduled("건 " + i, SalePhase.OPEN, daysAgo(100 + i), null, null);
     }
-    // 공지 시각이 같은 두 건: id 내림차순
-    scheduled("같은 시각 A", SalePhase.OPEN, daysAgo(200), null, null);
+    // 지난 시각이 같은 두 건이 쪽 경계(30번째·31번째)에 걸친다: id 큰 쪽이 먼저
+    Instant same = daysAgo(200);
+    scheduled("같은 시각 먼저 저장", SalePhase.OPEN, same, null, null);
+    scheduled("같은 시각 나중 저장", SalePhase.OPEN, same, null, null);
+    for (int i = 0; i < 5; i++) {
+      scheduled("옛 건 " + i, SalePhase.OPEN, daysAgo(300 + i), null, null);
+    }
 
     String first =
         mockMvc
@@ -559,6 +565,7 @@ class SaleApiTest {
         mockMvc
             .perform(get("/api/sales/past").param("cursor", cursor))
             .andExpect(jsonPath("$.items", hasSize(6)))
+            .andExpect(jsonPath("$.items[0].productName").value("같은 시각 먼저 저장"))
             .andExpect(jsonPath("$.hasMore").value(false))
             .andExpect(jsonPath("$.nextCursor").value(nullValue()))
             .andReturn()
@@ -568,7 +575,8 @@ class SaleApiTest {
     all.addAll(names(second));
     org.assertj.core.api.Assertions.assertThat(all).hasSize(36).doesNotHaveDuplicates();
     org.assertj.core.api.Assertions.assertThat(all.getFirst()).isEqualTo("건 0");
-    org.assertj.core.api.Assertions.assertThat(all.getLast()).isEqualTo("같은 시각 A");
+    org.assertj.core.api.Assertions.assertThat(all.get(29)).isEqualTo("같은 시각 나중 저장");
+    org.assertj.core.api.Assertions.assertThat(all.get(30)).isEqualTo("같은 시각 먼저 저장");
   }
 
   @Test
@@ -597,6 +605,7 @@ class SaleApiTest {
     mockMvc.perform(get("/api/sales/past").param("vendor", "foo")).andExpect(status().isBadRequest());
     mockMvc.perform(get("/api/sales/past").param("category", "other")).andExpect(status().isBadRequest());
     mockMvc.perform(get("/api/sales/past").param("cursor", "abc")).andExpect(status().isBadRequest());
+    mockMvc.perform(get("/api/sales/past").param("cursor", "1_abc")).andExpect(status().isBadRequest());
   }
 
   @TestConfiguration(proxyBeanMethods = false)
