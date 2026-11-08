@@ -1,0 +1,26 @@
+/* 사진 위 배지 줄(시안 d). 칸 모양은 BentoCell.module.css의 큰 칸 규칙을 그대로 쓴다 */
+.status {
+  display: inline-flex;
+}
+
+/* 채움이 아닌 상태 배지(진한·회색 테두리)는 어두운 사진 위에서 읽히게 흰 테두리·흰 글자로 */
+.onPhoto > span {
+  border-color: rgba(255, 255, 255, 0.75);
+  background: rgba(0, 0, 0, 0.25);
+  color: #ffffff;
+}
+
+/* "국내 판매" 칩: 상태 배지(SaleBadge)와 같은 크기, 사진 위 모양 */
+.chip {
+  flex: none;
+  display: inline-block;
+  padding: 1px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.25);
+  color: #ffffff;
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: 600;
+  white-space: nowrap;
+}
