@@ -59,16 +59,36 @@ public class NoticeCollector {
     }
   }
 
+  private static long idOrZero(String id) {
+    try {
+      return Long.parseLong(id);
+    } catch (NumberFormatException e) {
+      return 0;
+    }
+  }
+
   private void collectChannel(KoreanVendor vendor, String channelIdText) {
-    long channelId = Long.parseLong(channelIdText);
+    long channelId;
+    try {
+      channelId = Long.parseLong(channelIdText);
+    } catch (NumberFormatException e) {
+      log.warn("{} 채널 id 설정이 숫자가 아니라 건너뛰어요", vendor);
+      return;
+    }
     NoticeChannelCursor cursor = cursorRepository.findById(channelId).orElse(null);
     while (true) {
       String after = cursor == null ? null : String.valueOf(cursor.getLastMessageId());
       List<DiscordMessage> batch = client.messagesAfter(channelIdText, after);
       long max = 0;
       for (DiscordMessage message : batch) {
-        ingestService.ingest(vendor, channelId, message, NoticeOrigin.BOT);
-        max = Math.max(max, Long.parseLong(message.getId()));
+        try {
+          ingestService.ingest(vendor, channelId, message, NoticeOrigin.BOT);
+          max = Math.max(max, Long.parseLong(message.getId()));
+        } catch (RuntimeException e) {
+          // 문제 메시지 하나가 채널 수집을 막지 않게 건너뛴다. 받은 최대 id로 커서는 전진한다.
+          log.warn("공지 메시지 {} 저장 실패, 건너뛰어요: {}", message.getId(), e.toString());
+          max = Math.max(max, idOrZero(message.getId()));
+        }
       }
       if (max > 0) {
         if (cursor == null) {

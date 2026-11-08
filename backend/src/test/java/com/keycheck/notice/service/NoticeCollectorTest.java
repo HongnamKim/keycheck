@@ -135,4 +135,93 @@ class NoticeCollectorTest {
     verify(client, times(1)).messagesAfter(any(), any());
     verify(client, never()).messagesAfter(eq(GEON), any());
   }
+
+  private NoticeCollector collector(
+      NoticeIngestService ingest, Map<KoreanVendor, String> channels, String token) {
+    NoticeProperties properties =
+        new NoticeProperties(
+            token, "http://x", "ua", channels, Duration.ofHours(24),
+            new NoticeProperties.Summary(Duration.ofMinutes(10)));
+    return new NoticeCollector(client, ingest, cursorRepository, properties, clock);
+  }
+
+  private Map<KoreanVendor, String> both() {
+    Map<KoreanVendor, String> channels = new java.util.EnumMap<>(KoreanVendor.class);
+    channels.put(KoreanVendor.SWAGKEYS, SWAG);
+    channels.put(KoreanVendor.GEONWORKS, GEON);
+    return channels;
+  }
+
+  @Test
+  @DisplayName("토큰이 비면 디스코드를 부르지 않는다")
+  void 토큰이_비면_디스코드를_부르지_않는다() {
+    NoticeCollector collector = collector(ingestService, both(), "");
+
+    collector.collect();
+    collector.collect();
+
+    verify(client, never()).messagesAfter(any(), any());
+  }
+
+  @Test
+  @DisplayName("한 채널이 장애여도 다음 채널을 받는다")
+  void 한_채널이_장애여도_다음_채널을_받는다() {
+    when(client.messagesAfter(eq(SWAG), any()))
+        .thenThrow(new com.keycheck.notice.client.DiscordUnavailableException("장애", null));
+    when(client.messagesAfter(eq(GEON), any())).thenReturn(List.of(msg(BASE + 1)));
+
+    collector(ingestService, both(), "token").collect();
+
+    assertThat(noticeRepository.count()).isEqualTo(1);
+  }
+
+  @Test
+  @DisplayName("건너뛴 메시지만 받아도 커서는 전진한다")
+  void 건너뛴_메시지만_받아도_커서는_전진한다() {
+    DiscordMessage system =
+        DiscordMessage.from(
+            mapper.readTree(
+                "{\"id\":\"" + (BASE + 5) + "\",\"type\":12,\"content\":\"\",\"attachments\":[]}"));
+    when(client.messagesAfter(eq(SWAG), isNull())).thenReturn(List.of(system));
+
+    collector(ingestService, Map.of(KoreanVendor.SWAGKEYS, SWAG), "token").collect();
+
+    assertThat(noticeRepository.count()).isZero();
+    assertThat(cursorRepository.findById(9001L).orElseThrow().getLastMessageId())
+        .isEqualTo(BASE + 5);
+  }
+
+  @Test
+  @DisplayName("문제 메시지는 건너뛰고 나머지를 저장하며 다음 채널도 받는다")
+  void 문제_메시지는_건너뛰고_나머지를_저장하며_다음_채널도_받는다() {
+    // 첨부 id가 숫자가 아니라 저장 중 예외가 나는 메시지
+    DiscordMessage bad =
+        DiscordMessage.from(
+            mapper.readTree(
+                "{\"id\":\"" + (BASE + 2) + "\",\"type\":0,\"content\":\"글\","
+                    + "\"attachments\":[{\"id\":\"x\",\"filename\":\"a.png\",\"url\":\"u\"}]}"));
+    when(client.messagesAfter(eq(SWAG), isNull()))
+        .thenReturn(List.of(msg(BASE + 1), bad, msg(BASE + 3)));
+    when(client.messagesAfter(eq(GEON), isNull())).thenReturn(List.of(msg(BASE + 10)));
+
+    collector(ingestService, both(), "token").collect();
+
+    assertThat(noticeRepository.count()).isEqualTo(3);
+    assertThat(cursorRepository.findById(9001L).orElseThrow().getLastMessageId())
+        .isEqualTo(BASE + 3);
+    assertThat(cursorRepository.findById(9002L)).isPresent();
+  }
+
+  @Test
+  @DisplayName("채널 id 설정이 숫자가 아니면 그 채널만 건너뛴다")
+  void 채널_id_설정이_숫자가_아니면_그_채널만_건너뛴다() {
+    Map<KoreanVendor, String> channels = new java.util.EnumMap<>(KoreanVendor.class);
+    channels.put(KoreanVendor.SWAGKEYS, "abc");
+    channels.put(KoreanVendor.GEONWORKS, GEON);
+    when(client.messagesAfter(eq(GEON), isNull())).thenReturn(List.of(msg(BASE + 1)));
+
+    collector(ingestService, channels, "token").collect();
+
+    assertThat(noticeRepository.count()).isEqualTo(1);
+  }
 }

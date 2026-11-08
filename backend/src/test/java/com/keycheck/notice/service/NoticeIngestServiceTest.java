@@ -31,6 +31,7 @@ class NoticeIngestServiceTest {
   @Autowired private NoticeIngestService service;
   @Autowired private NoticeRepository noticeRepository;
   @Autowired private TransactionTemplate tx;
+  @Autowired private com.keycheck.notice.config.NoticeProperties properties;
 
   private final JsonMapper mapper = JsonMapper.builder().build();
 
@@ -203,5 +204,28 @@ class NoticeIngestServiceTest {
 
     assertThat(saved.isHasText()).isFalse();
     assertThat(saved.getSummaryStatus()).isEqualTo(SummaryStatus.DONE);
+  }
+
+  @Test
+  @DisplayName("공개 주소가 없으면 원문 첨부 주소를 빈 문자열로 둔다")
+  void 공개_주소가_없으면_원문_첨부_주소를_빈_문자열로_둔다() {
+    com.keycheck.image.service.ThumbUrls blank = org.mockito.Mockito.mock(com.keycheck.image.service.ThumbUrls.class);
+    NoticeIngestService noUrl = new NoticeIngestService(noticeRepository, properties, blank);
+
+    Notice saved =
+        noUrl
+            .ingest(
+                KoreanVendor.SWAGKEYS,
+                CHANNEL,
+                message(plain(BASE + 1, "글", "[" + attachment(779L) + "]")),
+                NoticeOrigin.BOT)
+            .orElseThrow();
+
+    JsonNode first =
+        mapper.readTree(noticeRepository.findById(saved.getId()).orElseThrow().getRaw())
+            .path("attachments")
+            .get(0);
+    assertThat(first.path("url").asString()).isEmpty();
+    assertThat(first.path("proxy_url").asString()).isEmpty();
   }
 }
