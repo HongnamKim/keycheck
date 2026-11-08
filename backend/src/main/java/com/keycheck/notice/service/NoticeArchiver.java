@@ -6,7 +6,6 @@ import com.keycheck.image.config.StorageConfig;
 import com.keycheck.image.service.ImageSize;
 import com.keycheck.image.service.ThumbnailMaker;
 import com.keycheck.image.service.UnreadableImageException;
-import com.keycheck.image.storage.StorageUnavailableException;
 import com.keycheck.image.storage.ThumbStorage;
 import com.keycheck.notice.client.DiscordClient;
 import com.keycheck.notice.domain.ArchiveStatus;

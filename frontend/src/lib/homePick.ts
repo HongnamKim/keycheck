@@ -1,3 +1,4 @@
+import "server-only";
 import type { SaleCard, SalePick } from "./api";
 import { CRAWLER_UA } from "./bot";
 import { formatMonthDay } from "./format";
@@ -10,6 +11,7 @@ import { HTML_LIMITED_BOT_UA_RE } from "next/dist/shared/lib/router/utils/html-b
  * 메인 하이라이트 큰 칸을 고르는 인라인 스크립트(설계 3.7). 메인은 정적이라 서버에서 요청마다 고를 수 없어,
  * 정적 화면에 두 모양을 함께 넣고 이 스크립트가 화면을 그리기 전에 반반으로 고른다.
  * 스크립트 바로 앞 요소(두 모양을 감싼 요소)의 data-pick을 "kr"로 바꾸면 국내 판매 쪽이 보인다.
+ * 국내 판매 쪽이 걸리면 그 큰 칸 사진(data-kr-hero)을 바로 받도록 loading·fetchpriority를 바꾼다(LCP).
  * 검색·미리보기 봇(isCrawler와 같은 규칙)이나 UA가 없으면 고르지 않아 geekhack 쪽이 그대로 보인다.
  */
 export function homePickScript(): string {
@@ -20,7 +22,9 @@ export function homePickScript(): string {
     "var s=document.currentScript,el=s&&s.previousElementSibling;if(!el)return;" +
     "var ua=navigator.userAgent;" +
     `if(!ua||new RegExp(${crawler},"i").test(ua)||new RegExp(${limitedBot},"i").test(ua))return;` +
-    'if(Math.random()<0.5)el.setAttribute("data-pick","kr")' +
+    'if(Math.random()<0.5){el.setAttribute("data-pick","kr");' +
+    'var h=el.querySelector("[data-kr-hero]");' +
+    'if(h){h.setAttribute("loading","eager");h.setAttribute("fetchpriority","high")}}' +
     "})()"
   );
 }

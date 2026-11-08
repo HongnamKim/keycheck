@@ -7,6 +7,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
@@ -16,6 +17,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 /** 디스코드 REST API(읽기 전용) 클라이언트. 봇 토큰은 RestClient의 기본 헤더에만 있다. */
+@Slf4j
 @RequiredArgsConstructor
 public class DiscordClient {
   private static final int PAGE_SIZE = 100;
@@ -30,7 +32,11 @@ public class DiscordClient {
         "/channels/" + channelId + "/messages?limit=" + PAGE_SIZE
             + (StringUtils.hasText(afterId) ? "&after=" + afterId : "");
     JsonNode body = get(path);
-    if (body == null || !body.isArray()) {
+    if (body == null) {
+      log.warn("디스코드 채널을 찾지 못함(404 또는 빈 응답): channelId={}. 채널 ID 설정을 확인하세요", channelId);
+      return List.of();
+    }
+    if (!body.isArray()) {
       return List.of();
     }
     return body.valueStream()

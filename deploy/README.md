@@ -203,5 +203,6 @@ sudo systemctl start keycheck-update.timer
 - 로그: `sudo docker compose logs -f app` (`/opt/keycheck`에서). 갱신 기록은 `journalctl -u keycheck-update`.
 - 환경변수를 바꾼 뒤: `sudo docker compose up -d --force-recreate app`
 - 서버에서 직접 손볼 때는 타이머부터 끕니다(`sudo systemctl stop keycheck-update.timer`, 끝나면 `start`). 켜 둔 채면 새 이미지가 올라왔을 때 멈춰 둔 `app`을 다시 띄웁니다.
+- 국내 판매(`/api/sales/*`)를 처음 싣는 릴리스는 백엔드를 프론트보다 먼저 배포한다(프론트가 새 엔드포인트와 필드를 쓴다. 나머지는 없어도 무너지지 않게 돼 있지만 그 상태로 두지 않는다).
 - 배포 파일(`deploy/`)을 바꿨으면 4절처럼 새로 받아 덮어쓰고, compose를 바꿨으면 `sudo docker compose up -d`, 타이머 유닛을 바꿨으면 `sudo systemctl daemon-reload`.
 - Caddy 이미지는 자동으로 갱신하지 않습니다. 가끔 `sudo docker compose pull caddy && sudo docker compose up -d caddy`.

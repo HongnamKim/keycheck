@@ -14,12 +14,16 @@ import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
+@ExtendWith(OutputCaptureExtension.class)
 class DiscordClientTest {
   private final RestClient.Builder builder =
       RestClient.builder()
@@ -136,5 +140,17 @@ class DiscordClientTest {
     assertThatThrownBy(() -> client.messagesAfter("111", null))
         .isInstanceOf(DiscordUnavailableException.class)
         .hasMessageNotContaining("test-token");
+  }
+
+  @Test
+  @DisplayName("채널이 404면 빈 목록을 주고 채널 ID가 담긴 경고를 남긴다")
+  void warnsOnChannelNotFound(CapturedOutput output) {
+    server
+        .expect(requestTo("https://discord.test/api/v10/channels/999/messages?limit=100"))
+        .andRespond(withResourceNotFound());
+
+    assertThat(client.messagesAfter("999", null)).isEmpty();
+
+    assertThat(output.getOut() + output.getErr()).contains("channelId=999").doesNotContain("test-token");
   }
 }

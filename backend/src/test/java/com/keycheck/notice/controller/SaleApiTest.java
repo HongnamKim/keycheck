@@ -304,6 +304,23 @@ class SaleApiTest {
   }
 
   @Test
+  @DisplayName("하이라이트는 고른 이유와 판매 카드(id, 큰 사진 주소)를 준다")
+  void highlightsHavePickWithImage() throws Exception {
+    clock.set(Instant.parse("2026-11-05T00:00:00Z"));
+    Notice n = notice(KoreanVendor.SWAGKEYS, BASE, SummaryStatus.DONE);
+    attachment(n, 7101L, 0, ArchiveStatus.DONE);
+    SaleItem saved = item(n, 0, "하이라이트 건", SaleCategory.KEYBOARD, List.of(7101L));
+
+    mockMvc
+        .perform(get("/api/sales/highlights"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.picks", hasSize(1)))
+        .andExpect(jsonPath("$.picks[0].reason").value("UPCOMING"))
+        .andExpect(jsonPath("$.picks[0].sale.id").value(saved.getId()))
+        .andExpect(jsonPath("$.picks[0].sale.imageUrl").value("https://img.test/notices/7101.webp"));
+  }
+
+  @Test
   @DisplayName("없는 판매 건은 404")
   void unknownIs404() throws Exception {
     mockMvc.perform(get("/api/sales/999999999")).andExpect(status().isNotFound());

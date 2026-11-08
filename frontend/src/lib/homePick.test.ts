@@ -6,12 +6,18 @@ const HUMAN_UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36";
 
 /** 인라인 스크립트를 가짜 document·navigator·Math로 실행하고, 스크립트 바로 앞 요소의 data-pick을 돌려준다 */
-function runScript(ua: string, random: number): string {
+function runScript(ua: string, random: number, heroAttrs: Record<string, string> = {}): string {
   const attrs: Record<string, string> = { "data-pick": "gk" };
+  const hero = {
+    setAttribute: (name: string, value: string) => {
+      heroAttrs[name] = value;
+    },
+  };
   const wrapper = {
     setAttribute: (name: string, value: string) => {
       attrs[name] = value;
     },
+    querySelector: (selector: string) => (selector === "[data-kr-hero]" ? hero : null),
   };
   const document = { currentScript: { previousElementSibling: wrapper } };
   const navigator = { userAgent: ua };
@@ -23,6 +29,15 @@ function runScript(ua: string, random: number): string {
 describe("homePickScript", () => {
   it("무작위 값이 0.5보다 작으면 국내 판매(kr)를 고른다", () => {
     expect(runScript(HUMAN_UA, 0.3)).toBe("kr");
+  });
+
+  it("국내 판매를 고르면 큰 칸 사진을 바로 받게 바꾸고, geekhack이면 그대로 둔다", () => {
+    const kr: Record<string, string> = {};
+    runScript(HUMAN_UA, 0.3, kr);
+    expect(kr).toEqual({ loading: "eager", fetchpriority: "high" });
+    const gk: Record<string, string> = {};
+    runScript(HUMAN_UA, 0.7, gk);
+    expect(gk).toEqual({});
   });
 
   it("무작위 값이 0.5 이상이면 geekhack(gk) 그대로 둔다", () => {

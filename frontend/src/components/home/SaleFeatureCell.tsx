@@ -23,7 +23,7 @@ export default function SaleFeatureCell({ pick, now, className }: { pick: SalePi
     <Link href={saleHref(sale.id)} className={`${bento.cell} ${bento.feature} ${className ?? ""}`}>
       {image && (
         <span className={bento.media}>
-          {/* 기본으로 숨겨진 모양이라 늦게 불러온다(보일 때만 받는다) */}
+          {/* 기본으로 숨겨진 모양이라 늦게 불러온다(보일 때만 받는다). 국내 판매 쪽이 걸리면 homePickScript가 data-kr-hero 사진을 바로 받게 바꾼다 */}
           <RemoteImage
             src={image.src}
             fallbackSrc={image.fallback}
@@ -31,6 +31,7 @@ export default function SaleFeatureCell({ pick, now, className }: { pick: SalePi
             fill
             sizes="(max-width: 599px) 100vw, (max-width: 1023px) 66vw, 540px"
             loading="lazy"
+            data-kr-hero=""
             className={bento.img}
           />
         </span>
