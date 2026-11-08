@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SaleDetailResponse {
   private final Long id;
+  private final Long noticeId;
   private final KoreanVendor vendor;
   private final String productName;
   private final SaleCategory category;
@@ -54,6 +55,7 @@ public class SaleDetailResponse {
     SaleCardResponse card = SaleCardResponse.from(item, first, urls);
     return new SaleDetailResponse(
         card.getId(),
+        card.getNoticeId(),
         card.getVendor(),
         card.getProductName(),
         card.getCategory(),

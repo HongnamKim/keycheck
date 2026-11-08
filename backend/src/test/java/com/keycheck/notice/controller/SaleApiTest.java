@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.keycheck.MutableClock;
 import com.keycheck.TestcontainersConfiguration;
 import com.keycheck.notice.domain.ArchiveStatus;
 import com.keycheck.notice.domain.Notice;
@@ -33,7 +34,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.json.JsonCompareMode;
 import org.springframework.test.web.servlet.MockMvc;
@@ -41,7 +45,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@Import(TestcontainersConfiguration.class)
+@Import({TestcontainersConfiguration.class, SaleApiTest.ClockConfig.class})
 class SaleApiTest {
   private static final Instant BASE = Instant.parse("2026-11-01T00:00:00Z");
 
@@ -51,6 +55,7 @@ class SaleApiTest {
   @Autowired private SaleItemRepository saleItemRepository;
   @Autowired private JdbcTemplate jdbcTemplate;
   @Autowired private TransactionTemplate transaction;
+  @Autowired private MutableClock clock;
 
   private long nextId = 8_000_000L;
 
@@ -256,6 +261,7 @@ class SaleApiTest {
 
     mockMvc
         .perform(get("/api/sales"))
+        .andExpect(jsonPath("$.items[0].noticeId").value(n.getId()))
         .andExpect(jsonPath("$.items[0].thumbUrl").value("https://img.test/notices/7001-640.webp"))
         .andExpect(jsonPath("$.items[0].largeUrl").value("https://img.test/notices/7001-1280.webp"))
         .andExpect(jsonPath("$.items[0].imageUrl").value("https://img.test/notices/7001.webp"))
@@ -317,5 +323,140 @@ class SaleApiTest {
                     "[{\"id\": %d, \"lastModified\": \"2026-11-05T09:30:00Z\"}]"
                         .formatted(saved.getId()),
                     JsonCompareMode.STRICT));
+  }
+
+  /** 한국 시간 2026-11-13 12:00 */
+  private static final Instant NOW = Instant.parse("2026-11-13T03:00:00Z");
+
+  private SaleItem scheduled(
+      String name,
+      SalePhase phase,
+      Instant postedAt,
+      LocalDate startDate,
+      LocalDate endDate,
+      SaleCategory category,
+      KoreanVendor vendor) {
+    Notice n = notice(vendor, postedAt, SummaryStatus.DONE);
+    return saleItemRepository.save(
+        SaleItem.create(
+            n,
+            0,
+            new SaleItemDraft(
+                name,
+                category,
+                SaleType.SALE,
+                phase,
+                startDate,
+                null,
+                endDate,
+                null,
+                null,
+                List.of("줄"),
+                List.of(),
+                List.of())));
+  }
+
+  private SaleItem scheduled(
+      String name, SalePhase phase, Instant postedAt, LocalDate startDate, LocalDate endDate) {
+    return scheduled(name, phase, postedAt, startDate, endDate, SaleCategory.KEYBOARD, KoreanVendor.SWAGKEYS);
+  }
+
+  private static Instant daysAgo(int days) {
+    return NOW.minus(java.time.Duration.ofDays(days));
+  }
+
+  @Test
+  @DisplayName("일정 목록은 끝나지 않은 판매만: 마감, 예정 시작, 7일, 30일 경계")
+  void scheduleBoundaries() throws Exception {
+    clock.set(NOW);
+    LocalDate today = LocalDate.of(2026, 11, 13);
+    scheduled("어제 마감", SalePhase.OPEN, daysAgo(3), today.minusDays(5), today.minusDays(1));
+    scheduled("오늘 날짜만 마감", SalePhase.OPEN, daysAgo(3), today.minusDays(5), today);
+    scheduled("마감 없고 미래 시작", SalePhase.ANNOUNCE, daysAgo(40), today.plusDays(3), null);
+    scheduled("8일 전 시작", SalePhase.OPEN, daysAgo(20), today.minusDays(8), null);
+    scheduled("6일 전 시작", SalePhase.OPEN, daysAgo(20), today.minusDays(6), null);
+    scheduled("공지 8일 전 시작 없음", SalePhase.OPEN, daysAgo(8), null, null);
+    scheduled("공지 6일 전 시작 없음", SalePhase.OPEN, daysAgo(6), null, null);
+    scheduled("31일 전 일정 미정", SalePhase.ANNOUNCE, daysAgo(31), null, null);
+    scheduled("29일 전 일정 미정", SalePhase.ANNOUNCE, daysAgo(29), null, null);
+
+    mockMvc
+        .perform(get("/api/sales/schedule"))
+        .andExpect(status().isOk())
+        .andExpect(
+            jsonPath(
+                "$.items[*].productName",
+                org.hamcrest.Matchers.containsInAnyOrder(
+                    "오늘 날짜만 마감",
+                    "마감 없고 미래 시작",
+                    "6일 전 시작",
+                    "공지 6일 전 시작 없음",
+                    "29일 전 일정 미정")))
+        .andExpect(jsonPath("$.items[0].noticeId").isNumber());
+  }
+
+  @Test
+  @DisplayName("일정 목록은 오래전에 올라왔어도 마감이 남았으면 포함하고 최근 공지 순이다")
+  void scheduleKeepsOldPostWithFutureEnd() throws Exception {
+    clock.set(NOW);
+    LocalDate today = LocalDate.of(2026, 11, 13);
+    scheduled("옛 공지 긴 판매", SalePhase.OPEN, daysAgo(200), today.minusDays(100), today.plusDays(5));
+    scheduled("최근", SalePhase.OPEN, daysAgo(1), null, null);
+
+    mockMvc
+        .perform(get("/api/sales/schedule"))
+        .andExpect(jsonPath("$.items[*].productName", contains("최근", "옛 공지 긴 판매")));
+  }
+
+  @Test
+  @DisplayName("일정 목록도 판매처·분류로 거르고 숨김·OTHER·요약 전은 뺀다")
+  void scheduleFiltersAndExcludes() throws Exception {
+    clock.set(NOW);
+    scheduled("스웩 키보드", SalePhase.OPEN, daysAgo(1), null, null);
+    scheduled("건 키캡", SalePhase.OPEN, daysAgo(2), null, null, SaleCategory.KEYCAP, KoreanVendor.GEONWORKS);
+    scheduled("기타", SalePhase.OPEN, daysAgo(2), null, null, SaleCategory.OTHER, KoreanVendor.GEONWORKS);
+    SaleItem hidden = scheduled("숨김", SalePhase.OPEN, daysAgo(2), null, null);
+    hidden.setHidden(true);
+    saleItemRepository.save(hidden);
+    Notice pending = notice(KoreanVendor.SWAGKEYS, daysAgo(1), SummaryStatus.PENDING);
+    item(pending, 0, "요약 전", SaleCategory.KEYBOARD);
+
+    mockMvc
+        .perform(get("/api/sales/schedule").param("vendor", "geonworks").param("category", "keycap"))
+        .andExpect(jsonPath("$.items[*].productName", contains("건 키캡")));
+    mockMvc
+        .perform(get("/api/sales/schedule"))
+        .andExpect(jsonPath("$.items[*].productName", contains("스웩 키보드", "건 키캡")));
+  }
+
+  @Test
+  @DisplayName("일정 목록은 300건까지만 준다")
+  void scheduleCapsAtThreeHundred() throws Exception {
+    clock.set(NOW);
+    for (int i = 0; i < 305; i++) {
+      scheduled("건 " + i, SalePhase.OPEN, NOW.minusSeconds(60L * (i + 1)), null, null);
+    }
+
+    mockMvc
+        .perform(get("/api/sales/schedule"))
+        .andExpect(jsonPath("$.items", hasSize(300)))
+        .andExpect(jsonPath("$.items[0].productName").value("건 0"))
+        .andExpect(jsonPath("$.items[299].productName").value("건 299"));
+  }
+
+  @Test
+  @DisplayName("일정 목록의 잘못된 필터는 400")
+  void scheduleRejectsBadParams() throws Exception {
+    mockMvc.perform(get("/api/sales/schedule").param("vendor", "foo")).andExpect(status().isBadRequest());
+    mockMvc.perform(get("/api/sales/schedule").param("category", "other")).andExpect(status().isBadRequest());
+  }
+
+  @TestConfiguration(proxyBeanMethods = false)
+  static class ClockConfig {
+    @Bean
+    @Primary
+    MutableClock mutableClock() {
+      return new MutableClock();
+    }
   }
 }

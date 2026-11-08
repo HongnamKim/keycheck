@@ -5,14 +5,22 @@ import com.keycheck.notice.domain.ArchiveStatus;
 import com.keycheck.notice.domain.NoticeAttachment;
 import com.keycheck.notice.domain.SaleCategory;
 import com.keycheck.notice.domain.SaleItem;
+import com.keycheck.notice.domain.SalePhase;
 import com.keycheck.notice.dto.SaleCardResponse;
 import com.keycheck.notice.dto.SaleDetailResponse;
 import com.keycheck.notice.dto.SaleListResponse;
+import com.keycheck.notice.dto.SaleScheduleResponse;
 import com.keycheck.notice.dto.SaleSitemapItemResponse;
 import com.keycheck.notice.repository.NoticeAttachmentRepository;
 import com.keycheck.notice.repository.SaleItemRepository;
 import com.keycheck.post.domain.KoreanVendor;
+import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,12 +41,21 @@ public class SaleQueryService {
   /** 첫 쪽의 커서 시각: 어떤 공지 시각보다 뒤 */
   private static final Instant FAR_FUTURE = Instant.parse("9999-12-31T00:00:00Z");
 
+  private static final ZoneId SEOUL = ZoneId.of("Asia/Seoul");
+  private static final int SCHEDULE_MAX = 300;
+  private static final Duration ON_SALE_WINDOW = Duration.ofDays(7);
+  private static final Duration ANNOUNCE_WINDOW = Duration.ofDays(30);
+
+  /** 후보로 읽는 공지 기간 (일정 미정 30일, 시작 뒤 7일보다 넉넉히) */
+  private static final Duration SCHEDULE_CANDIDATE_POSTED = Duration.ofDays(120);
+
   private static final Set<KoreanVendor> LIST_VENDORS =
       Set.of(KoreanVendor.SWAGKEYS, KoreanVendor.GEONWORKS);
 
   private final SaleItemRepository saleItemRepository;
   private final NoticeAttachmentRepository attachmentRepository;
   private final ThumbUrls thumbUrls;
+  private final Clock clock;
 
   /**
    * @param vendor all, swagkeys, geonworks
@@ -68,6 +85,49 @@ public class SaleQueryService {
             ? items.getLast().getPostedAt().toEpochMilli() + "_" + items.getLast().getId()
             : null;
     return new SaleListResponse(cards(items), nextCursor, hasMore);
+  }
+
+  /**
+   * 지금 기준으로 끝나지 않은 판매(설계 3.9): ① 마감이 있으면 마감이 지금 뒤, ② 마감이 없고 시작이 지금 뒤, ③ 마감이 없고 예고가 아니면
+   * 시작(없으면 공지 시각) 뒤 7일 안, ④ 시작·마감이 없고 예고면 공지 30일 안. 공지 시각 최근 순으로 300건까지.
+   */
+  public SaleScheduleResponse getSchedule(String vendor, String category) {
+    String vendorName = parseVendor(vendor);
+    String categoryName = parseCategory(category);
+    Instant now = clock.instant();
+    LocalDate today = now.atZone(SEOUL).toLocalDate();
+    List<SaleItem> active =
+        saleItemRepository
+            .findScheduleCandidates(
+                vendorName,
+                categoryName,
+                now.minus(SCHEDULE_CANDIDATE_POSTED),
+                today.minusDays(1))
+            .stream()
+            .filter(i -> notEnded(i, now))
+            .limit(SCHEDULE_MAX)
+            .toList();
+    return new SaleScheduleResponse(cards(active));
+  }
+
+  private static boolean notEnded(SaleItem item, Instant now) {
+    if (item.getEndDate() != null) {
+      LocalTime time = item.getEndTime() == null ? LocalTime.of(23, 59, 59) : item.getEndTime();
+      return item.getEndDate().atTime(time).atZone(SEOUL).toInstant().isAfter(now);
+    }
+    ZonedDateTime start = null;
+    if (item.getStartDate() != null) {
+      LocalTime time = item.getStartTime() == null ? LocalTime.MIDNIGHT : item.getStartTime();
+      start = item.getStartDate().atTime(time).atZone(SEOUL);
+      if (start.toInstant().isAfter(now)) {
+        return true;
+      }
+    }
+    if (item.getPhase() != SalePhase.ANNOUNCE) {
+      Instant from = start != null ? start.toInstant() : item.getPostedAt();
+      return from.plus(ON_SALE_WINDOW).isAfter(now);
+    }
+    return start == null && item.getPostedAt().plus(ANNOUNCE_WINDOW).isAfter(now);
   }
 
   public SaleDetailResponse getSale(Long id) {

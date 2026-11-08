@@ -52,6 +52,7 @@ describe("homePickScript", () => {
 function sale(id: number, extra: Partial<SaleCard> = {}): SaleCard {
   return {
     id,
+    noticeId: 100 + id,
     vendor: "SWAGKEYS",
     productName: `판매 ${id}`,
     category: "KEYCAP",

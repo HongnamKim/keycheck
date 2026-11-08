@@ -23,6 +23,10 @@ public class SaleCardResponse {
   private static final DateTimeFormatter HH_MM = DateTimeFormatter.ofPattern("HH:mm");
 
   private final Long id;
+
+  /** 이 건이 나온 공지(키체크 내부 ID). 같은 공지의 건을 묶는 데 쓴다 */
+  private final Long noticeId;
+
   private final KoreanVendor vendor;
   private final String productName;
   private final SaleCategory category;
@@ -60,6 +64,7 @@ public class SaleCardResponse {
     boolean ready = first != null && first.getArchiveStatus() == ArchiveStatus.DONE;
     return new SaleCardResponse(
         item.getId(),
+        item.getNotice().getId(),
         item.getVendor(),
         item.getProductName(),
         item.getCategory(),

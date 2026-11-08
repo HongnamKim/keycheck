@@ -313,6 +313,7 @@ describe("isCompleteCard", () => {
 function sale(overrides: Partial<SaleDetail> = {}): SaleDetail {
   return {
     id: 7,
+    noticeId: 70,
     vendor: "SWAGKEYS",
     productName: "Neo80 Cu",
     category: "KEYBOARD",

@@ -3,6 +3,7 @@ package com.keycheck.notice.controller;
 import com.keycheck.notice.dto.SaleDetailResponse;
 import com.keycheck.notice.dto.SaleHighlightResponse;
 import com.keycheck.notice.dto.SaleListResponse;
+import com.keycheck.notice.dto.SaleScheduleResponse;
 import com.keycheck.notice.dto.SaleSitemapItemResponse;
 import com.keycheck.notice.service.SaleHighlightService;
 import com.keycheck.notice.service.SaleQueryService;
@@ -57,6 +58,30 @@ public class SaleController {
       @Parameter(description = "이전 응답의 nextCursor. 첫 요청은 생략") @RequestParam(required = false)
           String cursor) {
     return saleQueryService.getSales(vendor, category, cursor);
+  }
+
+  @Operation(
+      summary = "국내 판매 일정",
+      description =
+          "지금(한국 시각) 기준으로 끝나지 않은 판매 건을 쪽 나눔 없이 최대 300건, 공지 시각 최근 순(같으면 공지 안 순서)으로 돌려준다."
+              + " 마감이 있으면 마감이 지나지 않은 건, 마감이 없으면 시작이 아직 안 왔거나 예고가 아닌 건은 시작(없으면 공지) 뒤 7일 안,"
+              + " 시작·마감이 없는 예고는 공지 30일 안이다. 숨김·분류 OTHER·요약 전 공지의 건은 뺀다."
+              + TIMES_DESCRIPTION)
+  @ApiResponse(responseCode = "200", description = "성공")
+  @ApiResponse(responseCode = "400", description = "허용되지 않는 vendor·category 값")
+  @GetMapping("/schedule")
+  public SaleScheduleResponse getSchedule(
+      @Parameter(
+              description = "판매처 필터",
+              schema = @Schema(allowableValues = {"all", "swagkeys", "geonworks"}))
+          @RequestParam(defaultValue = "all")
+          String vendor,
+      @Parameter(
+              description = "분류 필터",
+              schema = @Schema(allowableValues = {"all", "keyboard", "keycap", "switch", "parts"}))
+          @RequestParam(defaultValue = "all")
+          String category) {
+    return saleQueryService.getSchedule(vendor, category);
   }
 
   @Operation(

@@ -333,6 +333,8 @@ export type SaleCategoryFilter = "all" | "keyboard" | "keycap" | "switch" | "par
 /** 국내 판매 건(백엔드 SaleCardResponse). 날짜는 한국 날짜 "YYYY-MM-DD", 시각은 "HH:mm"(시간대 없음), 모르면 null */
 export interface SaleCard {
   id: number;
+  /** 이 건이 나온 공지 ID. 같은 공지의 건을 묶는 데 쓴다 */
+  noticeId: number;
   vendor: SaleVendor;
   productName: string;
   category: SaleCategory;
@@ -388,6 +390,18 @@ export async function getSales(
   const res = await apiFetch(`/api/sales?${query}`);
   if (!res.ok) throw new Error(`국내 판매 목록 조회 실패: ${res.status}`);
   return res.json();
+}
+
+/** 끝나지 않은 판매 건 전체(최대 300, 공지 시각 최근 순). 쪽 나눔 없음 */
+export async function getSaleSchedule(
+  vendor: SaleVendorFilter,
+  category: SaleCategoryFilter,
+): Promise<SaleCard[]> {
+  const query = new URLSearchParams({ vendor, category });
+  const res = await apiFetch(`/api/sales/schedule?${query}`);
+  if (!res.ok) throw new Error(`국내 판매 일정 조회 실패: ${res.status}`);
+  const body: { items: SaleCard[] } = await res.json();
+  return body.items;
 }
 
 /** 없거나 숨김인 판매 건이면 null */

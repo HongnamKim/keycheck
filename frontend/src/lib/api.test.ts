@@ -10,6 +10,7 @@ import {
   getSaleHighlights,
   getSaleSitemap,
   getSales,
+  getSaleSchedule,
   getFeedPosts,
   getSitemapPosts,
   getStats,
@@ -94,6 +95,7 @@ describe("백엔드 호출 함수", () => {
     ["getSitemapPosts", () => getSitemapPosts()],
     ["getFeedPosts", () => getFeedPosts()],
     ["getSales", () => getSales("all", "all")],
+    ["getSaleSchedule", () => getSaleSchedule("all", "all")],
     ["getSale", () => getSale(1)],
     ["getSaleHighlights", () => getSaleHighlights()],
     ["getSaleSitemap", () => getSaleSitemap()],
@@ -165,6 +167,14 @@ describe("백엔드 호출 함수", () => {
     await getSales("geonworks", "keycap", "c1");
 
     expect((fetchMock.mock.calls[0] as unknown as [string])[0]).toBe(`${API_BASE_URL}/api/sales?vendor=geonworks&category=keycap&cursor=c1`);
+  });
+
+  it("getSaleSchedule은 필터를 싣고 items를 풀어 돌려준다", async () => {
+    const fetchMock = vi.fn(() => Promise.resolve(new Response('{"items":[{"id":1,"noticeId":9}]}')));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(getSaleSchedule("geonworks", "keycap")).resolves.toEqual([{ id: 1, noticeId: 9 }]);
+    expect((fetchMock.mock.calls[0] as unknown as [string])[0]).toBe(`${API_BASE_URL}/api/sales/schedule?vendor=geonworks&category=keycap`);
   });
 
   it("getSaleHighlights는 picks를 풀어 돌려준다", async () => {
