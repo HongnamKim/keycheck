@@ -36,6 +36,9 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class ThumbnailMaker {
+  /** 공지 첨부 보관본 */
+  public static final int ARCHIVE_WIDTH = 2048;
+
   /** 카드·하단 목록·갤러리 칸 */
   public static final int SMALL_WIDTH = 640;
 
