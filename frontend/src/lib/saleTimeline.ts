@@ -145,3 +145,26 @@ export function scheduleBuckets(items: SaleCard[], now: Date): ScheduleBucket[] 
     items: byKey.get(key)!.sort((a, b) => orderOf(a, key) - orderOf(b, key)),
   }));
 }
+
+/**
+ * 상세 아래 이어서 보기(판매 일정 순). 이 판매 건이 든 구간부터, 그 구간은 이 건부터 남기고 뒤 구간은 그대로 둔다.
+ * 어느 구간에도 없으면(지난 판매) 빈 목록.
+ */
+export function scheduleFrom(buckets: ScheduleBucket[], saleId: number): ScheduleBucket[] {
+  const at = buckets.findIndex((bucket) => bucket.items.some((item) => item.id === saleId));
+  if (at < 0) return [];
+  const first = buckets[at];
+  const start = first.items.findIndex((item) => item.id === saleId);
+  return [{ ...first, items: first.items.slice(start) }, ...buckets.slice(at + 1)];
+}
+
+/**
+ * 지난 판매의 정렬 기준 시각(ms). 서버 SaleTimes.pastAt과 같은 규칙: 마감(날짜만이면 23:59:59),
+ * 없으면 시작(날짜만이면 0시), 없으면 공지 시각.
+ */
+export function pastAtMillis(sale: SaleCard): number {
+  const end = endInstant(sale);
+  if (end !== null) return end;
+  if (sale.startDate) return instant(sale.startDate, sale.startTime);
+  return new Date(sale.postedAt).getTime();
+}

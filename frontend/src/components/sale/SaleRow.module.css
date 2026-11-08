@@ -16,6 +16,13 @@
   border-color: var(--color-text);
 }
 
+/* 상세 아래 이어서 보기의 지금 보는 판매 건. 링크가 아니라 마우스를 올려도 그대로다 */
+.current,
+.current:hover {
+  border-color: var(--color-accent);
+  box-shadow: inset 0 0 0 1px var(--color-accent);
+}
+
 .thumb {
   position: relative;
   flex: none;

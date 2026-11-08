@@ -7,6 +7,7 @@ import Gallery from "@/components/Gallery";
 import LoadFailed from "@/components/LoadFailed";
 import RemoteImage from "@/components/RemoteImage";
 import SaleBadge from "@/components/sale/SaleBadge";
+import SaleContinue from "@/components/sale/SaleContinue";
 import { getSaleForPage, type SaleDetail as SaleDetailData } from "@/lib/api";
 import { formatKstTime, formatMonthDay, kstDateKey } from "@/lib/format";
 import { parsePostId } from "@/lib/query";
@@ -177,6 +178,12 @@ async function SaleDetail({ params, searchParams }: PageProps<"/sales/[id]">) {
           </section>
         </Suspense>
       )}
+
+      {/* 들어온 목록 순서로 이 판매 건부터 잇는다. 따로 받아 본문을 막지 않고, 실패하면 영역만 빠진다.
+          다른 판매 건으로 옮겨 가면 그 건부터 새로 시작한다 */}
+      <Suspense fallback={null}>
+        <SaleContinue key={sale.id} sale={sale} from={from} />
+      </Suspense>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { SaleCard } from "./api";
-import { dayLabel, groupByNotice, scheduleBuckets } from "./saleTimeline";
+import { dayLabel, groupByNotice, pastAtMillis, scheduleBuckets, scheduleFrom, type ScheduleBucket } from "./saleTimeline";
 
 // 11/8(일) 15:00 KST
 const NOW = new Date("2026-11-08T06:00:00Z");
@@ -190,5 +190,63 @@ describe("scheduleBuckets", () => {
       ["onSale", [2, 1, 3]],
       ["tbd", [5, 4]],
     ]);
+  });
+});
+
+describe("scheduleFrom", () => {
+  const buckets: ScheduleBucket[] = [
+    { key: "closing", label: "곧 마감", items: [card(1), card(2)] },
+    { key: "today", label: "오늘", items: [card(3), card(4), card(5)] },
+    { key: "tbd", label: "일정 미정", items: [card(6)] },
+  ];
+  const shape = (list: ScheduleBucket[]) => list.map((b) => [b.key, ids(b.items)]);
+
+  it("이 건이 든 구간부터, 그 구간은 이 건부터 남기고 뒤 구간은 그대로 둔다", () => {
+    expect(shape(scheduleFrom(buckets, 4))).toEqual([
+      ["today", [4, 5]],
+      ["tbd", [6]],
+    ]);
+  });
+
+  it("첫 구간의 첫 건이면 전부 그대로", () => {
+    expect(shape(scheduleFrom(buckets, 1))).toEqual(shape(buckets));
+  });
+
+  it("어느 구간에도 없으면(지난 판매) 빈 목록", () => {
+    expect(scheduleFrom(buckets, 99)).toEqual([]);
+  });
+
+  it("받은 구간을 바꾸지 않는다", () => {
+    scheduleFrom(buckets, 5);
+    expect(shape(buckets)).toEqual([
+      ["closing", [1, 2]],
+      ["today", [3, 4, 5]],
+      ["tbd", [6]],
+    ]);
+  });
+});
+
+describe("pastAtMillis", () => {
+  // 백엔드 SaleTimes.pastAt과 같은 경계(SaleApiTest.pastOrdering, 오늘 11/13 KST)
+  it.each([
+    ["마감 날짜만이면 그날 23:59:59", { startDate: "2026-10-14", endDate: "2026-11-12" }, "2026-11-12T23:59:59+09:00"],
+    ["마감 시각이 있으면 그 시각", { endDate: "2026-11-12", endTime: "18:30" }, "2026-11-12T18:30:00+09:00"],
+    ["시작이 더 늦어도 마감이 기준", { startDate: "2026-10-30", startTime: "20:00", endDate: "2026-10-24" }, "2026-10-24T23:59:59+09:00"],
+    ["마감이 없으면 시작, 날짜만이면 그날 0시", { startDate: "2026-11-03" }, "2026-11-03T00:00:00+09:00"],
+    ["시작 시각이 있으면 그 시각", { startDate: "2026-11-03", startTime: "19:30" }, "2026-11-03T19:30:00+09:00"],
+    ["시작·마감이 없으면 공지 시각", { phase: "ANNOUNCE", postedAt: "2026-10-04T03:12:45.678Z" }, "2026-10-04T03:12:45.678Z"],
+  ] as [string, Partial<SaleCard>, string][])("%s", (_, overrides, expected) => {
+    expect(pastAtMillis(card(1, overrides))).toBe(Date.parse(expected));
+  });
+
+  it("지난 시각 내림차순이 백엔드 지난 판매 순서와 같다", () => {
+    const items = [
+      card(1, { productName: "공지 40일 전", phase: "ANNOUNCE", postedAt: "2026-10-04T03:00:00Z" }),
+      card(2, { productName: "마감 20일 전", startDate: "2026-10-04", endDate: "2026-10-24" }),
+      card(3, { productName: "마감 어제", startDate: "2026-10-14", endDate: "2026-11-12" }),
+      card(4, { productName: "시작 10일 전", startDate: "2026-11-03" }),
+    ];
+    const sorted = [...items].sort((a, b) => pastAtMillis(b) - pastAtMillis(a));
+    expect(sorted.map((s) => s.productName)).toEqual(["마감 어제", "시작 10일 전", "마감 20일 전", "공지 40일 전"]);
   });
 });

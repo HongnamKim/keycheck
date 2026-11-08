@@ -85,14 +85,18 @@ export interface FirstSaleBatch {
   fetchedAt: string;
 }
 
-/** 국내 판매 목록 첫 묶음. getFirstBatch와 같은 캐시 수명. 실패하면 null */
+/**
+ * 국내 판매 목록 첫 묶음. cursor를 주면 그 위치부터 받은 첫 묶음(상세 아래 이어서 보기).
+ * getFirstBatch와 같은 캐시 수명. 실패하면 null
+ */
 export async function getFirstSaleBatch(
   vendor: SaleVendorFilter,
   category: SaleCategoryFilter,
+  cursor: string | null = null,
 ): Promise<FirstSaleBatch | null> {
   "use cache";
   try {
-    const batch = await getSales(vendor, category, null);
+    const batch = await getSales(vendor, category, cursor);
     cacheLife({ stale: 900, revalidate: 60, expire: 3600 });
     return { batch, fetchedAt: new Date().toISOString() };
   } catch (err) {
@@ -121,14 +125,15 @@ export async function getCachedSaleSchedule(
   }
 }
 
-/** 국내 지난 판매 첫 쪽. getFirstSaleBatch와 같은 캐시 수명. 실패하면 null */
+/** 국내 지난 판매 첫 쪽. cursor를 주면 그 위치부터 받은 쪽(상세 아래 이어서 보기). getFirstSaleBatch와 같은 캐시 수명. 실패하면 null */
 export async function getCachedSalePast(
   vendor: SaleVendorFilter,
   category: SaleCategoryFilter,
+  cursor: string | null = null,
 ): Promise<FirstSaleBatch | null> {
   "use cache";
   try {
-    const batch = await getSalePast(vendor, category, null);
+    const batch = await getSalePast(vendor, category, cursor);
     cacheLife({ stale: 900, revalidate: 60, expire: 3600 });
     return { batch, fetchedAt: new Date().toISOString() };
   } catch (err) {
