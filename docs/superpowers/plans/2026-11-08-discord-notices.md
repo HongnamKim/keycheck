@@ -623,6 +623,20 @@ notice:
 - [ ] **Step 2:** 구현, `cd frontend && npm test && npm run lint && npm run build`.
 - [ ] **Step 3:** 커밋.
 
+### Task 23: 상세 아래 "이어서 보기" (2026-11-08 사용자 제안)
+
+**Files:** Modify `frontend/src/app/sales/[id]/page.tsx`(+ css), `lib/saleTimeline.ts`(+ test), `components/sale/SaleFeed.tsx`·`SaleSchedule.tsx`·`SalePastMore.tsx`·`SaleRow.tsx`(재사용·시작 위치·"지금 보는 판매" 표시), 필요하면 `components/sale/SaleContinue.tsx`
+
+**Interfaces:**
+- 보기 판단: `parseSaleDetailQuery(params)`가 있으면 그 `view`와 필터, 없으면(메인 등) 공지 순·필터 없음.
+- 공지 순: 기존 목록 API에 커서 `"<이 판매 건 postedAt 밀리초>_0"`을 주면 이 공지의 판매 건 전부와 더 오래된 공지가 온다(백엔드 변경 없음). SaleFeed의 이어 받기를 시작 커서를 받도록 넓혀 재사용(스냅숏 키는 상세 전용으로 따로, 또는 스냅숏 없이). 지금 보는 줄은 `current` 표시(테두리 강조, `aria-current="true"`).
+- 판매 일정 순: 일정 목록(캐시)으로 구간을 만들고, 이 건이 들어 있는 구간에서 이 건부터 그 뒤 구간들을 그린 다음 지난 판매 첫 쪽 + 더 보기. 이 건이 지난 판매면 지난 판매를 이 건부터: 서버 `SaleTimes.pastAt`과 같은 규칙의 `pastAtMillis(sale): number`(순수 함수, 백엔드 테스트와 같은 경계로 테스트)로 커서 `"<pastAt 밀리초>_<id + 1>"`.
+- 머리 "이어서 보기", 비어 있으면 영역을 그리지 않는다. now는 각 캐시 응답의 fetchedAt.
+
+- [ ] **Step 1:** `pastAtMillis`와 "이 건부터 자르기"(`scheduleFrom(buckets, saleId)`) 테스트 먼저(실패 확인).
+- [ ] **Step 2:** 구현, `cd frontend && npm test && npm run lint && npm run build`, 로컬에서 두 보기·메인에서 들어온 경우 확인.
+- [ ] **Step 3:** 커밋.
+
 ---
 
 ## 마무리
