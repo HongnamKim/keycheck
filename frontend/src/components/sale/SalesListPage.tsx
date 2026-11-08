@@ -1,16 +1,18 @@
 import { connection } from "next/server";
-import { Suspense } from "react";
-import { getFirstSaleBatch } from "@/lib/cachedApi";
+import { Suspense, type ReactNode } from "react";
+import { getCachedSaleSchedule, getFirstSaleBatch } from "@/lib/cachedApi";
 import { SALE_LIST_INFO } from "@/lib/format";
 import { parseSaleListQuery, saleListHref } from "@/lib/saleQuery";
 import LoadFailed from "../LoadFailed";
 import SaleFeed from "./SaleFeed";
 import SaleFilterBar from "./SaleFilterBar";
+import SaleSchedule from "./SaleSchedule";
+import SaleViewTabs from "./SaleViewTabs";
 import styles from "./SalesListPage.module.css";
 
 type SearchParams = PageProps<"/sales">["searchParams"];
 
-/** 국내 판매 목록 화면(/sales). 제목·설명은 바로 그리고, 필터와 목록은 주소의 쿼리를 읽은 뒤 그린다 */
+/** 국내 판매 목록 화면(/sales). 제목·설명은 바로 그리고, 보기 탭·필터와 목록은 주소의 쿼리를 읽은 뒤 그린다 */
 export default function SalesListPage({ searchParams }: { searchParams: SearchParams }) {
   return (
     <div className={styles.page}>
@@ -27,8 +29,16 @@ export default function SalesListPage({ searchParams }: { searchParams: SearchPa
 
 async function SaleList({ searchParams }: { searchParams: SearchParams }) {
   const query = parseSaleListQuery(await searchParams);
-  const first = await getFirstSaleBatch(query.vendor, query.category);
-  if (!first) {
+  let body: ReactNode = null;
+  if (query.view === "schedule") {
+    const schedule = await getCachedSaleSchedule(query.vendor, query.category);
+    if (schedule) body = <SaleSchedule query={query} items={schedule.items} fetchedAt={schedule.fetchedAt} />;
+  } else {
+    const first = await getFirstSaleBatch(query.vendor, query.category);
+    // 필터가 바뀌면(다른 주소) 목록을 새로 시작한다
+    if (first) body = <SaleFeed key={saleListHref(query)} query={query} initial={first.batch} renderedAt={first.fetchedAt} />;
+  }
+  if (!body) {
     // 오류 안내는 요청 때만 그려 정적 셸·재생성 결과·브라우저 캐시에 남지 않게 한다
     await connection();
     return (
@@ -42,9 +52,9 @@ async function SaleList({ searchParams }: { searchParams: SearchParams }) {
   }
   return (
     <div className={styles.feed}>
+      <SaleViewTabs query={query} />
       <SaleFilterBar query={query} />
-      {/* 필터가 바뀌면(다른 주소) 목록을 새로 시작한다 */}
-      <SaleFeed key={saleListHref(query)} query={query} initial={first.batch} renderedAt={first.fetchedAt} />
+      {body}
     </div>
   );
 }

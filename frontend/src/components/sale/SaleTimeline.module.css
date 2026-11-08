@@ -1,0 +1,76 @@
+/*
+ * 국내 판매 타임라인의 공통 모양(시안 timeline-options.html의 .day, .notice, .nh).
+ * 공지 순 보기(SaleFeed)와 판매 일정 순 보기(SaleSchedule)가 같이 쓴다.
+ * 머리의 점 가운데(4 + 10/2 = 9px)와 아래 묶음의 세로 줄 가운데(8 + 2/2 = 9px)를 맞춘다.
+ */
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 760px;
+}
+
+/* 날짜 머리(공지 순) 또는 구간 머리(판매 일정 순) */
+.head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 17px;
+  line-height: 1.4;
+  font-weight: 700;
+}
+
+.dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  margin-left: 4px;
+  border-radius: 50%;
+  background: var(--color-text);
+}
+
+.count {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-muted);
+}
+
+/* 세로 줄이 있는 묶음. 공지 순에서는 공지 하나, 판매 일정 순에서는 구간 하나 */
+.block {
+  margin-left: 8px;
+  padding: 0 0 10px 14px;
+  border-left: 2px solid var(--color-border);
+}
+
+.noticeHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+  margin: 2px 0 6px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.noticeMeta {
+  font-family: var(--font-code);
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--color-muted);
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  list-style: none;
+}
+
+.empty {
+  padding: 48px 0;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--color-muted);
+  text-align: center;
+}

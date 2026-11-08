@@ -7,26 +7,26 @@ export type BadgeTone = "fill" | "line" | "soft" | "dash";
 type Schedule = Pick<SaleCard, "phase" | "startDate" | "startTime" | "endDate" | "endTime" | "postedAt">;
 
 const HOUR_MS = 60 * 60 * 1_000;
-const DAY_MS = 24 * HOUR_MS;
+export const DAY_MS = 24 * HOUR_MS;
 const KST_OFFSET_MS = 9 * HOUR_MS;
 /** 마감 없는 판매를 이 기간까지만 판매 중으로 본다 */
-const OPEN_ENDED_DAYS = 7;
+export const OPEN_ENDED_DAYS = 7;
 
 /** 한국 날짜("YYYY-MM-DD")와 시각("HH:mm")이 가리키는 순간(ms). 시각을 모르면 그날 0시 */
-function instant(date: string, time: string | null): number {
+export function instant(date: string, time: string | null): number {
   const [year, month, day] = date.split("-").map(Number);
   const [hour, minute] = (time ?? "00:00").split(":").map(Number);
   return Date.UTC(year, month - 1, day, hour, minute) - KST_OFFSET_MS;
 }
 
 /** 1970-01-01부터 센 날 수. 한국 달력 날짜끼리 뺀다 */
-function dayNumber(date: string): number {
+export function dayNumber(date: string): number {
   const [year, month, day] = date.split("-").map(Number);
   return Date.UTC(year, month - 1, day) / DAY_MS;
 }
 
 /** 끝나는 순간. 날짜만 알면 그날 23:59:59 */
-function endInstant(sale: Schedule): number | null {
+export function endInstant(sale: Schedule): number | null {
   if (!sale.endDate) return null;
   return sale.endTime ? instant(sale.endDate, sale.endTime) : instant(sale.endDate, "23:59") + 59_000;
 }

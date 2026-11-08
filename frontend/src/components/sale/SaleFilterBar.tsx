@@ -14,10 +14,10 @@ const CATEGORIES: [SaleCategoryFilter, string][] = [
   ["keyboard", "키보드"],
   ["keycap", "키캡"],
   ["switch", "스위치"],
-  ["parts", "부품"],
+  ["parts", "기타"],
 ];
 
-/** 판매처와 분류 필터. 바꾸면 목록을 처음부터 다시 받는다 */
+/** 판매처와 분류 필터. 두 보기(공지 순, 판매 일정 순)에 같이 적용하고 보던 보기는 그대로 둔다. 바꾸면 목록을 처음부터 다시 받는다 */
 export default function SaleFilterBar({ query }: { query: SaleListQuery }) {
   return (
     <div className={styles.bar}>

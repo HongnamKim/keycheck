@@ -37,7 +37,7 @@ export default function SaleRail() {
           </p>
         </div>
         <div className={styles.tools}>
-          <FreshListLink href={saleListHref({ vendor: "all", category: "all" })} className={styles.more}>
+          <FreshListLink href={saleListHref({ vendor: "all", category: "all", view: "notices" })} className={styles.more}>
             전체 보기 →
           </FreshListLink>
         </div>

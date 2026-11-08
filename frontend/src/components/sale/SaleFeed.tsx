@@ -12,12 +12,14 @@ import {
   type FeedSnapshot,
   type FeedState,
 } from "@/lib/feed";
+import { formatKstTime, kstDateKey } from "@/lib/format";
 import { saleHref, saleListHref, type SaleListQuery } from "@/lib/saleQuery";
-import SaleCard from "./SaleCard";
+import { vendorLabel } from "@/lib/saleStatus";
+import { dayLabel, groupByNotice } from "@/lib/saleTimeline";
+import SaleRow from "./SaleRow";
 import styles from "./SaleFeed.module.css";
+import timeline from "./SaleTimeline.module.css";
 
-/** 넓은 화면 첫 줄(4장)은 바로 보이므로 지연 로딩하지 않는다 */
-const EAGER_CARDS = 4;
 /** 끝에 닿기 전에 미리 다음 묶음을 받기 시작하는 여유 */
 const PRELOAD_MARGIN = "800px 0px";
 /** 0건을 받았을 때 같은 cursor로 다시 요청하기까지 기다리는 시간 */
@@ -27,13 +29,14 @@ interface Props {
   query: SaleListQuery;
   /** 서버가 cursor 없이 받은 첫 묶음 */
   initial: SaleBatch;
-  /** 서버가 그린 시각. 카드의 상대 시간을 서버와 같게 맞춰 하이드레이션 차이를 막는다. */
+  /** 서버가 받은 시각. 배지·판매 시각·날짜 머리(오늘, 어제)를 서버와 같게 맞춰 하이드레이션 차이를 막는다. */
   renderedAt: string;
 }
 
 /**
- * 무한 스크롤 목록. 끝의 감시 요소가 보이면 다음 묶음을 브라우저에서 받아 붙인다.
- * 카드를 누를 때 보던 목록과 스크롤 위치를 목록 주소별로 sessionStorage에 남기고, 상세에서 돌아오면 한 번 이어서 보여준다.
+ * 공지 순 보기(설계 3.7 A). 받은 판매 건을 날짜 머리 → 공지 묶음 → 판매 건 줄로 그린다.
+ * 무한 스크롤 목록. 끝의 감시 요소가 보이면 다음 묶음을 브라우저에서 받아 붙인다(페이지 경계의 같은 공지는 한 묶음으로 이어진다).
+ * 줄을 누를 때 보던 목록과 스크롤 위치를 목록 주소별로 sessionStorage에 남기고, 상세에서 돌아오면 한 번 이어서 보여준다.
  * 필터·정렬을 눌러 들어온 목록은 저장본이 없어 처음부터 시작한다(목록이 보일 때 다른 목록의 저장본은 버린다).
  * 헤더 메뉴·메인의 전체 보기로 들어온 목록도 처음부터다(FreshListLink가 누를 때 저장본을 모두 지운다).
  * PostFeed와 같은 방식이고, 목록 주소(saleListHref)가 저장본 키다.
@@ -48,6 +51,7 @@ export default function SaleFeed({ query, initial, renderedAt }: Props) {
   const pendingRef = useRef<{ feed: FeedState<SaleCardData>; scrollY: number } | null>(null);
   const key = snapshotKey(saleListHref(query));
   const now = new Date(renderedAt);
+  const today = kstDateKey(now);
 
   function load(cursor: string | null) {
     setFeed((f) => ({ ...f, status: "loading" }));
@@ -57,7 +61,7 @@ export default function SaleFeed({ query, initial, renderedAt }: Props) {
   }
 
   function save(e: MouseEvent<HTMLDivElement>) {
-    // 같은 탭에서 상세로 넘어가는 클릭만 남긴다. 새 탭으로 여는 클릭이나 카드 사이 빈 곳 클릭은 목록을 떠나지 않는다
+    // 같은 탭에서 상세로 넘어가는 클릭만 남긴다. 새 탭으로 여는 클릭이나 줄 사이 빈 곳 클릭은 목록을 떠나지 않는다
     if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     if (!(e.target instanceof Element) || !e.target.closest("a[href]")) return;
     const { items, nextCursor, hasMore } = feed;
@@ -151,10 +155,32 @@ export default function SaleFeed({ query, initial, renderedAt }: Props) {
   return (
     <>
       {feed.items.length > 0 && (
-        // 카드를 누르는 순간의 목록과 위치를 남긴다
-        <div className={styles.grid} onClickCapture={save}>
-          {feed.items.map((sale, i) => (
-            <SaleCard key={sale.id} sale={sale} href={saleHref(sale.id, query)} now={now} eager={i < EAGER_CARDS} />
+        // 줄을 누르는 순간의 목록과 위치를 남긴다
+        <div className={timeline.timeline} onClickCapture={save}>
+          {groupByNotice(feed.items).map((day) => (
+            <section key={day.day}>
+              <h2 className={timeline.head}>
+                <span className={timeline.dot} aria-hidden="true" />
+                {dayLabel(day.day, today)}
+              </h2>
+              {day.notices.map((notice) => (
+                <div key={notice.items[0].id} className={timeline.block}>
+                  <h3 className={timeline.noticeHead}>
+                    {vendorLabel(notice.vendor)}
+                    <span className={timeline.noticeMeta}>
+                      {formatKstTime(notice.postedAt)} 공지 · 판매 {notice.items.length}건
+                    </span>
+                  </h3>
+                  <ul className={timeline.rows}>
+                    {notice.items.map((sale) => (
+                      <li key={sale.id}>
+                        <SaleRow sale={sale} href={saleHref(sale.id, query)} now={now} />
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </section>
           ))}
         </div>
       )}
@@ -170,7 +196,7 @@ export default function SaleFeed({ query, initial, renderedAt }: Props) {
             </button>
           </>
         )}
-        {feed.status === "end" && <p>{feed.items.length > 0 ? "마지막 판매 소식이에요" : "아직 정리된 판매 소식이 없어요"}</p>}
+        {feed.status === "end" && <p>{feed.items.length > 0 ? "마지막 판매 소식이에요" : "아직 모은 판매 소식이 없어요"}</p>}
       </div>
     </>
   );
