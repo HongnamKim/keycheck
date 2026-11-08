@@ -3,6 +3,7 @@ package com.keycheck;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.keycheck.crawl.scheduler.CrawlScheduler;
+import com.keycheck.notice.scheduler.NoticeCollectScheduler;
 import com.keycheck.summary.service.FakeSummarizer;
 import com.keycheck.summary.service.Summarizer;
 import org.junit.jupiter.api.DisplayName;
@@ -24,6 +25,12 @@ class KeycheckApplicationTests {
   @DisplayName("기본 설정에서는 수집 스케줄러가 없어 실제 geekhack에 요청하지 않는다")
   void crawlSchedulerIsOffByDefault() {
     assertThat(context.getBeansOfType(CrawlScheduler.class)).isEmpty();
+  }
+
+  @Test
+  @DisplayName("기본 설정에서는 공지 수집 스케줄러가 없어 실제 디스코드에 요청하지 않는다")
+  void noticeCollectSchedulerIsOffByDefault() {
+    assertThat(context.getBeansOfType(NoticeCollectScheduler.class)).isEmpty();
   }
 
   @Test
