@@ -594,6 +594,23 @@ notice:
 - [ ] **Step 3: 로컬 확인** — 로컬 백엔드(요약된 샘플)로 `/sales`, `/sales?view=schedule`, 필터, 더 불러오기, 상세 → 목록으로.
 - [ ] **Step 4: 커밋**
 
+### Task 21: 판매 일정 순에 "지난 판매" 구간 (2026-11-08 사용자 요청)
+
+**Files:**
+- Backend: `notice/service/SaleQueryService.java`(지난 판매 목록), `notice/controller/SaleController.java`, `notice/repository/SaleItemRepository.java`(필요하면), Test: `SaleApiTest`, `OpenApiTest`
+- Frontend: `lib/api.ts`(`getSalePast`), `lib/cachedApi.ts`(`getCachedSalePast` 첫 쪽), `lib/saleTimeline.ts`(+ test: 지난 판매 정렬 기준 함수가 필요하면), `components/sale/SaleSchedule.tsx`(+ "지난 판매" 구간과 "더 보기" 클라이언트 부품)
+
+**Interfaces:**
+- Produces:
+  - `GET /api/sales/past?vendor=&category=&cursor=` → `SaleListResponse { items; nextCursor; hasMore }`, 쪽 크기 30. 대상은 목록과 같은 제외 규칙에, `/api/sales/schedule`의 "끝나지 않은" 규칙(R16)에 **들지 않는** 판매 전부. 정렬 "지난 시각" 내림차순(마감 날짜+시각(날짜만이면 23:59:59), 없으면 시작 날짜+시각(날짜만이면 00:00), 없으면 공지 시각; 모두 KST) 다음 id 내림차순. 커서는 `"<지난 시각 밀리초>_<id>"`. 판매 일정 목록과 같은 시각 규칙을 한 곳(공용 도우미)에서 계산해 두 목록이 겹치거나 빠지지 않게 한다. 잘못된 필터·커서는 400(기존 문구).
+  - 프론트: `getSalePast(vendor, category, cursor?) : Promise<SaleBatch>`, `getCachedSalePast(vendor, category)` 첫 쪽(`{ batch, fetchedAt } | null`, 목록과 같은 cacheLife).
+  - 판매 일정 순 화면: 마지막에 "지난 판매" 머리(다른 구간과 같은 모양) + 첫 쪽 줄들(`SaleRow`, 판매처 표시) + 더 있으면 "지난 판매 더 보기" 버튼(누르면 다음 쪽을 붙인다, 불러오는 중·실패 안내는 SaleFeed 문구를 따른다). 지난 판매가 하나도 없으면 구간을 그리지 않는다.
+
+- [ ] **Step 1: 실패하는 테스트** — `SaleApiTest`: 지난 판매에 마감 지난 건·8일 전 시작 마감 없음·31일 전 일정 미정이 들어가고, 판매 일정 목록의 건은 들어가지 않음(두 목록 합 = 전체); 정렬(마감 > 시작 > 공지 기준, 날짜만 처리); 30개씩 이어 받기와 커서; 필터; 400. `OpenApiTest`. 프론트 `api.test.ts` 표에 `getSalePast`.
+- [ ] **Step 2: 실패 확인 → 구현 → 통과 확인** — `cd backend && ./gradlew test`, `cd frontend && npm test && npm run lint && npm run build`
+- [ ] **Step 3: 로컬 확인** — `/sales?view=schedule`에서 지난 판매 첫 쪽과 더 보기.
+- [ ] **Step 4: 커밋**
+
 ---
 
 ## 마무리
