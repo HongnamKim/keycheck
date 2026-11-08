@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { PostDetail } from "./api";
+import type { PostDetail, SaleDetail } from "./api";
 import {
   breadcrumbJsonLd,
   cardPhotoType,
@@ -8,6 +8,7 @@ import {
   ogCardVersion,
   ogPhotoUrl,
   postMetadata,
+  saleMetadata,
   postTitle,
   SITE_CARD_ALT,
   SITE_URL,
@@ -306,5 +307,55 @@ describe("isCompleteCard", () => {
     expect(isCompleteCard(true, false, true)).toBe(false);
     expect(isCompleteCard(true, true, false)).toBe(false);
     expect(isCompleteCard(false, false, false)).toBe(false);
+  });
+});
+
+function sale(overrides: Partial<SaleDetail> = {}): SaleDetail {
+  return {
+    id: 7,
+    vendor: "SWAGKEYS",
+    productName: "Neo80 Cu",
+    category: "KEYBOARD",
+    saleType: "RESTOCK",
+    phase: "OPEN",
+    startDate: "2026-11-06",
+    startTime: "19:30",
+    endDate: null,
+    endTime: null,
+    summaryFirstLine: null,
+    thumbUrl: null,
+    largeUrl: null,
+    imageUrl: null,
+    postedAt: "2026-11-06T09:42:00Z",
+    summaryLines: ["Neo80 Cu 6가지 색 조합이 다시 들어왔어요."],
+    shippingNote: null,
+    links: [],
+    images: [],
+    ...overrides,
+  };
+}
+
+describe("saleMetadata", () => {
+  it("제목은 상품 이름, canonical은 판매 상세 주소다", () => {
+    const meta = saleMetadata(sale());
+
+    expect(meta.title).toBe("Neo80 Cu");
+    expect(meta.alternates).toEqual({ canonical: "/sales/7" });
+  });
+
+  it("설명은 요약 첫 줄이고, 120자를 넘으면 자르고 …를 붙인다", () => {
+    expect(saleMetadata(sale()).description).toBe("Neo80 Cu 6가지 색 조합이 다시 들어왔어요.");
+    expect(saleMetadata(sale({ summaryLines: ["가".repeat(130)] })).description).toBe(`${"가".repeat(120)}…`);
+    expect(saleMetadata(sale({ summaryLines: ["나".repeat(120)] })).description).toBe("나".repeat(120));
+  });
+
+  it("요약 줄이 없으면 기본 문구다", () => {
+    expect(saleMetadata(sale({ summaryLines: [] })).description).toBe(
+      "Swagkeys 디스코드 공지에서 정리한 국내 판매 소식 \"Neo80 Cu\"를 키체크에서 확인해 보세요",
+    );
+  });
+
+  it("openGraph는 사이트 기본 카드에 판매 상세 주소를 둔다", () => {
+    expect(saleMetadata(sale()).openGraph).toEqual(siteOpenGraph("/sales/7"));
   });
 });

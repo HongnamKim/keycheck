@@ -1,8 +1,9 @@
 /** 검색 노출·링크 미리보기용 메타데이터(설계 3.3). 순수 함수만 둔다 */
 
 import type { Metadata, MetadataRoute } from "next";
-import type { Board, Category, PostDetail, SitemapPost } from "./api";
+import type { Board, Category, PostDetail, SaleDetail, SitemapPost } from "./api";
 import { boardLabel, displayTitle } from "./format";
+import { vendorLabel } from "./saleStatus";
 
 /** 사이트 주소. 메타데이터의 상대 주소(OG 이미지·canonical) 기준이고, 사이트맵·robots의 절대 주소에 쓴다. 운영 주소가 기본이다 */
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://keycheck.kr";
@@ -119,6 +120,19 @@ export function postMetadata(post: PostDetail): Metadata {
       publishedTime: post.postedAt ?? undefined,
       images: [{ url: `${path}/og.png?v=${ogCardVersion(post)}`, width: 1200, height: 630, alt: name }],
     },
+  };
+}
+
+/** 국내 판매 상세의 메타데이터. 제목은 상품 이름, 설명은 요약 첫 줄 */
+export function saleMetadata(sale: SaleDetail): Metadata {
+  const path = `/sales/${sale.id}`;
+  return {
+    title: sale.productName,
+    description: sale.summaryLines[0]
+      ? truncate(sale.summaryLines[0], DESCRIPTION_MAX)
+      : `${vendorLabel(sale.vendor)} 디스코드 공지에서 정리한 국내 판매 소식 "${sale.productName}"를 키체크에서 확인해 보세요`,
+    alternates: { canonical: path },
+    openGraph: siteOpenGraph(path),
   };
 }
 
