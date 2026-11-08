@@ -47,6 +47,19 @@
   color: var(--color-muted);
 }
 
+.category {
+  flex: none;
+  padding: 1px 8px;
+  border: 1px solid var(--color-divider);
+  border-radius: 999px;
+  background: var(--color-divider);
+  color: var(--color-muted);
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .name {
   font-size: 16px;
   line-height: 1.35;

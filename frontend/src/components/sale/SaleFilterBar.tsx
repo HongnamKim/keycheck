@@ -1,5 +1,6 @@
 import Link from "next/link";
-import type { SaleCategoryFilter, SaleVendorFilter } from "@/lib/api";
+import type { SaleCategory, SaleCategoryFilter, SaleVendorFilter } from "@/lib/api";
+import { CATEGORY_LABELS } from "@/lib/saleStatus";
 import { saleListHref, type SaleListQuery } from "@/lib/saleQuery";
 import styles from "./SaleFilterBar.module.css";
 
@@ -11,10 +12,9 @@ const VENDORS: [SaleVendorFilter, string][] = [
 
 const CATEGORIES: [SaleCategoryFilter, string][] = [
   ["all", "전체"],
-  ["keyboard", "키보드"],
-  ["keycap", "키캡"],
-  ["switch", "스위치"],
-  ["parts", "기타"],
+  ...(Object.keys(CATEGORY_LABELS) as SaleCategory[]).map(
+    (category): [SaleCategoryFilter, string] => [category.toLowerCase() as SaleCategoryFilter, CATEGORY_LABELS[category]],
+  ),
 ];
 
 /** 판매처와 분류 필터. 두 보기(공지 순, 판매 일정 순)에 같이 적용하고 보던 보기는 그대로 둔다. 바꾸면 목록을 처음부터 다시 받는다 */

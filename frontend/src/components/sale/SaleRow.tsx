@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { SaleCard } from "@/lib/api";
-import { saleBadge, saleKindLabel, saleWhenText, vendorLabel } from "@/lib/saleStatus";
+import { saleBadge, saleCategoryLabel, saleKindLabel, saleWhenText, vendorLabel } from "@/lib/saleStatus";
 import RemoteImage from "../RemoteImage";
 import SaleBadge from "./SaleBadge";
 import styles from "./SaleRow.module.css";
@@ -34,6 +34,7 @@ export default function SaleRow({
       <span className={styles.body}>
         <span className={styles.meta}>
           {badge && <SaleBadge badge={badge} />}
+          <span className={styles.category}>{saleCategoryLabel(sale.category)}</span>
           <span>{showVendor ? `${vendorLabel(sale.vendor)} · ${kind}` : kind}</span>
         </span>
         <span className={styles.name}>{sale.productName}</span>

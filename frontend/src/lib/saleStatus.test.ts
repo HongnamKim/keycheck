@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { SaleCard } from "./api";
 import { formatKstTime } from "./format";
-import { saleBadge, saleKindLabel, saleWhenText, vendorLabel } from "./saleStatus";
+import { saleBadge, saleCategoryLabel, saleKindLabel, saleWhenText, vendorLabel } from "./saleStatus";
 
 // 11/8(일) 15:00 KST
 const NOW = new Date("2026-11-08T06:00:00Z");
@@ -55,6 +55,17 @@ describe("saleKindLabel", () => {
     ["DROP", "OPEN", "드랍"],
   ] as const)("%s + %s -> %s", (type, phase, label) => {
     expect(saleKindLabel(type, phase)).toBe(label);
+  });
+});
+
+describe("saleCategoryLabel", () => {
+  it.each([
+    ["KEYBOARD", "키보드"],
+    ["KEYCAP", "키캡"],
+    ["SWITCH", "스위치"],
+    ["PARTS", "기타"],
+  ] as const)("%s -> %s", (category, label) => {
+    expect(saleCategoryLabel(category)).toBe(label);
   });
 });
 

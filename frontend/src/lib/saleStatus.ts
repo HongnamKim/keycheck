@@ -1,4 +1,4 @@
-import type { SaleCard, SalePhase, SaleType, SaleVendor } from "./api";
+import type { SaleCard, SaleCategory, SalePhase, SaleType, SaleVendor } from "./api";
 import { formatKstTime, formatMonthDay, kstDateKey } from "./format";
 
 /** 상태 배지 모양: 강조색 채움, 진한 테두리, 회색 테두리, 회색 점선 */
@@ -133,4 +133,16 @@ export function saleWhenText(sale: Schedule, now: Date): string {
 
 export function vendorLabel(vendor: SaleVendor): string {
   return vendor === "SWAGKEYS" ? "Swagkeys" : "GeonWorks";
+}
+
+/** 분류 이름. 목록 줄의 칩과 분류 필터가 이 표를 같이 쓴다 */
+export const CATEGORY_LABELS: Record<SaleCategory, string> = {
+  KEYBOARD: "키보드",
+  KEYCAP: "키캡",
+  SWITCH: "스위치",
+  PARTS: "기타",
+};
+
+export function saleCategoryLabel(category: SaleCategory): string {
+  return CATEGORY_LABELS[category];
 }
