@@ -172,8 +172,6 @@ export interface Highlights {
   newIcCount: number;
   /** 최근 7일 새 공동구매 수 */
   newGbCount: number;
-  /** 오늘부터 14일 안에 마감하는 공동구매 수 */
-  endingSoonGbCount: number;
   /** 고른 칸만 칸 순서대로. 후보가 없어 빈 칸은 빠진다 */
   slots: HighlightSlot[];
 }
@@ -381,6 +379,13 @@ export interface SalePick {
   sale: SaleCard;
 }
 
+/** 메인 국내 판매 칸과 날짜 줄 숫자(백엔드 SaleHighlightResponse) */
+export interface SaleHighlights {
+  picks: SalePick[];
+  /** 최근 7일에 올라온 공지의 판매 건 수(숨김·OTHER 제외) */
+  newSaleCount: number;
+}
+
 /** 국내 판매 목록. cursor 없이 부르면 첫 묶음. 서버와 브라우저 모두에서 부른다 */
 export async function getSales(
   vendor: SaleVendorFilter,
@@ -430,12 +435,11 @@ export async function getSale(id: number, signal?: AbortSignal): Promise<SaleDet
 /** 상세 페이지와 generateMetadata가 함께 쓰는 서버 호출. 한 요청에서 한 번만 부른다 */
 export const getSaleForPage = cache((id: number) => getSale(id));
 
-/** 메인 국내 판매 칸에 쓸 건들(곧 시작·곧 마감·최근 순). 서버에서 부른다 */
-export async function getSaleHighlights(): Promise<SalePick[]> {
+/** 메인 국내 판매 칸에 쓸 건들(곧 시작·곧 마감·최근 순)과 날짜 줄의 최근 7일 판매 건 수. 서버에서 부른다 */
+export async function getSaleHighlights(): Promise<SaleHighlights> {
   const res = await apiFetch("/api/sales/highlights");
   if (!res.ok) throw new Error(`국내 판매 하이라이트 조회 실패: ${res.status}`);
-  const body: { picks: SalePick[] } = await res.json();
-  return body.picks;
+  return res.json();
 }
 
 /** 사이트맵에 넣을 판매 건. 서버에서 부른다 */

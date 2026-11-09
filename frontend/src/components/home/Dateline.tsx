@@ -1,45 +1,37 @@
 import { connection } from "next/server";
-import { getCachedHighlights } from "@/lib/cachedApi";
+import { Fragment } from "react";
+import { getCachedHighlights, getCachedSaleHighlights } from "@/lib/cachedApi";
+import { datelineCounts } from "@/lib/dateline";
 import { formatDateline, kstDateKey } from "@/lib/format";
 import Segs from "./Segs";
 import styles from "./Dateline.module.css";
 
-/** 띄어쓰기 자리에서 줄이 갈리지 않게 붙인다(시안 &nbsp; 자리) */
-const NBSP = " ";
-
 /**
- * 메인 맨 위 날짜 줄. 하이라이트를 고른 한국 시간 오늘과 최근 7일 새 글 수, 2주 안에 마감하는 공동구매 수.
- * 하이라이트와 같은 요청을 쓴다(한 렌더에서 한 번만 보낸다).
+ * 메인 맨 위 날짜 줄. 하이라이트를 고른 한국 시간 오늘과 최근 7일 현황(geekhack IC·GB 새 글 수, 국내 판매 건 수).
+ * 하이라이트·국내 판매 칸과 같은 요청을 쓴다(한 렌더에서 한 번씩만 보낸다).
  */
 export default async function Dateline() {
-  const highlights = await getCachedHighlights();
-  if (!highlights) {
-    // 요청 때만 그린다. 아래 현재 시각이 미리 그리기를 끊지 않고, 숫자 없는 줄이 캐시에 남지 않는다
+  const [highlights, sales] = await Promise.all([getCachedHighlights(), getCachedSaleHighlights()]);
+  if (!highlights || !sales) {
+    // 하나라도 실패하면 요청 때만 그린다. 아래 현재 시각이 미리 그리기를 끊지 않고, 숫자가 빠진 줄이 캐시에 남지 않는다
     await connection();
-    // 오류는 하이라이트 칸이 남긴다. 숫자 없이 오늘 날짜만 보여준다
-    return (
-      <div className={styles.dateline}>
-        <span className={styles.strong}>{formatDateline(kstDateKey(new Date()))}</span>
-      </div>
-    );
   }
+  // 오류 안내는 하이라이트 칸이 맡는다. 받은 쪽 숫자만 보여 주고(0으로 채우지 않는다), 둘 다 실패하면 오늘 날짜만 보여준다
+  const today = highlights ? highlights.today : kstDateKey(new Date());
+  const counts = datelineCounts(highlights, sales?.newSaleCount);
 
   return (
     <div className={styles.dateline}>
-      <span className={styles.strong}>{formatDateline(highlights.today)}</span>
-      <Segs
-        items={[
-          <>
-            최근{NBSP}7일 새 IC <strong className={styles.strong}>{highlights.newIcCount}</strong>
-          </>,
-          <>
-            새 공동구매 <strong className={styles.strong}>{highlights.newGbCount}</strong>
-          </>,
-          <>
-            2주 안에 마감 <strong className={styles.strong}>{highlights.endingSoonGbCount}</strong>
-          </>,
-        ]}
-      />
+      <span className={styles.strong}>{formatDateline(today)}</span>
+      {counts.length > 0 && (
+        <Segs
+          items={counts.map(({ label, count }) => (
+            <Fragment key={label}>
+              {label} <strong className={styles.strong}>{count}</strong>
+            </Fragment>
+          ))}
+        />
+      )}
     </div>
   );
 }

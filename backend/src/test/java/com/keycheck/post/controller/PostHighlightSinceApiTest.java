@@ -102,8 +102,7 @@ class PostHighlightSinceApiTest {
         .andExpect(jsonPath("$.slots[*].slot", contains("FEATURE", "TALL")))
         .andExpect(jsonPath("$.slots[*].post.title", contains("글 1000", "글 1001")))
         .andExpect(jsonPath("$.newIcCount").value(1))
-        .andExpect(jsonPath("$.newGbCount").value(1))
-        .andExpect(jsonPath("$.endingSoonGbCount").value(0));
+        .andExpect(jsonPath("$.newGbCount").value(1));
   }
 
   @TestConfiguration(proxyBeanMethods = false)

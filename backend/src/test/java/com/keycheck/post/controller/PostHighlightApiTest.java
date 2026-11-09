@@ -366,8 +366,7 @@ class PostHighlightApiTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.slots", hasSize(0)))
         .andExpect(jsonPath("$.newIcCount").value(0))
-        .andExpect(jsonPath("$.newGbCount").value(0))
-        .andExpect(jsonPath("$.endingSoonGbCount").value(0));
+        .andExpect(jsonPath("$.newGbCount").value(0));
 
     save(Board.IC, 1, 2, 900, 10);
     save(Board.IC, 2, 3, 100, 5);
@@ -379,7 +378,7 @@ class PostHighlightApiTest {
   }
 
   @Test
-  @DisplayName("날짜 줄: 최근 7일 새 IC·공동구매 수와 오늘부터 14일 안(양끝 포함)에 마감하는 공동구매 수. 대표 이미지는 묻지 않는다")
+  @DisplayName("날짜 줄: 최근 7일 새 IC·공동구매 수. 대표 이미지는 묻지 않고, 마감 임박 수는 주지 않는다")
   void countsDateline() throws Exception {
     save(Board.IC, 1, 1, 0, 0);
     save(Board.IC, 2, 3, 0, 0);
@@ -394,28 +393,22 @@ class PostHighlightApiTest {
     saveWithRepresentative(justOutside);
     // 대표 이미지가 없는 글도 센다
     postRepository.saveAndFlush(newPost(Board.IC, 14, 2, 0, 0));
-    setGbEndDate(postRepository.saveAndFlush(newPost(Board.GB, 15, 8, 0, 0)), TODAY.plusDays(3));
-    // 마감을 넣은 글은 모두 8일 전 작성이라 새 글 수에 들지 않는다
-    setGbEndDate(save(Board.GB, 5, 8, 0, 0), TODAY);
-    setGbEndDate(save(Board.GB, 6, 8, 0, 0), TODAY.plusDays(14));
-    setGbEndDate(save(Board.GB, 7, 8, 0, 0), TODAY.minusDays(1));
-    setGbEndDate(save(Board.GB, 8, 8, 0, 0), TODAY.plusDays(15));
-    // GB에서 IC로 옮겨져 예전 기간이 남은 글
-    setGbEndDate(save(Board.IC, 9, 8, 0, 0), TODAY.plusDays(3));
+    // 8일 전 글은 마감이 가까워도 새 글 수에 들지 않는다
+    setGbEndDate(save(Board.GB, 5, 8, 0, 0), TODAY.plusDays(3));
     // 숨김 글은 세지 않는다
     Post hiddenIc = newPost(Board.IC, 10, 1, 0, 0);
     hiddenIc.setHidden(true);
     postRepository.saveAndFlush(hiddenIc);
-    Post hiddenGb = newPost(Board.GB, 11, 8, 0, 0);
+    Post hiddenGb = newPost(Board.GB, 11, 1, 0, 0);
     hiddenGb.setHidden(true);
-    setGbEndDate(postRepository.saveAndFlush(hiddenGb), TODAY.plusDays(3));
+    postRepository.saveAndFlush(hiddenGb);
 
     mockMvc
         .perform(get(URL))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.newIcCount").value(5))
         .andExpect(jsonPath("$.newGbCount").value(1))
-        .andExpect(jsonPath("$.endingSoonGbCount").value(3));
+        .andExpect(jsonPath("$.endingSoonGbCount").doesNotExist());
   }
 
   @TestConfiguration(proxyBeanMethods = false)
