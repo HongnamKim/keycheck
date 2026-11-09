@@ -98,4 +98,11 @@ public interface SaleItemRepository extends JpaRepository<SaleItem, Long> {
           + " where s.hidden = false and s.category <> com.keycheck.notice.domain.SaleCategory.OTHER"
           + " order by s.postedAt desc, s.id asc")
   List<SaleSitemapRow> findSitemapRows();
+
+  /** 날짜 줄: 공지가 postedFrom 이후인 판매 건 중 숨김·OTHER를 뺀 수. 요약 상태는 묻지 않는다(판매 건은 요약이 끝나야 생긴다) */
+  @Query(
+      "select count(s) from SaleItem s where s.hidden = false"
+          + " and s.category <> com.keycheck.notice.domain.SaleCategory.OTHER"
+          + " and s.postedAt >= :postedFrom")
+  long countPostedSince(Instant postedFrom);
 }

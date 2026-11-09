@@ -44,6 +44,9 @@ public class SaleHighlightService {
   /** 후보로 읽는 공지 기간 (최근 소식 14일보다 넉넉히) */
   private static final Duration CANDIDATE_POSTED = Duration.ofDays(90);
 
+  /** 날짜 줄의 새 판매 건 창 */
+  private static final Duration NEW_SALE = Duration.ofDays(7);
+
   private final SaleItemRepository saleItemRepository;
   private final NoticeAttachmentRepository attachmentRepository;
   private final SaleQueryService saleQueryService;
@@ -93,6 +96,11 @@ public class SaleHighlightService {
       picks.add(new SalePickResponse(reasons.get(i), cards.get(i)));
     }
     return picks;
+  }
+
+  /** 날짜 줄 숫자: 지금에서 7일 전 이후에 올라온 공지의 판매 건 중 숨김·OTHER를 뺀 수. 사진은 묻지 않는다 */
+  public long countNew(Instant now) {
+    return saleItemRepository.countPostedSince(now.minus(NEW_SALE));
   }
 
   private static void fill(

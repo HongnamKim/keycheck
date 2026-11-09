@@ -188,10 +188,16 @@ describe("백엔드 호출 함수", () => {
     expect((fetchMock.mock.calls[0] as unknown as [string])[0]).toBe(`${API_BASE_URL}/api/sales/past?vendor=geonworks&category=keycap&cursor=c1`);
   });
 
-  it("getSaleHighlights는 picks를 풀어 돌려준다", async () => {
-    vi.stubGlobal("fetch", vi.fn(() => Promise.resolve(new Response('{"picks":[{"reason":"RECENT","sale":{"id":1}}]}'))));
+  it("getSaleHighlights는 picks와 날짜 줄의 최근 7일 판매 건 수를 돌려준다", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => Promise.resolve(new Response('{"picks":[{"reason":"RECENT","sale":{"id":1}}],"newSaleCount":3}'))),
+    );
 
-    await expect(getSaleHighlights()).resolves.toEqual([{ reason: "RECENT", sale: { id: 1 } }]);
+    await expect(getSaleHighlights()).resolves.toEqual({
+      picks: [{ reason: "RECENT", sale: { id: 1 } }],
+      newSaleCount: 3,
+    });
   });
 
   it("getSitemapPosts는 글 ID와 요약을 마친 시각을 순서대로 돌려준다", async () => {

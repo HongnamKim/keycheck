@@ -319,6 +319,22 @@ class SaleApiTest {
   }
 
   @Test
+  @DisplayName("하이라이트는 날짜 줄에 쓸 최근 7일 판매 건 수를 함께 준다(공지가 아니라 건을 센다)")
+  void highlightsHaveNewSaleCount() throws Exception {
+    clock.set(Instant.parse("2026-11-05T00:00:00Z"));
+    Notice recent = notice(KoreanVendor.SWAGKEYS, BASE, SummaryStatus.DONE);
+    item(recent, 0, "첫째 건", SaleCategory.KEYBOARD);
+    item(recent, 1, "둘째 건", SaleCategory.KEYCAP);
+    Notice old = notice(KoreanVendor.GEONWORKS, Instant.parse("2026-10-28T23:00:00Z"), SummaryStatus.DONE);
+    item(old, 0, "8일 전 건", SaleCategory.KEYBOARD);
+
+    mockMvc
+        .perform(get("/api/sales/highlights"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.newSaleCount").value(2));
+  }
+
+  @Test
   @DisplayName("없는 판매 건은 404")
   void unknownIs404() throws Exception {
     mockMvc.perform(get("/api/sales/999999999")).andExpect(status().isNotFound());
