@@ -90,6 +90,91 @@ class NoticeIngestServiceTest {
     assertThat(saved.getSummaryStatus()).isEqualTo(SummaryStatus.PENDING);
   }
 
+  /** 사용자가 원래 공지(original)를 대상 채널로 전달한 메시지(id) */
+  private static String forward(long id, long original, String content, String attachmentsJson) {
+    return "{\"id\":\""
+        + id
+        + "\",\"type\":0,\"channel_id\":\"555\",\"content\":\"\",\"flags\":16384,\"attachments\":[],"
+        + "\"message_reference\":{\"type\":1,\"channel_id\":\"7\",\"message_id\":\""
+        + original
+        + "\",\"guild_id\":\"8\"},"
+        + "\"message_snapshots\":[{\"message\":{\"type\":0,\"content\":\""
+        + content
+        + "\",\"flags\":0,\"attachments\":"
+        + attachmentsJson
+        + "}}]}";
+  }
+
+  @Test
+  @DisplayName("전달된 공지는 원래 id·원래 시각과 안쪽 글·사진으로 저장하고 전달 메시지 id를 남긴다")
+  void 전달된_공지는_원래_공지로_저장한다() {
+    long original = BASE + 1;
+    long forwarded = BASE + 600 * MINUTE;
+
+    Notice saved =
+        ingest(message(forward(forwarded, original, "판매 공지", "[" + attachment(780L) + "]")), NoticeOrigin.BOT)
+            .orElseThrow();
+
+    assertThat(saved.getSourceMessageId()).isEqualTo(original);
+    assertThat(saved.getChannelMessageId()).isEqualTo(forwarded);
+    assertThat(saved.getPostedAt()).isEqualTo(com.keycheck.notice.domain.Snowflakes.time(original));
+    assertThat(saved.getContent()).isEqualTo("판매 공지");
+    assertThat(saved.isHasText()).isTrue();
+    assertThat(saved.getSummaryStatus()).isEqualTo(SummaryStatus.PENDING);
+    tx.executeWithoutResult(
+        s -> {
+          Notice found = noticeRepository.findById(saved.getId()).orElseThrow();
+          assertThat(found.getAttachments())
+              .singleElement()
+              .satisfies(a -> assertThat(a.getSourceUrl()).isEqualTo("https://cdn.discordapp.com/a/780.png"));
+          JsonNode inner =
+              mapper.readTree(found.getRaw()).path("message_snapshots").get(0).path("message").path("attachments").get(0);
+          assertThat(inner.path("url").asString()).isEqualTo("https://img.test/notices/780.webp");
+          assertThat(inner.path("proxy_url").asString()).isEqualTo("https://img.test/notices/780.webp");
+        });
+  }
+
+  @Test
+  @DisplayName("원래 공지가 답글이어도 전달하면 저장한다")
+  void 원래_공지가_답글이어도_전달하면_저장한다() {
+    long original = BASE + 3;
+    String json = forward(BASE + 200, original, "답글 공지", "[]").replace("\"message\":{\"type\":0", "\"message\":{\"type\":19");
+
+    Notice saved = ingest(message(json), NoticeOrigin.BOT).orElseThrow();
+
+    assertThat(saved.getSourceMessageId()).isEqualTo(original);
+    assertThat(saved.getContent()).isEqualTo("답글 공지");
+  }
+
+  @Test
+  @DisplayName("이미 들어온 공지나 같은 공지를 다시 전달하면 건너뛴다")
+  void 이미_들어온_공지를_전달하면_건너뛴다() {
+    long original = BASE + 1;
+    ingest(message(plain(original, "백필", "[]")), NoticeOrigin.BACKFILL).orElseThrow();
+    long other = BASE + 2;
+
+    assertThat(ingest(message(forward(BASE + 100, original, "백필", "[]")), NoticeOrigin.BOT)).isEmpty();
+    assertThat(ingest(message(forward(BASE + 101, other, "새 공지", "[]")), NoticeOrigin.BOT)).isPresent();
+    assertThat(ingest(message(forward(BASE + 102, other, "새 공지", "[]")), NoticeOrigin.BOT)).isEmpty();
+    assertThat(noticeRepository.count()).isEqualTo(2);
+  }
+
+  @Test
+  @DisplayName("전달된 사진만 있는 공지는 원래 시각 기준으로 앞 공지에 묶는다")
+  void 전달된_사진만_있는_공지는_앞_공지에_묶는다() {
+    Notice text =
+        ingest(message(forward(BASE + 900 * MINUTE, BASE, "글 공지", "[]")), NoticeOrigin.BOT).orElseThrow();
+
+    Notice photo =
+        ingest(
+                message(forward(BASE + 901 * MINUTE, BASE + MINUTE, "<@&1234>", "[" + attachment(781L) + "]")),
+                NoticeOrigin.BOT)
+            .orElseThrow();
+
+    assertThat(photo.isHasText()).isFalse();
+    assertThat(photo.getParent().getId()).isEqualTo(text.getId());
+  }
+
   @Test
   @DisplayName("이미 있는 원래 id는 건너뛴다")
   void 이미_있는_원래_id는_건너뛴다() {
