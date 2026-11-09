@@ -45,7 +45,7 @@ public class Notice {
   @Column(unique = true)
   private long sourceMessageId;
 
-  /** 팔로우 채널에 복사된 메시지 id. 봇이 받은 공지만 있다. */
+  /** 팔로우 채널에 복사됐거나 사용자가 전달한 메시지 id. 봇이 받은 공지만 있다. */
   private Long channelMessageId;
 
   private long channelId;
