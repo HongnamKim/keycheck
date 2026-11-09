@@ -125,7 +125,7 @@ const SUBCATEGORY_LABELS: Record<Subcategory, string> = {
   KB_75: "75%",
   KB_65: "65%",
   KB_60: "60%",
-  KB_40: "40% 이하",
+  KB_40: "50% 이하",
   KB_ERGO: "앨리스·스플릿",
   KB_ETC: "그 외",
   KC_GMK: "GMK",

@@ -13,17 +13,17 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum Subcategory {
-  /** 숫자패드와 기능열이 모두 있는 풀배열 */
+  /** 숫자패드와 기능열이 모두 있는 풀배열. 풀배열보다 큰 배열(배틀십 등) 포함 */
   KB_100(Category.KEYBOARD, "100"),
   /** 숫자패드를 붙인 압축 풀배열 */
   KB_96(Category.KEYBOARD, "96"),
-  /** TKL (F13 TKL, WKL TKL 포함) */
+  /** TKL (F13 TKL 포함) */
   KB_80(Category.KEYBOARD, "80"),
   KB_75(Category.KEYBOARD, "75"),
   KB_65(Category.KEYBOARD, "65"),
-  /** HHKB, WK·WKL 포함 */
+  /** HHKB 배열 포함. WK·WKL 같은 하단열 모양은 크기와 상관없다 */
   KB_60(Category.KEYBOARD, "60"),
-  /** 40% 이하 */
+  /** 50% 이하 (40%, 50% 등) */
   KB_40(Category.KEYBOARD, "40"),
   /** 앨리스·스플릿·기타 인체공학 배열 */
   KB_ERGO(Category.KEYBOARD, "ergo"),
