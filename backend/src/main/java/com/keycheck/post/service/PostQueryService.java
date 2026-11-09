@@ -21,6 +21,7 @@ import com.keycheck.post.dto.PostSort;
 import com.keycheck.post.dto.PostedAtAnchor;
 import com.keycheck.post.repository.PostImageRepository;
 import com.keycheck.post.repository.PostRepository;
+import com.keycheck.summary.service.SummaryInProgress;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -64,6 +65,7 @@ public class PostQueryService {
   private final CrawlService crawlService;
   private final CollectProperties collectProperties;
   private final ThumbUrls thumbUrls;
+  private final SummaryInProgress inProgress;
   private final Clock clock;
 
   /**
@@ -288,6 +290,8 @@ public class PostQueryService {
    * @param fill false면 채우지 않고 미리 읽기 표시도 그대로 둔다(검색·미리보기 봇이 원문 읽기·요약을 늘리지 않게)
    */
   public PostDetailResponse getPost(Long id, boolean fill) {
+    // 글보다 먼저 읽는다. 그래야 요약이 끝나는 순간 "요약 대기인데 요약 중 아님"이 나오지 않는다
+    Long summarizingForMs = inProgress.elapsedMs(id, clock.instant());
     Post post = visible(postRepository.findWithImagesById(id));
     if (fill && !post.isDetailLoaded()) {
       crawlService.fillSkeleton(post, FILL_WAIT);
@@ -299,7 +303,11 @@ public class PostQueryService {
     PostImage representative =
         representativeImages(List.of(post)).get(post.getRepresentativeImageId());
     return PostDetailResponse.from(
-        post, representative, estimatedPostedAts(List.of(post)).get(post.getId()), thumbUrls);
+        post,
+        representative,
+        estimatedPostedAts(List.of(post)).get(post.getId()),
+        thumbUrls,
+        summarizingForMs);
   }
 
   /** 사이트맵에 넣을 글(PostRepository.findSitemapRows), 글 번호 내림차순. geekhack을 호출하지 않는다. */
