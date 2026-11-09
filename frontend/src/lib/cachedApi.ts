@@ -23,7 +23,7 @@ import {
   type SaleBatch,
   type SaleCard,
   type SaleCategoryFilter,
-  type SalePick,
+  type SaleHighlights,
   type SaleVendorFilter,
   type SubFilter,
 } from "./api";
@@ -144,13 +144,13 @@ export async function getCachedSalePast(
   }
 }
 
-/** 메인 국내 판매 칸. getCachedHighlights와 같은 캐시 수명. 실패하면 null */
-export async function getCachedSaleHighlights(): Promise<{ picks: SalePick[]; fetchedAt: string } | null> {
+/** 메인 국내 판매 칸과 날짜 줄 숫자. getCachedHighlights와 같은 캐시 수명. 실패하면 null */
+export async function getCachedSaleHighlights(): Promise<(SaleHighlights & { fetchedAt: string }) | null> {
   "use cache";
   try {
-    const picks = await getSaleHighlights();
+    const highlights = await getSaleHighlights();
     cacheLife({ stale: 300, revalidate: 60, expire: 900 });
-    return { picks, fetchedAt: new Date().toISOString() };
+    return { ...highlights, fetchedAt: new Date().toISOString() };
   } catch (err) {
     unstable_rethrow(err);
     console.error(err);

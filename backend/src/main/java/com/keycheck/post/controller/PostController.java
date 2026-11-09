@@ -124,8 +124,7 @@ public class PostController {
               + " windowDays: 고른 창(일). 전체로 넓혔거나 마감 띠면 null."
               + " rank: 그 창의 정렬 순위(1부터, 앞 칸에 들어간 글도 센다). 마감 띠면 null."
               + " today: 한국 날짜(YYYY-MM-DD). newIcCount·newGbCount: 최근 7일에 작성된 IC·공동구매 글 수."
-              + " endingSoonGbCount: today부터 14일 뒤까지(양끝 포함) 마감하는 공동구매 글 수."
-              + " 세 숫자 모두 숨김 글과 수집 기간 이전 글을 빼고 센다(본문·대표 이미지는 묻지 않는다)."
+              + " 두 숫자 모두 숨김 글과 수집 기간 이전 글을 빼고 센다(본문·대표 이미지는 묻지 않는다)."
               + " 카드 형식은 목록과 같다."
               + DATES_DESCRIPTION)
   @ApiResponse(responseCode = "200", description = "성공")

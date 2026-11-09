@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Clock;
+import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -117,11 +118,14 @@ public class SaleController {
           "메인에 올릴 국내 판매 건을 최대 2개 돌려준다. 대표 사진이 보관된 건만 고르고,"
               + " reason 순서로 채운다. UPCOMING: 7일 안에 시작. CLOSING: 판매 중이고 7일 안에 마감."
               + " RECENT: 공지가 14일 안. 같은 건은 한 번만 나온다. 하나도 없으면 picks가 빈 배열이다."
+              + " newSaleCount: 메인 날짜 줄 숫자. 공지 시각(postedAt)이 지금에서 7일 전 이후인 판매 건 중"
+              + " 숨김·분류 OTHER를 뺀 수(사진은 묻지 않는다)."
               + TIMES_DESCRIPTION)
   @ApiResponse(responseCode = "200", description = "성공")
   @GetMapping("/highlights")
   public SaleHighlightResponse getHighlights() {
-    return new SaleHighlightResponse(saleHighlightService.pick(clock.instant()));
+    Instant now = clock.instant();
+    return new SaleHighlightResponse(saleHighlightService.pick(now), saleHighlightService.countNew(now));
   }
 
   @Operation(
