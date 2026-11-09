@@ -173,6 +173,7 @@ public class PostController {
               + " 돌려준다. 읽지 못하면(요청 간격 대기 초과, 요청·해석 실패) 틀 그대로 detailLoaded=false로 돌려준다."
               + " fill=false면 채우지 않고 틀 그대로 돌려준다."
               + " 요약은 백그라운드에서 만들므로 막 채운 글은 summaryStatus=PENDING이다."
+              + " summarizingForMs: 지금 요약 중이면 서버가 요약을 시작한 뒤 흐른 밀리초, 요약 차례를 기다리거나 요약 중이 아니면 null."
               + " vendors: 요약기가 뽑은 벤더(name, region: 대문자 지역 코드 또는 null, url: 첫 글 본문에 있던 판매 페이지 주소 또는"
               + " null). 한국 벤더(KR)를 앞에 두고 각 무리 안은 본문 순서, 없거나 아직 뽑지 않았으면 빈 배열."
               + " 알려진 한국 벤더(GeonWorks·Swagkeys·KLC Playground)는 원문 지역 표기와 상관없이 region KR이고, 판매 링크가 없으면"

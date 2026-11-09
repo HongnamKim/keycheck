@@ -14,7 +14,7 @@ class DailySummaryBudgetTest {
 
   private DailySummaryBudget budget(int dailyLimit) {
     return new DailySummaryBudget(
-        new SummaryProperties(false, false, false, dailyLimit), clock);
+        new SummaryProperties(false, false, false, dailyLimit, 1), clock);
   }
 
   @Test

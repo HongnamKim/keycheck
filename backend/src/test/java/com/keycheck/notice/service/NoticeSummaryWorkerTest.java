@@ -39,6 +39,7 @@ import com.keycheck.post.repository.PostRepository;
 import com.keycheck.summary.config.SummaryProperties;
 import com.keycheck.summary.service.DailySummaryBudget;
 import com.keycheck.summary.service.FakeSummarizer;
+import com.keycheck.summary.service.SummaryInProgress;
 import com.keycheck.summary.service.SummaryWorker;
 import java.time.Duration;
 import java.time.Instant;
@@ -114,7 +115,7 @@ class NoticeSummaryWorkerTest {
   }
 
   private DailySummaryBudget budget(int dailyLimit) {
-    return new DailySummaryBudget(new SummaryProperties(false, false, false, dailyLimit), clock);
+    return new DailySummaryBudget(new SummaryProperties(false, false, false, dailyLimit, 1), clock);
   }
 
   private NoticeSummaryWorker worker() {
@@ -529,7 +530,7 @@ class NoticeSummaryWorkerTest {
             "본문");
     postRepository.saveAndFlush(post);
     saveNotice(Instant.parse("2026-11-08T00:00:00Z"));
-    SummaryProperties summaryProperties = new SummaryProperties(false, false, false, 1);
+    SummaryProperties summaryProperties = new SummaryProperties(false, false, false, 1, 1);
     DailySummaryBudget shared = new DailySummaryBudget(summaryProperties, clock);
     SummaryWorker geekhackWorker =
         new SummaryWorker(
@@ -538,6 +539,7 @@ class NoticeSummaryWorkerTest {
             summaryProperties,
             new CollectProperties(0),
             shared,
+            new SummaryInProgress(),
             clock);
 
     assertThat(geekhackWorker.summarizeNext()).isTrue();

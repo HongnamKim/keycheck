@@ -121,6 +121,8 @@ export interface PostDetail {
   /** 규칙에서 빠지지 않은 후보 이미지 전체, 본문 순서, 주소 중복 제외 (대표 이미지 포함) */
   images: PostImage[];
   summaryStatus: SummaryStatus;
+  /** 지금 요약 중이면 서버가 요약을 시작한 뒤 흐른 밀리초, 아니면 null. 옛 백엔드는 키가 없다 */
+  summarizingForMs?: number | null;
   summaryLines: string[];
   specs: SpecItem[];
   /** 한국 벤더가 앞, 그 안과 나머지는 원문 순서. 요약 전이거나 벤더를 모르면 빈 배열 */

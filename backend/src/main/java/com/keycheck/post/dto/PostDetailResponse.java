@@ -76,9 +76,16 @@ public class PostDetailResponse {
   /** false면 틀 글: geekhack에서 글을 읽지 못해 본문·이미지·요약이 없다. */
   private final boolean detailLoaded;
 
+  /** 지금 요약 중이면 요약을 시작한 뒤 흐른 밀리초, 아니면 null */
+  private final Long summarizingForMs;
+
   /** representative는 대표 이미지. 없으면 null. */
   public static PostDetailResponse from(
-      Post post, PostImage representative, Instant estimatedPostedAt, ThumbUrls urls) {
+      Post post,
+      PostImage representative,
+      Instant estimatedPostedAt,
+      ThumbUrls urls,
+      Long summarizingForMs) {
     boolean done = post.getSummaryStatus() == SummaryStatus.DONE;
     Set<String> seen = new HashSet<>();
     return new PostDetailResponse(
@@ -108,7 +115,8 @@ public class PostDetailResponse {
         post.getPostedAt(),
         estimatedPostedAt,
         post.getLastPostAt(),
-        post.isDetailLoaded());
+        post.isDetailLoaded(),
+        summarizingForMs);
   }
 
   /**

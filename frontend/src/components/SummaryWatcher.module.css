@@ -36,6 +36,23 @@
   transition-timing-function: ease-out;
 }
 
+/* 차례를 기다리는 동안은 차오르지 않고, 짧은 조각이 트랙을 왼쪽에서 오른쪽으로 거듭 지나간다 */
+.queued {
+  width: 30%;
+  transition: none;
+  animation: queued 1.6s ease-in-out infinite;
+}
+
+/* 조각 너비(트랙의 30%) 기준이라 트랙 밖 왼쪽(-100%)에서 트랙 밖 오른쪽(100% / 30% ≈ 334%)까지 */
+@keyframes queued {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(334%);
+  }
+}
+
 /* 움직임을 줄이는 설정이면 막대 없이 문구만 보인다 */
 @media (prefers-reduced-motion: reduce) {
   .track {
