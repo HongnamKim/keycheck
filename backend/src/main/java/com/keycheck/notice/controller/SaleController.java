@@ -37,7 +37,7 @@ public class SaleController {
   @Operation(
       summary = "국내 판매 목록",
       description =
-          "숨김·분류 OTHER·요약 전 공지의 건을 뺀 판매 건을 공지 시각 최근 순(같으면 공지 안 순서)으로 20건씩 이어서 돌려준다."
+          "숨김·분류 OTHER 건을 뺀 판매 건을 공지 시각 최근 순(같으면 id 순: 대개 공지 안 순서, 다시 요약에서 더해진 건은 뒤)으로 20건씩 이어서 돌려준다."
               + " hasMore가 true면 nextCursor를 cursor로 넘겨 다음을 요청한다."
               + " 끝난 판매도 남긴다."
               + TIMES_DESCRIPTION)
@@ -63,9 +63,9 @@ public class SaleController {
   @Operation(
       summary = "국내 판매 일정",
       description =
-          "지금(한국 시각) 기준으로 끝나지 않은 판매 건을 쪽 나눔 없이 최대 300건, 공지 시각 최근 순(같으면 공지 안 순서)으로 돌려준다."
+          "지금(한국 시각) 기준으로 끝나지 않은 판매 건을 쪽 나눔 없이 최대 300건, 공지 시각 최근 순(같으면 id 순)으로 돌려준다."
               + " 마감이 있으면 마감이 지나지 않은 건이다. 마감이 없으면 시작이 있을 때 시작이 아직 안 왔거나 시작 뒤 7일 안인 건(예고 포함),"
-              + " 시작이 없을 때 예고가 아니면 공지 뒤 7일 안, 예고면 공지 뒤 30일 안인 건이다. 숨김·분류 OTHER·요약 전 공지의 건은 뺀다."
+              + " 시작이 없을 때 예고가 아니면 공지 뒤 7일 안, 예고면 공지 뒤 30일 안인 건이다. 숨김·분류 OTHER 건은 뺀다."
               + TIMES_DESCRIPTION)
   @ApiResponse(responseCode = "200", description = "성공")
   @ApiResponse(responseCode = "400", description = "허용되지 않는 vendor·category 값")
@@ -90,7 +90,7 @@ public class SaleController {
           "국내 판매 일정에 들지 않는(지금 기준 끝난) 판매 건 전부를 지난 시각 최근 순(같으면 id 큰 순)으로 30건씩 이어서 돌려준다."
               + " 지난 시각은 마감(날짜만이면 23:59:59), 없으면 시작(날짜만이면 00:00), 없으면 공지 시각이다(한국 시각)."
               + " hasMore가 true면 nextCursor를 cursor로 넘겨 다음을 요청한다."
-              + " 숨김·분류 OTHER·요약 전 공지의 건은 뺀다."
+              + " 숨김·분류 OTHER 건은 뺀다."
               + TIMES_DESCRIPTION)
   @ApiResponse(responseCode = "200", description = "성공")
   @ApiResponse(responseCode = "400", description = "허용되지 않는 vendor·category·cursor 값")
@@ -141,7 +141,7 @@ public class SaleController {
               + " images는 보관이 끝난 사진만 공지에 나온 순서로, url(2048)·largeUrl(1280)·thumbUrl(640)이다."
               + TIMES_DESCRIPTION)
   @ApiResponse(responseCode = "200", description = "성공")
-  @ApiResponse(responseCode = "404", description = "없거나 숨김 처리되었거나 분류가 OTHER이거나 요약 전인 판매 건")
+  @ApiResponse(responseCode = "404", description = "없거나 숨김 처리되었거나 분류가 OTHER인 판매 건")
   @GetMapping("/{id}")
   public SaleDetailResponse getSale(
       @Parameter(description = "판매 건 ID (키체크 내부 ID)") @PathVariable Long id) {

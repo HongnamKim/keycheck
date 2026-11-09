@@ -90,21 +90,26 @@ public class SaleItem {
   public static SaleItem create(Notice notice, int position, SaleItemDraft draft) {
     SaleItem item = new SaleItem();
     item.notice = notice;
-    item.position = position;
     item.vendor = notice.getVendor();
     item.postedAt = notice.getPostedAt();
-    item.productName = draft.getProductName();
-    item.category = draft.getCategory();
-    item.saleType = draft.getSaleType();
-    item.phase = draft.getPhase();
-    item.startDate = draft.getStartDate();
-    item.startTime = draft.getStartTime();
-    item.endDate = draft.getEndDate();
-    item.endTime = draft.getEndTime();
-    item.shippingNote = draft.getShippingNote();
-    item.summaryLines = draft.getSummaryLines();
-    item.links = draft.getLinks();
-    item.imageIds = draft.getImageIds();
+    item.update(position, draft);
     return item;
+  }
+
+  /** 다시 요약한 내용으로 바꾼다. id·숨김·저장 시각과 공지에서 복사한 값은 그대로 둔다. */
+  public void update(int position, SaleItemDraft draft) {
+    this.position = position;
+    this.productName = draft.getProductName();
+    this.category = draft.getCategory();
+    this.saleType = draft.getSaleType();
+    this.phase = draft.getPhase();
+    this.startDate = draft.getStartDate();
+    this.startTime = draft.getStartTime();
+    this.endDate = draft.getEndDate();
+    this.endTime = draft.getEndTime();
+    this.shippingNote = draft.getShippingNote();
+    this.summaryLines = draft.getSummaryLines();
+    this.links = draft.getLinks();
+    this.imageIds = draft.getImageIds();
   }
 }

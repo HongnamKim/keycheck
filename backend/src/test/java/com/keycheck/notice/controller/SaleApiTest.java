@@ -217,16 +217,14 @@ class SaleApiTest {
   }
 
   @Test
-  @DisplayName("숨김, OTHER, 요약 전 공지의 건은 내보내지 않는다")
-  void excludesHiddenOtherAndPending() throws Exception {
+  @DisplayName("숨김, OTHER 건은 내보내지 않는다")
+  void excludesHiddenAndOther() throws Exception {
     Notice done = notice(KoreanVendor.SWAGKEYS, BASE, SummaryStatus.DONE);
-    Notice pending = notice(KoreanVendor.SWAGKEYS, BASE.plusSeconds(60), SummaryStatus.PENDING);
     item(done, 0, "보이는 건", SaleCategory.KEYBOARD);
     SaleItem hidden = item(done, 1, "숨긴 건", SaleCategory.KEYBOARD);
     hidden.setHidden(true);
     saleItemRepository.save(hidden);
     item(done, 2, "기타 건", SaleCategory.OTHER);
-    item(pending, 0, "요약 전 건", SaleCategory.KEYBOARD);
 
     mockMvc
         .perform(get("/api/sales"))
@@ -444,7 +442,7 @@ class SaleApiTest {
   }
 
   @Test
-  @DisplayName("일정 목록도 판매처·분류로 거르고 숨김·OTHER·요약 전은 뺀다")
+  @DisplayName("일정 목록도 판매처·분류로 거르고 숨김·OTHER는 뺀다")
   void scheduleFiltersAndExcludes() throws Exception {
     clock.set(NOW);
     scheduled("스웩 키보드", SalePhase.OPEN, daysAgo(1), null, null);
@@ -453,8 +451,6 @@ class SaleApiTest {
     SaleItem hidden = scheduled("숨김", SalePhase.OPEN, daysAgo(2), null, null);
     hidden.setHidden(true);
     saleItemRepository.save(hidden);
-    Notice pending = notice(KoreanVendor.SWAGKEYS, daysAgo(1), SummaryStatus.PENDING);
-    item(pending, 0, "요약 전", SaleCategory.KEYBOARD);
 
     mockMvc
         .perform(get("/api/sales/schedule").param("vendor", "geonworks").param("category", "keycap"))
@@ -597,7 +593,7 @@ class SaleApiTest {
   }
 
   @Test
-  @DisplayName("지난 판매에도 필터가 적용되고 숨김·OTHER·요약 전은 뺀다")
+  @DisplayName("지난 판매에도 필터가 적용되고 숨김·OTHER는 뺀다")
   void pastFiltersAndExcludes() throws Exception {
     clock.set(NOW);
     scheduled("스웩 키보드", SalePhase.OPEN, daysAgo(50), null, null);
@@ -605,8 +601,6 @@ class SaleApiTest {
     scheduled("기타", SalePhase.OPEN, daysAgo(52), null, null, SaleCategory.OTHER, KoreanVendor.GEONWORKS);
     SaleItem hidden = scheduled("숨김", SalePhase.OPEN, daysAgo(53), null, null);
     jdbcTemplate.update("update sale_item set hidden = true where id = ?", hidden.getId());
-    Notice pending = notice(KoreanVendor.SWAGKEYS, daysAgo(54), SummaryStatus.PENDING);
-    item(pending, 0, "요약 전", SaleCategory.KEYBOARD);
 
     mockMvc
         .perform(get("/api/sales/past").param("vendor", "geonworks").param("category", "keycap"))
@@ -614,6 +608,43 @@ class SaleApiTest {
     mockMvc
         .perform(get("/api/sales/past"))
         .andExpect(jsonPath("$.items[*].productName").value(contains("스웩 키보드", "건 키캡")));
+  }
+
+  @Test
+  @DisplayName("다시 요약을 기다리거나 다시 요약에 실패한 공지의 판매 건도 계속 내보낸다")
+  void keepsItemsOfNoticeBeingResummarized() throws Exception {
+    clock.set(NOW);
+    Notice waiting = notice(KoreanVendor.SWAGKEYS, daysAgo(1), SummaryStatus.DONE);
+    attachment(waiting, 7201L, 0, ArchiveStatus.DONE);
+    SaleItem active = item(waiting, 0, "다시 요약 대기 건", SaleCategory.KEYBOARD, List.of(7201L));
+    SaleItem ended = scheduled("다시 요약 실패 건", SalePhase.OPEN, daysAgo(50), null, null);
+    noticeRepository.updateSummaryStatus(waiting.getId(), SummaryStatus.PENDING);
+    noticeRepository.updateSummaryStatus(ended.getNotice().getId(), SummaryStatus.FAILED);
+
+    mockMvc
+        .perform(get("/api/sales"))
+        .andExpect(jsonPath("$.items[*].productName", contains("다시 요약 대기 건", "다시 요약 실패 건")));
+    mockMvc.perform(get("/api/sales/" + active.getId())).andExpect(status().isOk());
+    mockMvc.perform(get("/api/sales/" + ended.getId())).andExpect(status().isOk());
+    mockMvc
+        .perform(get("/api/sales/schedule"))
+        .andExpect(jsonPath("$.items[*].productName", contains("다시 요약 대기 건")));
+    mockMvc
+        .perform(get("/api/sales/past"))
+        .andExpect(jsonPath("$.items[*].productName").value(contains("다시 요약 실패 건")));
+    mockMvc
+        .perform(get("/api/sales/highlights"))
+        .andExpect(jsonPath("$.picks", hasSize(1)))
+        .andExpect(jsonPath("$.picks[0].sale.id").value(active.getId()));
+    mockMvc
+        .perform(get("/api/sales/sitemap"))
+        .andExpect(
+            content()
+                .json(
+                    ("[{\"id\": %d, \"lastModified\": \"2026-11-05T09:30:00Z\"},"
+                            + " {\"id\": %d, \"lastModified\": \"2026-11-05T09:30:00Z\"}]")
+                        .formatted(active.getId(), ended.getId()),
+                    JsonCompareMode.STRICT));
   }
 
   @Test

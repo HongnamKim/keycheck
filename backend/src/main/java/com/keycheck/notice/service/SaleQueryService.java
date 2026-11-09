@@ -30,7 +30,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-/** 국내 판매 목록·상세·사이트맵 조회. 숨김·OTHER·요약 전 공지의 건은 내보내지 않는다. */
+/** 국내 판매 목록·상세·사이트맵 조회. 숨김·OTHER 건은 내보내지 않는다. 다시 요약을 기다리는 공지의 건은 예전 그대로 내보낸다. */
 @Service
 @RequiredArgsConstructor
 public class SaleQueryService {
