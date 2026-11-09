@@ -40,9 +40,6 @@ public class PostHighlightService {
   /** 날짜 줄의 새 글 창(일) */
   private static final int NEW_POST_DAYS = 7;
 
-  /** 날짜 줄의 마감 임박 범위: 오늘부터 이 날수 뒤까지(양끝 포함) */
-  private static final int ENDING_SOON_DAYS = 14;
-
   /** 마감 띠 후보 범위: 오늘부터 이 날수 뒤까지(양끝 포함) 마감하는 공동구매. 먼 마감(D-120 등)은 넣지 않는다 */
   private static final int DEADLINE_DAYS = 30;
 
@@ -78,7 +75,6 @@ public class PostHighlightService {
         today,
         postRepository.countPostedSince(since, Board.IC, newFrom),
         postRepository.countPostedSince(since, Board.GB, newFrom),
-        postRepository.countGbEndingBetween(since, today, today.plusDays(ENDING_SOON_DAYS)),
         slots);
   }
 

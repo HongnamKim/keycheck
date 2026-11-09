@@ -637,6 +637,19 @@ notice:
 - [ ] **Step 2:** 구현, `cd frontend && npm test && npm run lint && npm run build`, 로컬에서 두 보기·메인에서 들어온 경우 확인.
 - [ ] **Step 3:** 커밋.
 
+### Task 24: 다시 요약해도 판매 건 id 유지 (2026-11-09 사용자 결정, Task 7의 `deleteByNoticeId`와 Task 8·19의 "요약 전 제외"를 바꾼다)
+
+**Files:** Modify `notice/domain/SaleItem.java`(`update`), `notice/service/NoticeSummaryWorker.java`, `notice/repository/SaleItemRepository.java`(`deleteByNoticeId` → `findByNoticeId`, 노출 쿼리의 `summary_status = DONE` 조건 제거), `notice/service/SaleQueryService.java`·`notice/controller/SaleController.java`(주석·설명), Test: `NoticeSummaryWorkerTest`, `SaleApiTest`
+
+**Interfaces:**
+- `NoticeSummaryWorker` 저장: 같은 트랜잭션에서 기존 판매 건(id 순)과 새 요약을 상품 이름 키(공백 모두 제거 + `Locale.ROOT` 소문자)로 짝짓는다. 같은 키는 순서대로, 이름이 비면 짝짓지 않는다. 짝이 있으면 `SaleItem.update(position, draft)`(id·숨김·`createdAt`·공지·판매처·공지 시각 유지), 없으면 `SaleItem.create`, 남은 기존 건은 삭제(404).
+- 노출 쿼리(`findPage`, `findVisible`, `findHighlightCandidates`, `findScheduleCandidates`, `findAllVisible`, `findSitemapRows`)는 공지 요약 상태를 보지 않는다. 다시 요약을 기다리거나 실패한 공지의 건도 보인다.
+- 공지 안 순서는 그대로 id 오름차순(커서 `"<밀리초>_<id>"` 유지). 다시 요약에서 새로 생긴 건은 같은 공지의 기존 건 뒤.
+
+- [ ] **Step 1:** 테스트 먼저 — 같은 이름 id·숨김·만든 시각 유지와 내용 갱신, 공백·대소문자 차이, 같은 이름 여럿, 빈 이름은 새 id, 이름이 모두 바뀌면 예전 id 없음, 다시 요약 대기·실패 중에도 판매 API 전부(목록·일정·지난 판매·상세·하이라이트·사이트맵)에 보임.
+- [ ] **Step 2:** 구현, `cd backend && ./gradlew test`.
+- [ ] **Step 3:** 커밋.
+
 ---
 
 ## 마무리

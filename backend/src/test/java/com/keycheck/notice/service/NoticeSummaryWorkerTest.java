@@ -39,10 +39,14 @@ import com.keycheck.post.repository.PostRepository;
 import com.keycheck.summary.config.SummaryProperties;
 import com.keycheck.summary.service.DailySummaryBudget;
 import com.keycheck.summary.service.FakeSummarizer;
+import com.keycheck.summary.service.SummaryInProgress;
 import com.keycheck.summary.service.SummaryWorker;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -111,7 +115,7 @@ class NoticeSummaryWorkerTest {
   }
 
   private DailySummaryBudget budget(int dailyLimit) {
-    return new DailySummaryBudget(new SummaryProperties(false, false, false, dailyLimit), clock);
+    return new DailySummaryBudget(new SummaryProperties(false, false, false, dailyLimit, 1), clock);
   }
 
   private NoticeSummaryWorker worker() {
@@ -155,6 +159,10 @@ class NoticeSummaryWorkerTest {
   }
 
   private static SaleItemDraft draft(String name) {
+    return draft(name, "줄");
+  }
+
+  private static SaleItemDraft draft(String name, String line) {
     return new SaleItemDraft(
         name,
         SaleCategory.KEYBOARD,
@@ -165,15 +173,29 @@ class NoticeSummaryWorkerTest {
         null,
         null,
         null,
-        List.of("줄"),
+        List.of(line),
         List.of(),
         List.of());
   }
 
+  /** id 순 */
   private List<SaleItem> itemsOf(Notice notice) {
     return saleItemRepository.findAll().stream()
         .filter(i -> i.getNotice().getId().equals(notice.getId()))
+        .sorted(Comparator.comparing(SaleItem::getId))
         .toList();
+  }
+
+  /** 요약이 끝난 공지를 다시 요약 대기로 돌리고 drafts로 다시 요약한다 */
+  private void resummarize(NoticeSummaryWorker worker, Notice notice, SaleItemDraft... drafts) {
+    noticeRepository.updateSummaryStatus(notice.getId(), SummaryStatus.PENDING);
+    summarizer.result = new NoticeSummaryResult(List.of(drafts), "claude-x");
+    assertThat(worker.summarizeNext()).isTrue();
+    assertThat(statusOf(notice)).isEqualTo(SummaryStatus.DONE);
+  }
+
+  private static List<Long> idsOf(List<SaleItem> items) {
+    return items.stream().map(SaleItem::getId).toList();
   }
 
   private static UnauthorizedException unauthorized() {
@@ -283,19 +305,157 @@ class NoticeSummaryWorkerTest {
   }
 
   @Test
-  @DisplayName("다시 요약하면 판매 건을 새로 만든다")
-  void 다시_요약하면_판매_건을_새로_만든다() {
+  @DisplayName("다시 요약에서 이름이 모두 바뀌면 예전 건을 지우고 새로 만든다")
+  void 다시_요약에서_이름이_모두_바뀌면_예전_건을_지우고_새로_만든다() {
     Notice notice = saveNotice(Instant.parse("2026-11-08T00:00:00Z"));
     summarizer.result = new NoticeSummaryResult(List.of(draft("A"), draft("B")), "claude-x");
     NoticeSummaryWorker worker = worker();
     worker.summarizeNext();
-    assertThat(itemsOf(notice)).hasSize(2);
+    List<Long> before = idsOf(itemsOf(notice));
+    assertThat(before).hasSize(2);
 
     noticeRepository.updateSummaryStatus(notice.getId(), SummaryStatus.PENDING);
     summarizer.result = new NoticeSummaryResult(List.of(draft("C")), "claude-x");
     assertThat(worker.summarizeNext()).isTrue();
 
-    assertThat(itemsOf(notice)).extracting(SaleItem::getProductName).containsExactly("C");
+    List<SaleItem> items = itemsOf(notice);
+    assertThat(items).extracting(SaleItem::getProductName).containsExactly("C");
+    assertThat(idsOf(items)).doesNotContainAnyElementsOf(before);
+  }
+
+  @Test
+  @DisplayName("다시 요약하면 같은 이름의 판매 건은 id·숨김·만든 시각을 두고 내용을 바꾼다")
+  void 다시_요약하면_같은_이름의_판매_건은_id_숨김_만든_시각을_두고_내용을_바꾼다() {
+    Notice notice = saveNotice(Instant.parse("2026-11-08T00:00:00Z"));
+    summarizer.result = new NoticeSummaryResult(List.of(draft("A"), draft("B")), "claude-x");
+    NoticeSummaryWorker worker = worker();
+    worker.summarizeNext();
+    SaleItem before = itemsOf(notice).get(1);
+    jdbcTemplate.update("update sale_item set hidden = true where id = ?", before.getId());
+
+    resummarize(
+        worker,
+        notice,
+        new SaleItemDraft(
+            "B",
+            SaleCategory.KEYCAP,
+            SaleType.PREORDER,
+            SalePhase.ANNOUNCE,
+            LocalDate.of(2026, 11, 20),
+            LocalTime.of(20, 0),
+            LocalDate.of(2026, 11, 30),
+            LocalTime.of(23, 0),
+            "12월 배송",
+            List.of("새 줄"),
+            List.of(new SaleLink("구매", "https://shop.test/b")),
+            List.of(4001L)));
+
+    List<SaleItem> items = itemsOf(notice);
+    assertThat(items).hasSize(1);
+    SaleItem after = items.get(0);
+    assertThat(after.getId()).isEqualTo(before.getId());
+    assertThat(after.isHidden()).isTrue();
+    assertThat(after.getCreatedAt()).isEqualTo(before.getCreatedAt());
+    assertThat(after.getVendor()).isEqualTo(KoreanVendor.SWAGKEYS);
+    assertThat(after.getPostedAt()).isEqualTo(before.getPostedAt());
+    assertThat(after.getPosition()).isZero();
+    assertThat(after.getProductName()).isEqualTo("B");
+    assertThat(after.getCategory()).isEqualTo(SaleCategory.KEYCAP);
+    assertThat(after.getSaleType()).isEqualTo(SaleType.PREORDER);
+    assertThat(after.getPhase()).isEqualTo(SalePhase.ANNOUNCE);
+    assertThat(after.getStartDate()).isEqualTo(LocalDate.of(2026, 11, 20));
+    assertThat(after.getStartTime()).isEqualTo(LocalTime.of(20, 0));
+    assertThat(after.getEndDate()).isEqualTo(LocalDate.of(2026, 11, 30));
+    assertThat(after.getEndTime()).isEqualTo(LocalTime.of(23, 0));
+    assertThat(after.getShippingNote()).isEqualTo("12월 배송");
+    assertThat(after.getSummaryLines()).containsExactly("새 줄");
+    assertThat(after.getLinks()).containsExactly(new SaleLink("구매", "https://shop.test/b"));
+    assertThat(after.getImageIds()).containsExactly(4001L);
+  }
+
+  @Test
+  @DisplayName("상품 이름의 공백과 대소문자 차이는 같은 상품으로 본다")
+  void 상품_이름의_공백과_대소문자_차이는_같은_상품으로_본다() {
+    Notice notice = saveNotice(Instant.parse("2026-11-08T00:00:00Z"));
+    summarizer.result =
+        new NoticeSummaryResult(List.of(draft("GMK CYL\u00a0nuSignal")), "claude-x");
+    NoticeSummaryWorker worker = worker();
+    worker.summarizeNext();
+    Long id = itemsOf(notice).get(0).getId();
+
+    resummarize(worker, notice, draft("gmk cyl  NUSIGNAL"));
+
+    List<SaleItem> items = itemsOf(notice);
+    assertThat(idsOf(items)).containsExactly(id);
+    assertThat(items).extracting(SaleItem::getProductName).containsExactly("gmk cyl  NUSIGNAL");
+  }
+
+  @Test
+  @DisplayName("다시 요약에서 새로 생긴 소식은 새 판매 건으로 더하고 순서는 새 요약을 따른다")
+  void 다시_요약에서_새로_생긴_소식은_새_판매_건으로_더하고_순서는_새_요약을_따른다() {
+    Notice notice = saveNotice(Instant.parse("2026-11-08T00:00:00Z"));
+    summarizer.result = new NoticeSummaryResult(List.of(draft("A")), "claude-x");
+    NoticeSummaryWorker worker = worker();
+    worker.summarizeNext();
+    Long a = itemsOf(notice).get(0).getId();
+
+    resummarize(worker, notice, draft("B"), draft("A"));
+
+    List<SaleItem> items = itemsOf(notice);
+    assertThat(items).extracting(SaleItem::getProductName).containsExactly("A", "B");
+    assertThat(items.get(0).getId()).isEqualTo(a);
+    assertThat(items.get(0).getPosition()).isEqualTo(1);
+    assertThat(items.get(1).getId()).isGreaterThan(a);
+    assertThat(items.get(1).getPosition()).isZero();
+  }
+
+  @Test
+  @DisplayName("다시 요약에서 사라진 소식의 판매 건은 지운다")
+  void 다시_요약에서_사라진_소식의_판매_건은_지운다() {
+    Notice notice = saveNotice(Instant.parse("2026-11-08T00:00:00Z"));
+    summarizer.result = new NoticeSummaryResult(List.of(draft("A"), draft("B")), "claude-x");
+    NoticeSummaryWorker worker = worker();
+    worker.summarizeNext();
+    List<Long> before = idsOf(itemsOf(notice));
+
+    resummarize(worker, notice, draft("B"));
+
+    assertThat(idsOf(itemsOf(notice))).containsExactly(before.get(1));
+    assertThat(saleItemRepository.findById(before.get(0))).isEmpty();
+  }
+
+  @Test
+  @DisplayName("같은 이름이 여럿이면 기존 건은 id 순, 새 요약은 요약 순으로 짝짓는다")
+  void 같은_이름이_여럿이면_기존_건은_id_순_새_요약은_요약_순으로_짝짓는다() {
+    Notice notice = saveNotice(Instant.parse("2026-11-08T00:00:00Z"));
+    summarizer.result =
+        new NoticeSummaryResult(
+            List.of(draft("A", "1"), draft("A", "2"), draft("A", "3")), "claude-x");
+    NoticeSummaryWorker worker = worker();
+    worker.summarizeNext();
+    List<Long> before = idsOf(itemsOf(notice));
+
+    resummarize(worker, notice, draft("a", "새 1"), draft("A", "새 2"));
+
+    List<SaleItem> items = itemsOf(notice);
+    assertThat(idsOf(items)).containsExactly(before.get(0), before.get(1));
+    assertThat(items).extracting(i -> i.getSummaryLines().get(0)).containsExactly("새 1", "새 2");
+  }
+
+  @Test
+  @DisplayName("상품 이름이 공백뿐이면 짝짓지 않고 새로 만든다")
+  void 상품_이름이_공백뿐이면_짝짓지_않고_새로_만든다() {
+    Notice notice = saveNotice(Instant.parse("2026-11-08T00:00:00Z"));
+    summarizer.result = new NoticeSummaryResult(List.of(draft("  ")), "claude-x");
+    NoticeSummaryWorker worker = worker();
+    worker.summarizeNext();
+    Long before = itemsOf(notice).get(0).getId();
+
+    resummarize(worker, notice, draft("  "));
+
+    List<SaleItem> items = itemsOf(notice);
+    assertThat(items).hasSize(1);
+    assertThat(items.get(0).getId()).isGreaterThan(before);
   }
 
   @Test
@@ -370,7 +530,7 @@ class NoticeSummaryWorkerTest {
             "본문");
     postRepository.saveAndFlush(post);
     saveNotice(Instant.parse("2026-11-08T00:00:00Z"));
-    SummaryProperties summaryProperties = new SummaryProperties(false, false, false, 1);
+    SummaryProperties summaryProperties = new SummaryProperties(false, false, false, 1, 1);
     DailySummaryBudget shared = new DailySummaryBudget(summaryProperties, clock);
     SummaryWorker geekhackWorker =
         new SummaryWorker(
@@ -379,6 +539,7 @@ class NoticeSummaryWorkerTest {
             summaryProperties,
             new CollectProperties(0),
             shared,
+            new SummaryInProgress(),
             clock);
 
     assertThat(geekhackWorker.summarizeNext()).isTrue();

@@ -27,4 +27,7 @@ public class SummaryProperties {
    * 한도 등)은 세지 않는다. 닿으면 다음 날까지 쉰다. 메모리에서 세므로 재시작하면 0부터 센다. 가짜 요약기에서는 무시.
    */
   private final int dailyLimit;
+
+  /** 동시에 요약하는 geekhack 글 수(요약 칸 수). 운영 요청 한도 등급을 확인하기 전이라 2에서 시작 */
+  private final int concurrency;
 }

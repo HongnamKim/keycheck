@@ -23,9 +23,14 @@ import com.keycheck.summary.service.DailySummaryBudget;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -42,7 +47,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * 올라온 지 wait가 지나고 사진 보관이 끝난 글 공지를 하나씩 판매 건으로 요약한다. 요약기 호출은 트랜잭션 밖에서 하고, 결과는 한
- * 트랜잭션에서 저장한다.
+ * 트랜잭션에서 저장한다. 다시 요약하면 상품 이름이 같은 기존 판매 건은 id를 두고 내용만 바꿔 공유된 주소가 이어지게 한다.
  */
 @Slf4j
 @Service
@@ -54,6 +59,10 @@ public class NoticeSummaryWorker {
   /** [글자](주소) 또는 맨 주소 */
   private static final Pattern LINK =
       Pattern.compile("\\[([^\\]]+)]\\((https?://[^)\\s]+)\\)|(https?://[^\\s<>)\\]]+)");
+
+  /** 유니코드 공백 (줄 바꿈 없는 공백·전각 공백 포함) */
+  private static final Pattern WHITESPACE =
+      Pattern.compile("\\s+", Pattern.UNICODE_CHARACTER_CLASS);
 
   private final NoticeRepository noticeRepository;
   private final NoticeAttachmentRepository attachmentRepository;
@@ -139,14 +148,41 @@ public class NoticeSummaryWorker {
       return false;
     }
     Notice notice = noticeRepository.findById(noticeId).orElseThrow();
-    saleItemRepository.deleteByNoticeId(noticeId);
+    List<SaleItem> existing = saleItemRepository.findByNoticeId(noticeId);
+    Map<String, Deque<SaleItem>> byName = new HashMap<>();
+    for (SaleItem item : existing) {
+      String key = nameKey(item.getProductName());
+      if (key != null) {
+        byName.computeIfAbsent(key, k -> new ArrayDeque<>()).add(item);
+      }
+    }
+    Set<SaleItem> kept = new HashSet<>();
     List<SaleItemDraft> drafts = result.getItems();
     for (int i = 0; i < drafts.size(); i++) {
-      saleItemRepository.save(SaleItem.create(notice, i, drafts.get(i)));
+      Deque<SaleItem> same = byName.get(nameKey(drafts.get(i).getProductName()));
+      SaleItem match = same == null ? null : same.poll();
+      if (match != null) {
+        match.update(i, drafts.get(i));
+        kept.add(match);
+      } else {
+        saleItemRepository.save(SaleItem.create(notice, i, drafts.get(i)));
+      }
     }
+    existing.stream().filter(item -> !kept.contains(item)).forEach(saleItemRepository::delete);
     noticeRepository.markSummarized(
         noticeId, SummaryStatus.DONE, result.getSummarizedBy(), clock.instant());
     return true;
+  }
+
+  /**
+   * 다시 요약할 때 기존 판매 건과 짝짓는 상품 이름 키: 공백을 모두 빼고 대소문자를 무시한다. 이름이 없거나 공백뿐이면 null(짝짓지 않음)
+   */
+  private static String nameKey(String productName) {
+    if (productName == null) {
+      return null;
+    }
+    String key = WHITESPACE.matcher(productName).replaceAll("").toLowerCase(Locale.ROOT);
+    return key.isEmpty() ? null : key;
   }
 
   private static Set<Long> ids(List<NoticeAttachment> attachments) {

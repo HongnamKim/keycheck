@@ -257,6 +257,29 @@ class ClaudeSummarizerTest {
   }
 
   @Test
+  @DisplayName("지시문은 WK·WKL 같은 하단열을 배열 크기 근거로 쓰지 않게 하고, 크기가 없으면 호환 PCB나 하우징이 들어가는 키보드의 크기를 따르게 한다")
+  void systemPromptKeepsBottomRowOutOfLayoutSize() {
+    assertThat(ClaudeSummarizer.SYSTEM_PROMPT)
+        .contains("하단열", "크기 근거로 쓰지 않는다", "호환 PCB", "하우징", "기능열·편집키·방향키·숫자패드")
+        .doesNotContain("WK·WKL 포함", "WKL TKL 포함");
+  }
+
+  @Test
+  @DisplayName("지시문은 50% 보드를 KB_40에, 풀배열보다 큰 보드를 KB_100에 넣게 한다")
+  void systemPromptPutsFiftyPercentInFortyAndLargerInFullSize() {
+    assertThat(ClaudeSummarizer.SYSTEM_PROMPT)
+        .contains("- KB_40: 50% 이하", "풀배열보다 큰 배열")
+        .doesNotContain("KB_40: 40% 이하");
+  }
+
+  @Test
+  @DisplayName("지시문은 MTNU를 GMK 프로파일로 알려 주고, 체리 계열 프로파일만으로 GMK를 고르지 않게 한다")
+  void systemPromptNamesMtnuAsGmkProfile() {
+    assertThat(ClaudeSummarizer.SYSTEM_PROMPT)
+        .contains("CYL·MTNU 등 GMK 프로파일", "체리·Cylindrical 프로파일만으로는 GMK로 정하지 않는다");
+  }
+
+  @Test
   @DisplayName("GB 글이면 사용자 메시지에 GB 게시판을 표시한다")
   void sendsGbBoard() {
     server.responseBody = response("end_turn", SUMMARY_JSON);

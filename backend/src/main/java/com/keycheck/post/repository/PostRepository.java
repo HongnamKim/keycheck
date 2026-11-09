@@ -165,16 +165,6 @@ public interface PostRepository extends JpaRepository<Post, Long> {
   long countPostedSince(long sinceTopicId, Board board, Instant postedFrom);
 
   /**
-   * 숨기지 않은 수집 기간 안의 공동구매 글 중 마감일이 from 이상 to 이하인 글 수(날짜 줄). 본문·이미지는 묻지 않는다. GB에서 IC로 옮겨진
-   * 글은 예전 기간이 남아 있으므로 게시판으로 거른다.
-   */
-  @Query(
-      "select count(p) from Post p where p.hidden = false and p.topicId >= :sinceTopicId"
-          + " and p.board = com.keycheck.post.domain.Board.GB"
-          + " and p.gbEndDate >= :from and p.gbEndDate <= :to")
-  long countGbEndingBetween(long sinceTopicId, LocalDate from, LocalDate to);
-
-  /**
    * 작성일 추정의 기준점(작성일이 있는 글, 숨김 포함). 주어진 글 번호마다 앞뒤로 가장 가까운 글 하나씩과, 글 번호가 가장 작은·가장 큰 글을
    * 모은다. 보간에는 앞뒤 하나씩, 외삽에는 가장 가까운 글과 그쪽 끝 글이 필요하므로 이것으로 충분하다. 글 수와 상관없이 쿼리 한 번이다.
    */

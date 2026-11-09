@@ -258,4 +258,20 @@ class SaleHighlightServiceTest {
 
     assertThat(names(service.pick(NOW))).containsExactly("A", "B");
   }
+
+  @Test
+  @DisplayName("날짜 줄 수: 최근 7일에 올라온 판매 건만 세고, 숨김과 OTHER는 빼고, 사진은 묻지 않는다")
+  void countsNewSales() {
+    item("하루 전", ago(Duration.ofDays(1)), SalePhase.OPEN, null, null, null, null);
+    // 7일 경계: 7일에서 1시간 모자란 건은 세고, 1시간 넘은 건은 세지 않는다
+    item("7일 안", ago(Duration.ofDays(7).minusHours(1)), SalePhase.OPEN, null, null, null, null);
+    item("7일 밖", ago(Duration.ofDays(7).plusHours(1)), SalePhase.ANNOUNCE, TODAY.plusDays(1), null, null, null);
+    save("사진 없음", ago(Duration.ofHours(1)), SalePhase.OPEN, SaleCategory.KEYBOARD, null, null, null, null, false);
+    save("기타", ago(Duration.ofHours(2)), SalePhase.OPEN, SaleCategory.OTHER, null, null, null, null, true);
+    SaleItem hidden = item("숨김", ago(Duration.ofHours(3)), SalePhase.OPEN, null, null, null, null);
+    hidden.setHidden(true);
+    saleItemRepository.save(hidden);
+
+    assertThat(service.countNew(NOW)).isEqualTo(3);
+  }
 }

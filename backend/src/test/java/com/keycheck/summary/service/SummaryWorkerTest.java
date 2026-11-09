@@ -1,9 +1,13 @@
 package com.keycheck.summary.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.AdditionalAnswers.delegatesTo;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 
@@ -34,13 +38,23 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 @SpringBootTest
@@ -53,10 +67,19 @@ class SummaryWorkerTest {
 
   private final RecordingSummarizer summarizer = new RecordingSummarizer();
   private final MutableClock clock = new MutableClock(CHECKED_AT);
+  private final SummaryInProgress inProgress = new SummaryInProgress();
+
+  /** 여러 칸이 함께 요약하는 테스트에서 칸을 돌리는 스레드 */
+  private final ExecutorService slots = Executors.newFixedThreadPool(2);
 
   @BeforeEach
   void setUp() {
     postRepository.deleteAll();
+  }
+
+  @AfterEach
+  void tearDown() {
+    slots.shutdownNow();
   }
 
   private SummaryWorker worker(boolean redoFake) {
@@ -81,12 +104,29 @@ class SummaryWorkerTest {
         postRepository,
         summarizer,
         new SummaryProperties(
-            redoFake, redoMissingSubcategory, redoMissingProductName, dailyLimit),
+            redoFake, redoMissingSubcategory, redoMissingProductName, dailyLimit, 1),
         new CollectProperties(0),
         new DailySummaryBudget(
             new SummaryProperties(
-                redoFake, redoMissingSubcategory, redoMissingProductName, dailyLimit),
+                redoFake, redoMissingSubcategory, redoMissingProductName, dailyLimit, 1),
             clock),
+        inProgress,
+        clock);
+  }
+
+  /** 다시 요약 설정은 모두 끄고 요약기와 하루 상한만 정한 작업 */
+  private SummaryWorker worker(Summarizer summarizer, int dailyLimit) {
+    return worker(postRepository, summarizer, dailyLimit);
+  }
+
+  private SummaryWorker worker(PostRepository repository, Summarizer summarizer, int dailyLimit) {
+    return new SummaryWorker(
+        repository,
+        summarizer,
+        new SummaryProperties(false, false, false, dailyLimit, 1),
+        new CollectProperties(0),
+        new DailySummaryBudget(new SummaryProperties(false, false, false, dailyLimit, 1), clock),
+        inProgress,
         clock);
   }
 
@@ -279,9 +319,10 @@ class SummaryWorkerTest {
         new SummaryWorker(
             repository,
             summarizer,
-            new SummaryProperties(false, false, false, 2),
+            new SummaryProperties(false, false, false, 2, 1),
             new CollectProperties(0),
-            new DailySummaryBudget(new SummaryProperties(false, false, false, 2), clock),
+            new DailySummaryBudget(new SummaryProperties(false, false, false, 2, 1), clock),
+            inProgress,
             clock);
 
     assertThat(worker.summarizeNext()).isTrue();
@@ -338,9 +379,10 @@ class SummaryWorkerTest {
         new SummaryWorker(
             postRepository,
             new FakeSummarizer(),
-            new SummaryProperties(false, false, false, 1),
+            new SummaryProperties(false, false, false, 1, 1),
             new CollectProperties(0),
-            new DailySummaryBudget(new SummaryProperties(false, false, false, 1), clock),
+            new DailySummaryBudget(new SummaryProperties(false, false, false, 1, 1), clock),
+            inProgress,
             clock);
 
     assertThat(worker.summarizeNext()).isTrue();
@@ -433,9 +475,10 @@ class SummaryWorkerTest {
         new SummaryWorker(
             postRepository,
             summarizer,
-            new SummaryProperties(false, false, false, 300),
+            new SummaryProperties(false, false, false, 300, 1),
             new CollectProperties(2500),
-            new DailySummaryBudget(new SummaryProperties(false, false, false, 300), clock),
+            new DailySummaryBudget(new SummaryProperties(false, false, false, 300, 1), clock),
+            inProgress,
             clock);
 
     while (worker.summarizeNext()) {
@@ -608,9 +651,10 @@ class SummaryWorkerTest {
         new SummaryWorker(
             postRepository,
             new FakeSummarizer(),
-            new SummaryProperties(false, true, false, 300),
+            new SummaryProperties(false, true, false, 300, 1),
             new CollectProperties(0),
-            new DailySummaryBudget(new SummaryProperties(false, true, false, 300), clock),
+            new DailySummaryBudget(new SummaryProperties(false, true, false, 300, 1), clock),
+            inProgress,
             clock);
 
     assertThat(worker.summarizeNext()).isFalse();
@@ -765,9 +809,10 @@ class SummaryWorkerTest {
         new SummaryWorker(
             postRepository,
             new FakeSummarizer(),
-            new SummaryProperties(false, false, true, 300),
+            new SummaryProperties(false, false, true, 300, 1),
             new CollectProperties(0),
-            new DailySummaryBudget(new SummaryProperties(false, false, true, 300), clock),
+            new DailySummaryBudget(new SummaryProperties(false, false, true, 300, 1), clock),
+            inProgress,
             clock);
 
     assertThat(worker.summarizeNext()).isFalse();
@@ -1002,9 +1047,10 @@ class SummaryWorkerTest {
         new SummaryWorker(
             postRepository,
             new FakeSummarizer(),
-            new SummaryProperties(false, false, false, 300),
+            new SummaryProperties(false, false, false, 300, 1),
             new CollectProperties(0),
-            new DailySummaryBudget(new SummaryProperties(false, false, false, 300), clock),
+            new DailySummaryBudget(new SummaryProperties(false, false, false, 300, 1), clock),
+            inProgress,
             clock);
 
     assertThat(worker.summarizeNext()).isTrue();
@@ -1024,9 +1070,10 @@ class SummaryWorkerTest {
         new SummaryWorker(
             postRepository,
             new FakeSummarizer(),
-            new SummaryProperties(true, false, false, 300),
+            new SummaryProperties(true, false, false, 300, 1),
             new CollectProperties(0),
-            new DailySummaryBudget(new SummaryProperties(true, false, false, 300), clock),
+            new DailySummaryBudget(new SummaryProperties(true, false, false, 300, 1), clock),
+            inProgress,
             clock);
 
     assertThat(worker.summarizeNext()).isTrue();
@@ -1189,6 +1236,255 @@ class SummaryWorkerTest {
     clock.advance(SummaryWorker.ERROR_PAUSE);
     assertThat(worker.summarizeNext()).isTrue();
     assertThat(summarizer.titles()).containsExactly("새 제목", "새 제목");
+  }
+
+  /** 다른 스레드(칸)에서 한 번 요약한다 */
+  private Future<Boolean> summarizeInSlot(SummaryWorker worker) {
+    return slots.submit(() -> worker.summarizeNext());
+  }
+
+  /** 기다리다 10초가 지나면 실패한다(테스트가 멈추지 않게) */
+  private static void await(CountDownLatch latch) {
+    try {
+      if (!latch.await(10, TimeUnit.SECONDS)) {
+        throw new IllegalStateException("기다리는 시간이 지났다");
+      }
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new IllegalStateException(e);
+    }
+  }
+
+  /** 과금되지 않는 API 오류 응답 */
+  private static UnauthorizedException unauthorized() {
+    return UnauthorizedException.builder()
+        .headers(Headers.builder().build())
+        .body(JsonValue.from("invalid x-api-key"))
+        .build();
+  }
+
+  @Test
+  @DisplayName("두 칸이 동시에 요약해도 서로 다른 글을 집는다")
+  void twoThreadsClaimDifferentPosts() throws Exception {
+    Post older = saveLoaded(2000);
+    Post newer = saveLoaded(3000);
+    List<String> titles = new CopyOnWriteArrayList<>();
+    CountDownLatch bothIn = new CountDownLatch(2);
+    SummaryWorker worker =
+        worker(
+            source -> {
+              titles.add(source.getTitle());
+              bothIn.countDown();
+              // 두 호출이 함께 요약기 안에 들어와야 지나간다
+              await(bothIn);
+              return new FakeSummarizer().summarize(source);
+            },
+            300);
+
+    Future<Boolean> first = summarizeInSlot(worker);
+    Future<Boolean> second = summarizeInSlot(worker);
+
+    assertThat(first.get(10, TimeUnit.SECONDS)).isTrue();
+    assertThat(second.get(10, TimeUnit.SECONDS)).isTrue();
+    assertThat(titles).containsExactlyInAnyOrder("[IC] 글 2000", "[IC] 글 3000");
+    assertThat(reload(older).getSummaryStatus()).isEqualTo(SummaryStatus.DONE);
+    assertThat(reload(newer).getSummaryStatus()).isEqualTo(SummaryStatus.DONE);
+  }
+
+  @Test
+  @DisplayName("두 칸이 동시에 요약해도 하루 상한은 글마다 한 번만 센다")
+  void budgetCountedOncePerPost() throws Exception {
+    saveLoaded(4000);
+    saveLoaded(3000);
+    saveLoaded(2000);
+    Post last = saveLoaded(1000);
+    CountDownLatch bothIn = new CountDownLatch(2);
+    List<String> titles = new CopyOnWriteArrayList<>();
+    SummaryWorker worker =
+        worker(
+            source -> {
+              titles.add(source.getTitle());
+              bothIn.countDown();
+              await(bothIn);
+              return new FakeSummarizer().summarize(source);
+            },
+            3);
+
+    Future<Boolean> first = summarizeInSlot(worker);
+    Future<Boolean> second = summarizeInSlot(worker);
+    assertThat(first.get(10, TimeUnit.SECONDS)).isTrue();
+    assertThat(second.get(10, TimeUnit.SECONDS)).isTrue();
+
+    // 두 글에 두 번만 셌으면 상한(3)이 한 번 남는다
+    assertThat(worker.summarizeNext()).isTrue();
+    // 세 번을 다 썼으니 대기 글이 남아 있어도 쉰다
+    assertThat(worker.summarizeNext()).isFalse();
+    // 같은 글을 두 번 집어 두 번 셌다면 제목이 겹친다
+    assertThat(titles).hasSize(3).doesNotHaveDuplicates().doesNotContain("[IC] 글 1000");
+    assertThat(reload(last).getSummaryStatus()).isEqualTo(SummaryStatus.PENDING);
+  }
+
+  @Test
+  @DisplayName("요약하는 동안 글을 처리 중으로 올려 두고, 요약에 성공하면 내린다")
+  void releasesClaimAfterSuccess() {
+    Post post = saveLoaded(2000);
+    AtomicBoolean claimedWhileSummarizing = new AtomicBoolean();
+    summarizer.onSummarize = () -> claimedWhileSummarizing.set(inProgress.contains(post.getId()));
+
+    assertThat(worker(false).summarizeNext()).isTrue();
+
+    assertThat(claimedWhileSummarizing).isTrue();
+    assertThat(inProgress.contains(post.getId())).isFalse();
+  }
+
+  @Test
+  @DisplayName("글 때문에 요약하지 못해도 처리 중 표시를 내린다")
+  void releasesClaimAfterPostFailure() {
+    Post post = saveLoaded(2000);
+    summarizer.fail = true;
+
+    assertThat(worker(false).summarizeNext()).isTrue();
+
+    assertThat(reload(post).getSummaryStatus()).isEqualTo(SummaryStatus.FAILED);
+    assertThat(inProgress.size()).isZero();
+  }
+
+  @Test
+  @DisplayName("API를 쓸 수 없어도 처리 중 표시를 내린다")
+  void releasesClaimAfterApiError() {
+    Post post = saveLoaded(2000);
+    summarizer.error = new AnthropicIoException("연결 실패");
+
+    assertThat(worker(false).summarizeNext()).isTrue();
+
+    assertThat(reload(post).getSummaryStatus()).isEqualTo(SummaryStatus.PENDING);
+    assertThat(inProgress.size()).isZero();
+  }
+
+  @Test
+  @DisplayName("요약을 저장하다 예외가 나면 예외를 그대로 던지고 처리 중 표시를 내린다")
+  void releasesClaimAfterSaveError() {
+    Post post = saveLoaded(2000);
+    PostRepository repository = mock(PostRepository.class, delegatesTo(postRepository));
+    doThrow(new DataAccessResourceFailureException("DB 연결 끊김"))
+        .when(repository)
+        .saveSummary(
+            any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean(),
+            any(), any());
+    SummaryWorker worker = worker(repository, summarizer, 300);
+
+    assertThatThrownBy(() -> worker.summarizeNext())
+        .isInstanceOf(DataAccessResourceFailureException.class);
+
+    assertThat(reload(post).getSummaryStatus()).isEqualTo(SummaryStatus.PENDING);
+    assertThat(inProgress.size()).isZero();
+  }
+
+  @Test
+  @DisplayName("하루 상한에 닿아 요약하지 않은 글도 처리 중 표시를 내린다")
+  void releasesClaimWhenBudgetExhausted() {
+    saveLoaded(2000);
+
+    assertThat(worker(false, false, false, 0).summarizeNext()).isFalse();
+
+    assertThat(summarizer.sources).isEmpty();
+    assertThat(inProgress.size()).isZero();
+  }
+
+  @Test
+  @DisplayName("한 칸이 API 오류로 쉬기를 걸면 다른 칸은 하던 요약만 마치고 다음 글을 집지 않는다")
+  void stopsClaimingWhilePaused() throws Exception {
+    Post running = saveLoaded(3000);
+    saveLoaded(2000);
+    CountDownLatch runningIn = new CountDownLatch(1);
+    CountDownLatch release = new CountDownLatch(1);
+    AtomicInteger calls = new AtomicInteger();
+    SummaryWorker worker =
+        worker(
+            source -> {
+              calls.incrementAndGet();
+              if (source.getTitle().equals("[IC] 글 3000")) {
+                runningIn.countDown();
+                await(release);
+                return new FakeSummarizer().summarize(source);
+              }
+              throw unauthorized();
+            },
+            300);
+
+    // 칸 A는 3000을 요약하는 중이다
+    Future<Boolean> slotA = summarizeInSlot(worker);
+    await(runningIn);
+    // 칸 B는 2000을 집었다가 API 오류로 끝나 쉬기를 건다
+    assertThat(worker.summarizeNext()).isTrue();
+    // 쉬는 동안에는 요약 대기로 남은 2000도 집지 않는다
+    assertThat(worker.summarizeNext()).isFalse();
+    assertThat(calls).hasValue(2);
+
+    release.countDown();
+    assertThat(slotA.get(10, TimeUnit.SECONDS)).isTrue();
+    assertThat(reload(running).getSummaryStatus()).isEqualTo(SummaryStatus.DONE);
+  }
+
+  @Test
+  @DisplayName("하루 상한으로 다음 날까지 쉬는 중에 다른 칸이 API 오류로 1분 쉬기를 걸어도 더 늦은 시각까지 쉰다")
+  void pauseKeepsLaterInstant() throws Exception {
+    saveLoaded(3000);
+    saveLoaded(2000);
+    CountDownLatch runningIn = new CountDownLatch(1);
+    CountDownLatch release = new CountDownLatch(1);
+    AtomicInteger calls = new AtomicInteger();
+    SummaryWorker worker =
+        worker(
+            source -> {
+              calls.incrementAndGet();
+              runningIn.countDown();
+              await(release);
+              // 과금되지 않는 오류 응답이라 센 한 번을 되돌린다
+              throw unauthorized();
+            },
+            1);
+
+    // 칸 A는 상한 1을 쓰고 3000을 요약하는 중이다
+    Future<Boolean> slotA = summarizeInSlot(worker);
+    await(runningIn);
+    // 칸 B는 2000을 집었지만 상한에 닿아 다음 날 0시까지 쉬기를 건다
+    assertThat(worker.summarizeNext()).isFalse();
+    // 칸 A는 API 오류로 끝나 1분 쉬기를 걸고 상한을 되돌린다
+    release.countDown();
+    assertThat(slotA.get(10, TimeUnit.SECONDS)).isTrue();
+
+    // 1분 쉬기가 다음 날 0시를 덮었다면 되돌린 상한으로 다시 요약한다
+    clock.advance(SummaryWorker.ERROR_PAUSE);
+    assertThat(worker.summarizeNext()).isFalse();
+    assertThat(calls).hasValue(1);
+  }
+
+  @Test
+  @DisplayName("글을 집으면 집은 직후 onClaimed를 한 번 부르고, 대상이 없으면 부르지 않는다")
+  void callsOnClaimedOnceWhenClaimed() {
+    saveLoaded(2000);
+    AtomicInteger claimed = new AtomicInteger();
+    SummaryWorker worker = worker(false);
+
+    assertThat(worker.summarizeNext(claimed::incrementAndGet)).isTrue();
+    assertThat(claimed).hasValue(1);
+
+    assertThat(worker.summarizeNext(claimed::incrementAndGet)).isFalse();
+    assertThat(claimed).hasValue(1);
+  }
+
+  @Test
+  @DisplayName("다른 칸이 처리 중인 글은 건너뛰고 다음 글을 요약한다")
+  void skipsPostInProgress() {
+    Post claimed = saveLoaded(3000);
+    saveLoaded(2000);
+    inProgress.add(claimed.getId(), CHECKED_AT);
+
+    assertThat(worker(false).summarizeNext()).isTrue();
+
+    assertThat(summarizer.titles()).containsExactly("[IC] 글 2000");
+    assertThat(reload(claimed).getSummaryStatus()).isEqualTo(SummaryStatus.PENDING);
   }
 
   /** 받은 입력을 기록한다. result가 없으면 가짜 요약기 결과를 돌려준다. */

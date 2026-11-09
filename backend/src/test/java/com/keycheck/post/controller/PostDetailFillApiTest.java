@@ -24,6 +24,7 @@ import com.keycheck.post.domain.Category;
 import com.keycheck.post.domain.Post;
 import com.keycheck.post.repository.PostImageRepository;
 import com.keycheck.post.repository.PostRepository;
+import com.keycheck.summary.service.SummaryInProgress;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -58,6 +59,7 @@ class PostDetailFillApiTest {
   @Autowired private PostImageRepository postImageRepository;
   @Autowired private MutableClock clock;
   @Autowired private JdbcTemplate jdbcTemplate;
+  @Autowired private SummaryInProgress inProgress;
 
   // 실제 geekhack을 호출하지 않는다. 파서와 DB는 실제 것을 쓴다.
   @MockitoBean private GeekhackClient client;
@@ -325,6 +327,51 @@ class PostDetailFillApiTest {
     assertThat(first.get(20, TimeUnit.SECONDS)).isEqualTo(200);
     assertThat(second.get(20, TimeUnit.SECONDS)).isEqualTo(200);
     assertThat(postImageRepository.findAll()).hasSize(3);
+  }
+
+  /** 본문까지 읽어 요약을 기다리는 글 */
+  private Post savePending() {
+    return postRepository.saveAndFlush(
+        Post.create(
+            Board.IC,
+            TOPIC_ID,
+            "[IC] Test Board",
+            "bob",
+            Category.KEYBOARD,
+            Instant.parse("2026-10-13T13:29:35Z"),
+            100,
+            5,
+            Instant.parse("2026-10-30T00:00:00Z"),
+            "https://geekhack.test/index.php?topic=3000.0",
+            "본문"));
+  }
+
+  @Test
+  @DisplayName("지금 요약 중인 글은 요약을 시작한 뒤 흐른 밀리초를 summarizingForMs로 돌려준다")
+  void summarizingForMsWhileInProgress() throws Exception {
+    Post post = savePending();
+    inProgress.add(post.getId(), clock.instant().minusSeconds(4));
+    try {
+      mockMvc
+          .perform(get("/api/posts/" + post.getId() + "?fill=false"))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.summaryStatus").value("PENDING"))
+          .andExpect(jsonPath("$.summarizingForMs").value(4000));
+    } finally {
+      inProgress.remove(post.getId());
+    }
+  }
+
+  @Test
+  @DisplayName("요약 중이 아닌 글은 summarizingForMs 키를 null로 돌려준다")
+  void summarizingForMsNullWhenNotInProgress() throws Exception {
+    Post post = savePending();
+
+    mockMvc
+        .perform(get("/api/posts/" + post.getId() + "?fill=false"))
+        .andExpect(status().isOk())
+        // 키가 없으면 실패한다(키가 없으면 프론트는 옛 백엔드로 본다)
+        .andExpect(jsonPath("$.summarizingForMs").value(nullValue()));
   }
 
   private int open(Post post) {
