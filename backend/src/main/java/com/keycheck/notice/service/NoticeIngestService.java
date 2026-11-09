@@ -52,7 +52,8 @@ public class NoticeIngestService {
     boolean hasText = !MENTION.matcher(content).replaceAll("").isBlank();
     List<DiscordAttachment> attachments = message.getAttachments();
 
-    Long channelMessageId = message.isCrosspost() ? Long.parseLong(message.getId()) : null;
+    Long channelMessageId =
+        message.isCrosspost() || message.isForward() ? Long.parseLong(message.getId()) : null;
     Notice notice =
         Notice.create(
             sourceId,
@@ -91,25 +92,35 @@ public class NoticeIngestService {
     return Optional.of(noticeRepository.save(notice));
   }
 
-  /** 원문 JSON의 첨부 주소를 우리 저장소 주소로 바꾼다. 공개 주소가 없으면 빈 문자열 */
+  /** 원문 JSON의 첨부 주소(전달한 메시지면 안쪽 원래 메시지의 첨부도)를 우리 저장소 주소로 바꾼다. 공개 주소가 없으면 빈 문자열 */
   private String rewrittenRaw(DiscordMessage message) {
     JsonNode copy = message.getRaw().deepCopy();
-    JsonNode attachments = copy.path("attachments");
-    if (attachments.isArray()) {
-      for (JsonNode a : attachments) {
-        if (!(a instanceof ObjectNode node) || !node.hasNonNull("id")) {
-          continue;
-        }
-        String url = thumbUrls.url(NoticeKeys.archive(node.get("id").asLong()));
-        String value = url == null ? "" : url;
-        if (node.has("url")) {
-          node.put("url", value);
-        }
-        if (node.has("proxy_url")) {
-          node.put("proxy_url", value);
-        }
+    rewriteAttachments(copy.path("attachments"));
+    JsonNode snapshots = copy.path("message_snapshots");
+    if (snapshots.isArray()) {
+      for (JsonNode snapshot : snapshots) {
+        rewriteAttachments(snapshot.path("message").path("attachments"));
       }
     }
     return copy.toString();
+  }
+
+  private void rewriteAttachments(JsonNode attachments) {
+    if (!attachments.isArray()) {
+      return;
+    }
+    for (JsonNode a : attachments) {
+      if (!(a instanceof ObjectNode node) || !node.hasNonNull("id")) {
+        continue;
+      }
+      String url = thumbUrls.url(NoticeKeys.archive(node.get("id").asLong()));
+      String value = url == null ? "" : url;
+      if (node.has("url")) {
+        node.put("url", value);
+      }
+      if (node.has("proxy_url")) {
+        node.put("proxy_url", value);
+      }
+    }
   }
 }
