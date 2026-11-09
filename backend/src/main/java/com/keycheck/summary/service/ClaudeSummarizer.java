@@ -78,18 +78,21 @@ public class ClaudeSummarizer implements Summarizer {
       - OTHER: 그 밖의 것 (데스크매트, 스위치, 아티산, 케이블, 스태빌라이저 등)
 
       subcategory: category의 세부 분류. category와 맞는 값만 쓴다. OTHER면 null.
-      KEYBOARD면 배열 중 하나를 고른다.
-      - KB_100: 숫자패드와 기능열이 모두 있는 풀배열
+      KEYBOARD면 배열 크기 중 하나를 고른다.
+      WK·WKL·Tsangan·블로커 같은 하단열 모양은 어느 크기에나 있으니 크기 근거로 쓰지 않는다.
+      본문에 크기가 직접 없으면 호환 PCB·플레이트 이름에 적힌 크기(…TKL, …65 등)를 따르고, 하우징·케이스 키트면 들어가는 키보드의 크기를 따른다.
+      알파 배열이 독특해도 기능열·편집키·방향키·숫자패드 구성이 적혀 있으면 그 구성으로 가장 가까운 크기를 고른다.
+      - KB_100: 숫자패드와 기능열이 모두 있는 풀배열 (풀배열보다 큰 배열 포함: 배틀십·터미널 배열 등)
       - KB_96: 숫자패드를 붙인 압축 풀배열 (96%, 1800)
-      - KB_80: TKL (F13 TKL, WKL TKL 포함)
+      - KB_80: TKL (F13 TKL 포함)
       - KB_75: 75%
       - KB_65: 65% (68키 등)
-      - KB_60: 60% (HHKB, WK·WKL 포함)
-      - KB_40: 40% 이하
+      - KB_60: 60% (HHKB 배열 포함)
+      - KB_40: 50% 이하 (40%, 45%, 숫자열이 있는 50% 등)
       - KB_ERGO: 앨리스·스플릿·기타 인체공학 배열
       - KB_ETC: 그 외 (매크로패드, 넘패드, 판단 불가)
       KEYCAP이면 실제로 키캡을 만드는 제조사 중 하나를 고른다. 디자이너나 판매처가 아니다.
-      - KC_GMK: GMK (CYL 등 GMK 프로파일 포함)
+      - KC_GMK: GMK (CYL·MTNU 등 GMK 프로파일 포함. 체리·Cylindrical 프로파일만으로는 GMK로 정하지 않는다)
       - KC_SP: Signature Plastics (SA·DSA·DCS·DSS 등 SP 프로파일. 단 본문이 다른 제조사를 밝히면 그쪽)
       - KC_MW: MW (MWKEYS)
       - KC_KKB: KKB (Key Kobo)
